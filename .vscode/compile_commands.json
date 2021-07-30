@@ -1,0 +1,13 @@
+{
+    "configurations":[
+        {
+            "includePath": [
+                "${workspaceRoot}/deps/glfw/include",
+                "${workspaceRoot}/deps/glad/"
+            ]
+        }
+
+    ]
+
+
+}
