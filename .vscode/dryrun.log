@@ -1,24 +1,26 @@
 make.exe all CC=gcc -f "C:\dev\realm\Makefile" --dry-run --always-make --keep-going --print-directory
-make: Entering directory '/c/dev/realm'
+make: Entering directory 'c:/dev/realm'
 echo "==== Building GLFW (debug) ===="
-make --no-print-directory -C deps/glfw -f Makefile config=debug
+C:/ProgramData/chocolatey/lib/make/tools/install/bin/make.exe --no-print-directory -C deps/glfw -f Makefile config=debug
  
 make[1]: Makefile: No such file or directory
+ 
 make[1]: *** No rule to make target 'Makefile'.
 make[1]: Failed to remake makefile 'Makefile'.
 make[1]: *** No targets specified and no makefile found.  Stop.
+ 
 make: *** [C:\dev\realm\Makefile:36: GLFW] Error 2
  
 echo "==== Building glad (debug) ===="
-make --no-print-directory -C deps/glad -f Makefile config=debug
-echo Creating obj/Debug-windows-x86_64
-mkdir -p obj/Debug-windows-x86_64
-echo glad.c
-gcc   -MMD -MP  -Iinclude -m64 -g  -o "obj/Debug-windows-x86_64/glad.o" -MF "obj/Debug-windows-x86_64/glad.d" -c "src/glad.c"
-echo Creating bin/Debug-windows-x86_64
-mkdir -p bin/Debug-windows-x86_64
-echo Linking glad
-ar -rcs "bin/Debug-windows-x86_64/glad.lib" obj/Debug-windows-x86_64/glad.o
-:
-make: Leaving directory '/c/dev/realm'
+C:/ProgramData/chocolatey/lib/make/tools/install/bin/make.exe --no-print-directory -C deps/glad -f Makefile config=debug
+ 
+make[1]: Makefile: No such file or directory
+ 
+make[1]: *** No rule to make target 'Makefile'.
+make[1]: Failed to remake makefile 'Makefile'.
+make[1]: *** No targets specified and no makefile found.  Stop.
+ 
+make: *** [C:\dev\realm\Makefile:42: glad] Error 2
+ 
+make: Leaving directory 'c:/dev/realm'
  

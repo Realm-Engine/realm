@@ -8,13 +8,25 @@ re_index_buffer_t* index_buffer;
 re_gfx_pipeline_t pipeline;
 re_context_t* context;
 re_mesh_t square_mesh;
-void on_start();
-void on_update();
+re_transform_t square_transform;
+
+re_camera_t* camera;
+re_user_data_layout_t layout;
+void on_start(re_context_t* ctx);
+void on_update(re_context_t* ctx);
+void on_window_resize(re_context_t* ctx, int32_t width, int32_t height);
+void on_key_action(re_context_t* ctx, re_key_action_t action, int32_t key);
+void on_mouse_action(re_context_t* ctx, re_mouse_button_action_t action, int32_t button);
+void on_mouse_pos(re_context_t* ctx, float x, float y, float last_x, float last_y);
 
 int main(int argc, char** argv)
 {
 	printf("Hello, World!");
+	square_transform = new_transform;
+	square_transform.position = new_vec3(0, 0, 0.0f);
+	square_transform.rotation = new_vec4(0.0f, 0.0f, 0, 1.0f);
 
+	
 
 	context = re_init((re_app_desc_t) {
 		.height = 720,
@@ -22,11 +34,24 @@ int main(int argc, char** argv)
 			.title = "Realm",
 
 	});
+	int width = 0;
+	int height = 0;
+	re_context_size(context, &width, &height);
+	camera = re_create_camera(PERSPECTIVE, (re_view_desc_t) {
+		.size = new_vec2(width, height),
+			.fov_angle = 45,
+			.near_plane = 0.1f,
+			.far_plane = 100.0f
+	});
+	camera->camera_transform.rotation = new_vec4(0.1f, 0.0f, 0.0f, 1);
+	camera->camera_transform.position = new_vec3(0.0f,0.0f, 0.0f);
 	re_init_gfx();
 
 	re_set_event_handler(context, (re_event_handler_desc_t) {
 		.on_start = &on_start,
-			.on_update = &on_update
+			.on_update = &on_update,
+			.on_window_resize = &on_window_resize,
+			.on_user_key_action = &on_key_action
 
 	});
 
@@ -43,12 +68,12 @@ void on_start(re_context_t* ctx)
 {
 	printf("Start");
 	square_mesh.positions = NULL;
-	square_mesh.positions = (vec3_t*)malloc(sizeof(vec3_t) * 4);
+	square_mesh.positions = (vec3*)malloc(sizeof(vec3) * 4);
 
 
 	for (int i = 0; i < 4; i++)
 	{
-		memcpy(&square_mesh.positions[i], square_model[i], sizeof(vec3_t));
+		memcpy(&square_mesh.positions[i], square_model[i], sizeof(vec3));
 	}
 
 	square_mesh.triangles = (uint32_t*)malloc(sizeof(uint32_t) * 6);
@@ -58,10 +83,10 @@ void on_start(re_context_t* ctx)
 	char fragment[256];
 	memset(fragment, 0, sizeof(fragment));
 	re_read_text("./resources/re_fragment.glsl", fragment);
-	char vertex[256];
+	char vertex[512];
 	memset(vertex, 0, sizeof(vertex));
 	re_read_text("./resources/re_vertex.glsl", vertex);
-	
+
 	shader = (re_shader_program_t){
 			.name = "Default",
 			.source = {
@@ -84,22 +109,26 @@ void on_start(re_context_t* ctx)
 	};
 	re_init_gfx_pipeline(&pipeline);
 	re_set_bg_color(153.0f, 46.0f, 137.0f, 255.0f, 1);
+	vec3_to_string(re_compute_camera_front(camera));
 	
-
+	re_query_userdata_layout(&pipeline, "_reUserData", &layout);
+	
 
 
 }
 void on_update(re_context_t* ctx)
 {
 	re_clear_color();
+
+
+	mat4x4 vp= re_compute_view_projection(camera);
 	
-	int width = 0;
-	int height = 0;
-	re_context_size(ctx, &width, &height);
-	re_update_vp(&pipeline, re_perspective(90,width/height,0.1f,100.0f));
+	
+	re_update_vp(&pipeline,&vp );
 	re_pipeline_start_draw(&pipeline);
 	{
-		re_upload_vertex_data(square_mesh.positions, square_mesh.mesh_size);
+		re_set_userdata_vector(&layout, "color", new_vec4(0.5f, 1.0, 1.0, 1.0));
+		re_upload_vertex_data(re_apply_transform(square_transform, &square_mesh), square_mesh.mesh_size);
 		re_upload_index_data(square_triangles, 6);
 		re_draw_triangles(6);
 	}
@@ -107,3 +136,51 @@ void on_update(re_context_t* ctx)
 
 
 }
+
+void on_window_resize(re_context_t* ctx,int32_t width, int32_t height)
+{
+	camera->size.x = (float)width;
+	camera->size.y = (float)height;
+
+}
+
+void on_key_action(re_context_t* ctx, re_key_action_t action, int32_t key)
+{
+	vec3 move_vector = vec3_zero;
+	switch (action)
+	{
+	case KEY_DOWN:
+		switch (key)
+		{
+		case GLFW_KEY_W:
+			printf("moving forward");
+			move_vector = vec3_scalar_mul( re_compute_camera_front(camera),-0.1f);
+			break;
+		case GLFW_KEY_D:
+			move_vector = vec3_scalar_mul(re_compute_camera_right(camera), 0.1f);
+			break;
+		case GLFW_KEY_S:
+			printf("moving forward");
+			move_vector = vec3_scalar_mul(re_compute_camera_front(camera), 0.1f);
+			break;
+		case GLFW_KEY_A:
+			move_vector = vec3_scalar_mul(re_compute_camera_right(camera), -0.1f);
+			break;
+		
+		default:
+			break;
+		}
+	default:
+		break;
+	}
+	camera->camera_transform.position =  vec3_add(camera->camera_transform.position, move_vector);
+}
+
+void on_mouse_action(re_context_t* ctx, re_mouse_button_action_t action, int32_t button)
+{
+}
+
+void on_mouse_pos(re_context_t* ctx, float x, float y, float last_x, float last_y)
+{
+}
+

@@ -17,11 +17,11 @@ void main()\n\
 	FragColor = vec4(Color, 1.0);\n\
 }";
 static uint32_t square_triangles[6] = { 0,1,2,2,3,0 };
-static float square_model[4][3] = {
-	{0,0,-1.0f},
-	{0,5,-1.0f},
-	{5,5,-1.0f},
-	{5,0,-1.0f}
+static float square_model[4][4] = {
+	{-0.5f,-0.5f,0.0f,1.0},
+	{0.5f,-0.5f,0.0f,1.0},
+	{0.5f,0.5f,0.0f,1.0},
+	{-0.5f,0.5f,0.0f,1.0}
 };
 
 
