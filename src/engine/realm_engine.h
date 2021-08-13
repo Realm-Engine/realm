@@ -1,16 +1,35 @@
-#pragma once
 
-
+#ifndef REALM_ENGINE_H
+#define REALM_ENGINE_H
 #include "GLFW/glfw3.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "re_math.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #define RE_GLOBAL_DATA_REF "_reGlobalData"
 #define RE_USER_DATA_REF "_reUserData"
 #define REALM_ENGINE_FUNC static inline
 #define MAX_UNIFORMS GL_MAX_VERTEX_UNIFORM_COMPONENTS + GL_MAX_FRAGMENT_UNIFORM_COMPONENTS
 
+//Graphics API defintions
+
+//Structs and Enums
+
+struct re_shader_t;
+struct re_shader_program_t;
+struct re_vertex_attr_desc_t;
+struct re_vertex_buffer_t;
+struct re_shader_block_t;
+struct re_gfx_pipeline_t;
+
+typedef enum re_result_t
+{
+	RE_OK,
+	RE_ERROR
+} re_result_t;
 
 typedef struct re_global_data_t
 {
@@ -30,7 +49,8 @@ typedef enum re_user_data_var_types
 {
 	RE_VECTOR = FLOAT4,
 	RE_MATRIX = 0x4101,
-	RE_FLOAT = FLOAT
+	RE_FLOAT = FLOAT,
+	RE_TEXTURE2D = 0x101F
 }re_user_data_var_types;
 
 #define SHADER_VAR_BYTES(var)  ((int)(var >> 8) >> 4)
@@ -48,8 +68,60 @@ typedef struct re_user_data_layout_t
 
 }re_user_data_layout_t;
 
-#include "gfx_ogl.h"
 
+typedef enum re_image_format
+{
+	RGBA8,
+	SRGB
+
+}re_image_format;
+typedef enum re_image_type
+{
+	CUBEMAP,
+	TEXTURE2D,
+	TEXTURE3D,
+	TEXTURE2DARRAY
+
+}re_image_type;
+
+typedef enum re_texture_filter_func
+{
+	NEAREST,
+	LINEAR
+}re_texture_filter_func;
+typedef enum re_texture_wrap_func
+{
+	CLAMP_TO_EDGE,
+	CLAMP_TO_BORDER,
+	REPEAT,
+
+}re_texture_wrap_func;
+
+typedef struct re_texture_desc_t
+{
+	int32_t width;
+	int32_t height;
+	re_image_format format;
+	re_image_type type;
+	re_texture_filter_func filter;
+	re_texture_wrap_func wrap;
+
+}re_texture_desc_t;
+
+typedef struct re_texture_t
+{
+	unsigned char* data;
+	int32_t width;
+	int32_t height;
+	re_image_format format;
+	re_image_type type;
+	uint32_t  _handle;
+	int32_t channels;
+	re_texture_filter_func filter;
+	re_texture_wrap_func wrap;
+
+
+}re_texture_t;
 
 
 
@@ -58,7 +130,7 @@ typedef struct re_mesh_t
 {
 	vec3* positions;
 	vec3* normals;
-	vec3* texcoords;
+	vec2* texcoords;
 	uint32_t* triangles;
 	uint16_t mesh_size;
 }re_mesh_t;
@@ -87,6 +159,20 @@ typedef enum re_mouse_button_action_t
 
 }re_mouse_button_action_t;
 
+typedef enum re_attribute_slot
+{
+	RE_POSITION_ATTRIBUTE,
+	RE_TEXCOORD_ATTRIBUTE,
+	RE_NORMAL_ATTRIBUTE
+
+}re_attribute_slot;
+
+typedef struct _re_global_state_t
+{
+	uint32_t _num_textures_active;
+
+
+} _re_global_state_t;
 struct re_context_t;
 typedef struct re_event_handler_desc_t
 {
@@ -283,7 +369,8 @@ REALM_ENGINE_FUNC vec3* re_apply_transform(re_transform_t transform, re_mesh_t* 
 	
 	vec3* result = (vec3*)malloc(sizeof(vec3) * mesh->mesh_size);
 	mat4x4 model = compute_transform(transform);
-	for (int i = 0; i < 4; i++)
+	int i;
+	for (i = 0; i < 4; i++)
 	{
 		vec4 ws = mat4_mul_vec4(model, vec4_from_vec3(mesh->positions[i], 1.0f));
 		result[i] = vec3_from_vec4(ws );
@@ -390,6 +477,37 @@ REALM_ENGINE_FUNC mat4x4 re_compute_view_projection(re_camera_t* camera)
 
 }
 
+REALM_ENGINE_FUNC re_result_t re_read_image(const char* path, re_texture_t* texture,re_texture_desc_t desc)
+{
+	texture->data = stbi_load(path, &texture->width, &texture->height, &texture->channels, 0);
+	texture->filter = desc.filter;
+	texture->wrap = desc.wrap;
+	texture->type = desc.type;
+	return RE_OK;
 
 
+}
 
+REALM_ENGINE_FUNC re_result_t re_free_texture_data(re_texture_t* texture)
+{
+	stbi_image_free(texture->data);
+	return RE_OK;
+}
+
+//CONTAINER
+#define linked_list_decl(T)\
+typedef struct _linked_list_##T\
+{\
+	T value;\
+	struct _linked_list_##T * _next;\
+} _linked_list_##T;\
+
+
+#define linked_list(T) _linked_list_##T
+linked_list_decl(int)
+
+
+#endif
+
+
+#include "gfx_ogl.h"

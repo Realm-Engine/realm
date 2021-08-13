@@ -23,6 +23,7 @@ group ""
 project "realm_game"
     kind "ConsoleApp"
     language "C"
+    toolset "clang"
     staticruntime "on"
     targetdir("bin/" .. outputdir .. "/%{prj.name}")
     objdir("obj/" .. outputdir .. "/%{prj.name}")

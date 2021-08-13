@@ -18,18 +18,25 @@ endif
 # Configurations
 # #############################################
 
-RESCOMP = windres
+ifeq ($(origin CC), default)
+  CC = clang
+endif
+ifeq ($(origin CXX), default)
+  CXX = clang++
+endif
+ifeq ($(origin AR), default)
+  AR = ar
+endif
 DEFINES += -DGLFW_INCLUDE_NONE
 INCLUDES += -Isrc -Ideps/glfw/include -Ideps/glad/include -Ipremake5.lua
 FORCE_INCLUDE +=
 ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
 ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64
 LINKCMD = $(CC) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
 define PREBUILDCMDS
 endef
 define PRELINKCMDS
-endef
-define POSTBUILDCMDS
 endef
 
 ifeq ($(config),debug)
@@ -40,7 +47,10 @@ ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -g
 LIBS += deps/glfw/bin/Debug-windows-x86_64/GLFW.lib deps/glad/bin/Debug-windows-x86_64/glad.lib -lopengl32
 LDDEPS += deps/glfw/bin/Debug-windows-x86_64/GLFW.lib deps/glad/bin/Debug-windows-x86_64/glad.lib
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64
+define POSTBUILDCMDS
+	@echo Running postbuild commands
+	xcopy /Q /E /Y /I "resources" "bin\Debug-windows-x86_64\realm_game\resources"
+endef
 
 else ifeq ($(config),release)
 TARGETDIR = bin/Release-windows-x86_64/realm_game
@@ -50,7 +60,10 @@ ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O2
 LIBS += deps/glfw/bin/Release-windows-x86_64/GLFW.lib deps/glad/bin/Release-windows-x86_64/glad.lib -lopengl32
 LDDEPS += deps/glfw/bin/Release-windows-x86_64/GLFW.lib deps/glad/bin/Release-windows-x86_64/glad.lib
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
+define POSTBUILDCMDS
+	@echo Running postbuild commands
+	xcopy /Q /E /Y /I "resources" "bin\Release-windows-x86_64\realm_game\resources"
+endef
 
 endif
 

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "engine/realm_engine.h"
-#include "engine/gfx_ogl.h"
+
 #include "resource.c"
 re_shader_program_t shader;
 re_vertex_buffer_t* vertex_buffer;
@@ -11,7 +11,8 @@ re_mesh_t square_mesh;
 re_transform_t square_transform;
 
 re_camera_t* camera;
-re_user_data_layout_t layout;
+re_user_data_layout_t* layout;
+re_texture_t* brick_texture;
 void on_start(re_context_t* ctx);
 void on_update(re_context_t* ctx);
 void on_window_resize(re_context_t* ctx, int32_t width, int32_t height);
@@ -25,7 +26,7 @@ int main(int argc, char** argv)
 	square_transform = new_transform;
 	square_transform.position = new_vec3(0, 0, 0.0f);
 	square_transform.rotation = new_vec4(0.0f, 0.0f, 0, 1.0f);
-
+	layout = (re_user_data_layout_t*)malloc(sizeof(re_user_data_layout_t));
 	
 
 	context = re_init((re_app_desc_t) {
@@ -56,7 +57,11 @@ int main(int argc, char** argv)
 	});
 
 
-
+	brick_texture = (re_texture_t*)malloc(sizeof(re_texture_t));
+	if (re_read_image("./resources/wall.jpg", brick_texture,(re_texture_desc_t){.filter = LINEAR,.wrap = CLAMP_TO_EDGE,.type = TEXTURE2D}) == RE_OK)
+	{
+		re_gen_texture(brick_texture);
+	}
 	re_start(context);
 
 	return 1;
@@ -66,18 +71,22 @@ int main(int argc, char** argv)
 
 void on_start(re_context_t* ctx)
 {
+	
 	printf("Start");
 	square_mesh.positions = NULL;
 	square_mesh.positions = (vec3*)malloc(sizeof(vec3) * 4);
-
-
-	for (int i = 0; i < 4; i++)
+	square_mesh.texcoords = (vec2*)malloc(sizeof(vec2) * 4);
+	int i;
+	for (i = 0; i < 4; i++)
 	{
 		memcpy(&square_mesh.positions[i], square_model[i], sizeof(vec3));
+		memcpy(&square_mesh.texcoords[i], square_uv[i], sizeof(vec2));
 	}
 
+
+
 	square_mesh.triangles = (uint32_t*)malloc(sizeof(uint32_t) * 6);
-	memcpy(&square_mesh.triangles, square_triangles, sizeof(uint32_t) * 6);
+	memcpy(square_mesh.triangles, square_triangles, sizeof(uint32_t) * 6);
 	square_mesh.mesh_size = 4;
 
 	char fragment[256];
@@ -100,9 +109,10 @@ void on_start(re_context_t* ctx)
 	re_init_program(&shader);
 
 	pipeline = (re_gfx_pipeline_t){
-	.num_attribs = 1,
+	.num_attribs = 2,
 	.attributes = {
-			{.index = 0,.type = FLOAT3,.offset = 0}
+			{.index = 0,.type = FLOAT3,.offset = 0,.attribute_slot = RE_POSITION_ATTRIBUTE},
+			{.index = 1, .type = FLOAT2, .offset = 12,.attribute_slot = RE_TEXCOORD_ATTRIBUTE}
 		},
 	.program = shader,
 
@@ -111,8 +121,10 @@ void on_start(re_context_t* ctx)
 	re_set_bg_color(153.0f, 46.0f, 137.0f, 255.0f, 1);
 	vec3_to_string(re_compute_camera_front(camera));
 	
-	re_query_userdata_layout(&pipeline, "_reUserData", &layout);
-	
+	re_query_userdata_layout(&pipeline, layout);
+
+
+
 
 
 }
@@ -127,9 +139,10 @@ void on_update(re_context_t* ctx)
 	re_update_vp(&pipeline,&vp );
 	re_pipeline_start_draw(&pipeline);
 	{
-		re_set_userdata_vector(&layout, "color", new_vec4(0.5f, 1.0, 1.0, 1.0));
-		re_upload_vertex_data(re_apply_transform(square_transform, &square_mesh), square_mesh.mesh_size);
-		re_upload_index_data(square_triangles, 6);
+		re_set_texture(&pipeline, "albedo", brick_texture);
+		re_set_userdata_vector(layout, "color", new_vec4(0.5f, 1.0, 1.0, 1.0));
+		re_upload_mesh_data(&square_mesh, &square_transform,&pipeline);
+		//re_upload_index_data(square_triangles, 6);
 		re_draw_triangles(6);
 	}
 	re_pipeline_end_draw(&pipeline);

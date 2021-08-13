@@ -188,6 +188,8 @@ VEC_FUNCTIONS(vec2,2)
 VEC_FUNCTIONS(vec3,3)
 VEC_FUNCTIONS(vec4,4)
 
+#define vec_add(a,b) _Generic((a), vec2: vec2_add,vec3 : vec3_add, vec4: vec4_add,default:vec4_add)(a,b)
+
 static inline vec3 vec3_cross(vec3 a, vec3 b)
 {
 	vec3 r;
