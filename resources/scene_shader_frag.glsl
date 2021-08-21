@@ -8,6 +8,6 @@ layout(binding = 0) uniform sampler2D albedo;
 
 void main()
 {
-	FragColor = texture(albedo,AlbedoUV) * Color;
+	FragColor =  Color;
 
 }

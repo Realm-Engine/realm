@@ -2,7 +2,6 @@ make.exe all CC=gcc -f "C:\dev\realm\Makefile" --dry-run --always-make --keep-go
 make: Entering directory 'c:/dev/realm'
 echo "==== Building GLFW (debug) ===="
 C:/ProgramData/chocolatey/lib/make/tools/install/bin/make.exe --no-print-directory -C deps/glfw -f Makefile config=debug
- 
 echo Creating obj/Debug-windows-x86_64
 mkdir -p obj/Debug-windows-x86_64
 echo context.c

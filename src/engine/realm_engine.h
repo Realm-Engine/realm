@@ -8,7 +8,6 @@
 #include "re_math.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
 #define RE_GLOBAL_DATA_REF "_reGlobalData"
 #define RE_USER_DATA_REF "_reUserData"
 #define REALM_ENGINE_FUNC static inline
@@ -18,12 +17,12 @@
 
 //Structs and Enums
 
-struct re_shader_t;
+/*struct re_shader_t;
 struct re_shader_program_t;
 struct re_vertex_attr_desc_t;
 struct re_vertex_buffer_t;
 struct re_shader_block_t;
-struct re_gfx_pipeline_t;
+struct re_gfx_pipeline_t;*/
 
 typedef enum re_result_t
 {
@@ -167,17 +166,12 @@ typedef enum re_attribute_slot
 
 }re_attribute_slot;
 
-typedef struct _re_global_state_t
-{
-	uint32_t _num_textures_active;
 
-
-} _re_global_state_t;
 struct re_context_t;
 typedef struct re_event_handler_desc_t
 {
-	void(*on_update)(struct re_context_t* ctx);
-	void(*on_start)(struct re_context_t* ctx);
+	void(*on_update)(struct re_context_t ctx);
+	void(*on_start)(struct re_context_t ctx);
 	void(*on_window_resize)(struct re_context_t* ctx, int32_t width, int32_t height);
 	void(*on_user_mouse_move)(struct re_context_t* ctx, float x, float y, float last_x, float last_y);
 	void(*on_user_mouse_action)(struct re_context_t* ctx, re_mouse_button_action_t action, int32_t button);
@@ -229,7 +223,116 @@ typedef struct re_view_desc_t
 
 
 
+
+re_context_t _re_context;
+#pragma region Containers
+//CONTAINER
+#define linked_list_decl(T)\
+typedef struct _##T##_node\
+{ \
+	struct _##T##_node * next;\
+	T value;\
+}_##T##_node;\
+static inline _##T##_node* _linked_list_##T##_enumerate_func(_##T##_node* current, T* val)\
+{\
+	if(current->next == NULL)\
+	{\
+		return NULL;\
+	}\
+	*val = current->next->value;\
+	return current->next;\
+}\
+static inline _##T##_node* _##T##_node_create(T val)\
+{\
+	_##T##_node* node = (_##T##_node*)malloc(sizeof(_##T##_node));\
+	node->value = val;\
+	node->next = NULL;\
+	return node;\
+}\
+typedef struct _linked_list_##T\
+{\
+	_##T##_node * _head;\
+} _linked_list_##T;\
+static inline _##T##_node* _linked_list_##T##_append(_linked_list_##T * ll,T value)\
+{\
+	_##T##_node* current = ll->_head;\
+	if(current == NULL)\
+	{\
+		ll->_head = _##T##_node_create(value);\
+		return ll->_head;\
+	}\
+	while(current->next != NULL)\
+	{\
+		current = current->next;\
+	}\
+	current->next = _##T##_node_create(value);\
+	return current->next;\
+}\
+static inline void _linked_list_##T##_free(_linked_list_##T * ll)\
+{\
+	_##T##_node* current = ll->_head;\
+	while(current != NULL)\
+	{\
+		_##T##_node* temp = current;\
+		current = current->next;\
+		free(temp);\
+	}\
+}\
+
+#define linked_list(T) _linked_list_##T
+#define linked_list_append(T,ll,v) _linked_list_##T##_append(ll,v);
+#define linked_list_traverse(T,v,e)\
+T v = (e)._head->value;\
+_##T##_node* i;\
+for(i = (e)._head;i != NULL; i = _linked_list_##T##_enumerate_func((i),(&v)))
+#define linked_list_free(T,ll) _linked_list_##T##_free(ll);
+
+#pragma endregion
+
+struct linked_list(re_actor_t);
+
+typedef struct re_actor_t
+{
+	re_mesh_t mesh;
+	re_transform_t transform;
+	struct linked_list(re_actor_t)* children;
+}re_actor_t;
+linked_list_decl(re_actor_t);
+
+#pragma region Function defines
+REALM_ENGINE_FUNC void _re_handle_window_resize(GLFWwindow* window, int width, int height);
+REALM_ENGINE_FUNC void _re_handle_mouse_action(GLFWwindow* window, int button, int action, int mods);
+REALM_ENGINE_FUNC void _re_handle_mouse_pos(GLFWwindow* window, double x, double y);
+REALM_ENGINE_FUNC void _re_handle_key_action(GLFWwindow* window, int key, int scancode, int action, int mods);
+REALM_ENGINE_FUNC re_result_t re_init(re_app_desc_t app);
+REALM_ENGINE_FUNC void re_set_event_handler(re_event_handler_desc_t ev);
+REALM_ENGINE_FUNC void _re_poll_events();
+REALM_ENGINE_FUNC void _re_swap_buffers();
+REALM_ENGINE_FUNC void re_start();
+REALM_ENGINE_FUNC re_result_t re_context_size(int* width, int* height);
+REALM_ENGINE_FUNC vec3* re_apply_transform(re_transform_t transform, re_mesh_t* mesh);
+REALM_ENGINE_FUNC re_result_t re_read_text(const char* filePath, char* buffer);
+REALM_ENGINE_FUNC re_camera_t* re_create_camera(re_projection_type type, re_view_desc_t view_desc);
+REALM_ENGINE_FUNC vec3 re_compute_camera_front(re_camera_t* camera);
+REALM_ENGINE_FUNC vec3 re_compute_camera_up(re_camera_t* camera);
+REALM_ENGINE_FUNC vec3 re_compute_camera_right(re_camera_t* camera);
+REALM_ENGINE_FUNC mat4x4 re_camera_lookat(re_camera_t* camera);
+REALM_ENGINE_FUNC mat4x4 re_camera_projection(re_camera_t* camera);
+REALM_ENGINE_FUNC mat4x4 re_compute_view_projection(re_camera_t* camera);
+REALM_ENGINE_FUNC re_result_t re_read_image(const char* path, re_texture_t* texture, re_texture_desc_t desc);
+REALM_ENGINE_FUNC re_result_t re_free_texture_data(re_texture_t* texture);
+REALM_ENGINE_FUNC re_actor_t* re_actor_add_child(re_actor_t* parent, re_actor_t child);
+void init_actor(re_actor_t* actor);
+#pragma endregion
+
+
+#ifndef RE_GFX_IMPL
+#define RE_GFX_IMPL
+#endif
+#include "gfx_ogl.h"
+
 #define _GET_GLFW_USERPOINTER(ctx,window) re_context_t* ctx = (re_context_t*)glfwGetWindowUserPointer(window)
+#ifdef REALM_ENGINE_IMPL
 
 REALM_ENGINE_FUNC void _re_handle_window_resize(GLFWwindow* window, int width, int height)
 {
@@ -306,50 +409,52 @@ REALM_ENGINE_FUNC void _re_handle_key_action(GLFWwindow* window, int key, int sc
 }
 
 
-REALM_ENGINE_FUNC re_context_t* re_init(re_app_desc_t app) {
+
+
+REALM_ENGINE_FUNC re_result_t re_init(re_app_desc_t app) {
 	if (!glfwInit())
 	{
 		printf("Could not init glfw!\n");
 	}
-	re_context_t* ctx = (re_context_t*)malloc(sizeof(re_context_t));
-	memset(&ctx->event_handlers, NULL, sizeof(re_event_handler_desc_t));
-	ctx->_window = glfwCreateWindow(app.width, app.height, app.title, NULL, NULL);
-	memcpy(&ctx->app, &app, sizeof(re_context_t));
-	glfwMakeContextCurrent(ctx->_window);
-	glfwSetWindowUserPointer(ctx->_window, ctx);
-	glfwSetWindowSizeCallback(ctx->_window, &_re_handle_window_resize);
-	glfwSetMouseButtonCallback(ctx->_window, &_re_handle_mouse_action);
-	glfwSetCursorPosCallback(ctx->_window, &_re_handle_mouse_pos);
-	glfwSetKeyCallback(ctx->_window, &_re_handle_key_action);
-	return ctx;
+	
+	memset(&_re_context.event_handlers, NULL, sizeof(re_event_handler_desc_t));
+	_re_context._window = glfwCreateWindow(app.width, app.height, app.title, NULL, NULL);
+	_re_context.app = app;
+	glfwMakeContextCurrent(_re_context._window);
+	glfwSetWindowUserPointer(_re_context._window, &_re_context);
+	glfwSetWindowSizeCallback(_re_context._window, &_re_handle_window_resize);
+	glfwSetMouseButtonCallback(_re_context._window, &_re_handle_mouse_action);
+	glfwSetCursorPosCallback(_re_context._window, &_re_handle_mouse_pos);
+	glfwSetKeyCallback(_re_context._window, &_re_handle_key_action);
+	return RE_OK;
 
 	
 }
 
 
 
-REALM_ENGINE_FUNC void re_set_event_handler(re_context_t* ctx, re_event_handler_desc_t ev)
+REALM_ENGINE_FUNC void re_set_event_handler(re_event_handler_desc_t ev)
 {
-	memcpy(&ctx->event_handlers, &ev, sizeof(re_event_handler_desc_t));
+	_re_context.event_handlers = ev;
 }
 
 REALM_ENGINE_FUNC void _re_poll_events()
 {
 	glfwPollEvents();
 }
-REALM_ENGINE_FUNC void _re_swap_buffers(re_context_t* ctx)
+REALM_ENGINE_FUNC void _re_swap_buffers()
 {
-	glfwSwapBuffers(ctx->_window);
+	glfwSwapBuffers(_re_context._window);
 }
 
-REALM_ENGINE_FUNC void re_start(re_context_t* ctx)
+REALM_ENGINE_FUNC void re_start()
 {
-	ctx->event_handlers.on_start(ctx);
-	while (!glfwWindowShouldClose(ctx->_window))
+	_re_context.event_handlers.on_start(_re_context);
+	while (!glfwWindowShouldClose(_re_context._window))
 	{
 		
-		ctx->event_handlers.on_update(ctx);
-		_re_swap_buffers(ctx);
+		_re_context.event_handlers.on_update(_re_context);
+		_re_swap_buffers();
 		_re_poll_events();
 
 	}
@@ -358,9 +463,9 @@ REALM_ENGINE_FUNC void re_start(re_context_t* ctx)
 
 }
 
-REALM_ENGINE_FUNC re_result_t re_context_size(re_context_t* ctx,int* width, int* height)
+REALM_ENGINE_FUNC re_result_t re_context_size(int* width, int* height)
 {
-	glfwGetWindowSize(ctx->_window, width, height);
+	glfwGetWindowSize(_re_context._window, width, height);
 	return RE_OK;
 }
  
@@ -472,6 +577,7 @@ REALM_ENGINE_FUNC mat4x4 re_compute_view_projection(re_camera_t* camera)
 {
 	mat4x4 projection = re_camera_projection(camera);
 	mat4x4 view = re_camera_lookat(camera);
+	
 	//mat4x4 view = compute_transform(camera->camera_transform);
 	return mat4_mul(projection, view);
 
@@ -494,20 +600,22 @@ REALM_ENGINE_FUNC re_result_t re_free_texture_data(re_texture_t* texture)
 	return RE_OK;
 }
 
-//CONTAINER
-#define linked_list_decl(T)\
-typedef struct _linked_list_##T\
-{\
-	T value;\
-	struct _linked_list_##T * _next;\
-} _linked_list_##T;\
 
 
-#define linked_list(T) _linked_list_##T
-linked_list_decl(int)
+
+void init_actor(re_actor_t* actor)
+{
+	memset(actor, 0, sizeof(re_actor_t));
+	actor->children = (linked_list(re_actor_t)*)malloc(sizeof(linked_list(re_actor_t)));
+	memset(actor->children, 0, sizeof(linked_list(re_actor_t)));
+}
+
+REALM_ENGINE_FUNC re_actor_t* re_actor_add_child(re_actor_t* parent, re_actor_t child)
+{
+	return linked_list_append(re_actor_t, parent->children, child);
+}
 
 
 #endif
-
-
-#include "gfx_ogl.h"
+#endif
+//#include "gfx_ogl.h"
