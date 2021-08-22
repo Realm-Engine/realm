@@ -51,35 +51,14 @@ void realm_start(re_context_t ctx)
 	re_set_bg_color(153.0f, 46.0f, 137.0f, 255.0f, 1);
 	vec3_to_string(re_compute_camera_front(state.camera));
 	scene_root = &actors[0];
+	scene_root->mesh.mesh_size = 0;
 	square_actor = &actors[1];
-	other_actor = &actors[2];
-	init_actor(square_actor);
 	init_actor(scene_root);
-	init_actor(other_actor);
-	square_actor->mesh.positions = (vec3*)malloc(sizeof(square_model));
-	square_actor->mesh.texcoords = (vec2*)malloc(sizeof(square_uv));
-	square_actor->mesh.triangles = (uint32_t*)malloc(sizeof(square_triangles));
-	square_actor->mesh.mesh_size = 4;
+	init_actor(square_actor);
+	re_fill_mesh(&square_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);
+	re_set_mesh_triangles(&square_actor->mesh, square_triangles, 6);
 
-	memcpy(square_actor->mesh.positions, square_model, sizeof(square_model));
-	memcpy(square_actor->mesh.texcoords, square_uv, sizeof(square_uv));
-	memcpy(square_actor->mesh.triangles, square_triangles, sizeof(square_triangles));
-	other_actor->transform.position = new_vec3(1, 0, -3);
-	other_actor->mesh.positions = (vec3*)malloc(sizeof(square_model));
-	other_actor->mesh.texcoords = (vec2*)malloc(sizeof(square_uv));
-	other_actor->mesh.triangles = (uint32_t*)malloc(sizeof(square_triangles));
-	other_actor->mesh.mesh_size = 4;
-	memcpy(other_actor->mesh.positions, square_model, sizeof(square_model));
-	memcpy(other_actor->mesh.texcoords, square_uv, sizeof(square_uv));
-	memcpy(other_actor->mesh.triangles, square_triangles, sizeof(square_triangles));
-	other_actor->transform = new_transform;
-	other_actor->transform.scale = new_vec3(5, 5, 1);
-	square_actor->transform = new_transform;
-	square_actor->transform.scale = new_vec3(10, 10,1);
-	square_actor->transform.position = new_vec3(0, 0, -2);
-	square_actor = re_actor_add_child(scene_root, *square_actor);
-	other_actor = re_actor_add_child(scene_root, *other_actor);
-	other_actor->transform.position = new_vec3(2, 0, -1);
+	re_actor_add_child(scene_root, square_actor);
 	
 	//re_query_userdata_layout(&state.pipeline, layout);
 
@@ -95,6 +74,7 @@ void realm_update(re_context_t ctx)
 
 
 	re_update_vp(vp);
+	re_set_camera_data(state.camera);
 	re_pipeline_start_draw();
 	{
 		//re_upload_mesh_data(&square_actor->mesh, &square_actor->transform);

@@ -5,9 +5,8 @@ make.exe all CC=gcc -f "C:\dev\realm\Makefile" --print-data-base --no-builtin-va
 # License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
- 
 
-# Make data base, printed on Sat Aug 21 09:02:45 2021
+# Make data base, printed on Sun Aug 22 16:28:05 2021
 
 # Variables
 
@@ -28,7 +27,7 @@ USERPROFILE = D:\Users\Nathan
 # environment
 LOCALAPPDATA = D:\Users\Nathan\AppData\Local
 # environment
-VSCODE_IPC_HOOK_EXTHOST = \\.\pipe\vscode-ipc-a3dcbfa2-9ed8-4ad0-8266-b9442782762b-sock
+VSCODE_IPC_HOOK_EXTHOST = \\.\pipe\vscode-ipc-8a5f88d6-e037-4d47-856b-1f6becc9ceda-sock
 # environment
 VSCODE_CWD = D:\Program Files\Microsoft VS Code
 # environment
@@ -44,7 +43,7 @@ MAKE_COMMAND := C:/ProgramData/chocolatey/lib/make/tools/install/bin/make.exe
 # automatic
 @D = $(patsubst %/,%,$(patsubst %\,%,$(dir $@)))
 # environment
-CHROME_CRASHPAD_PIPE_NAME = \\.\pipe\crashpad_10580_JITXBILVWRBYEDCC
+CHROME_CRASHPAD_PIPE_NAME = \\.\pipe\crashpad_17160_NUNFAJNKQTMJWBFY
 # environment
 VS160COMCOMNTOOLS = C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\
 # environment
@@ -110,7 +109,7 @@ MAKEFILE_LIST := C:\dev\realm\Makefile
 # environment
 VSCODE_VERBOSE_LOGGING = true
 # environment
-VSCODE_PID = 10580
+VSCODE_PID = 17160
 # makefile (from 'C:\dev\realm\Makefile', line 25)
 PROJECTS := GLFW glad realm_game
 # environment
@@ -312,8 +311,7 @@ glad:
 #  File does not exist.
 #  File has not been updated.
 #  recipe to execute (from 'C:\dev\realm\Makefile', line 41):
-	@e 
-cho "==== Building glad ($(glad_config)) ===="
+	@echo "==== Building glad ($(glad_config)) ===="
 	@${MAKE} --no-print-directory -C deps/glad -f Makefile config=$(glad_config)
 
 clean:
@@ -420,8 +418,7 @@ help:
 
 # files hash-table stats:
 # Load=11/1024=1%, Rehash=0, Collisions=0/43=0%
-# VPATH Search P 
-aths
+# VPATH Search Paths
 
 # No 'vpath' search paths.
 
@@ -433,6 +430,6 @@ aths
 # strcache performance: lookups = 38 / hit rate = 68%
 # hash-table stats:
 # Load=12/8192=0%, Rehash=0, Collisions=0/38=0%
-# Finished Make data base on Sat Aug 21 09:02:45 2021
+# Finished Make data base on Sun Aug 22 16:28:05 2021
 
  

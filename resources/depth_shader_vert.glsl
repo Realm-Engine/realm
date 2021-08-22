@@ -2,7 +2,6 @@
 layout(location = 0) in vec3 _position;
 layout (location = 1) in vec2 _texture_uv;
 
-
 struct camera
 {
 	float near_plane;
@@ -15,25 +14,16 @@ layout(std140,binding = 0) uniform _reGlobalData {
 	camera _camera;
 };
 
-layout(packed, binding = 1) uniform _reUserData{
-	vec4 color;
-
-};
-
-
 
 vec4 re_world_to_clipspace(vec3 ws)
 {
 	return  _vp * vec4( ws,1.0);
 }
 
-out vec4 Color;
-out vec2 AlbedoUV;
-out vec2 ViewPortSize;
+out float Color;
+
+
 void main() {
 		gl_Position =  re_world_to_clipspace(_position);
-		ViewPortSize = _camera.screen_size;
-		Color = color;
-		AlbedoUV = _texture_uv;
+		Color = gl_Position.z / _camera.far_plane;
 }
-

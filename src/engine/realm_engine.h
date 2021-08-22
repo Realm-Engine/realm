@@ -6,13 +6,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "re_math.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define RE_GLOBAL_DATA_REF "_reGlobalData"
 #define RE_USER_DATA_REF "_reUserData"
 #define REALM_ENGINE_FUNC static inline
 #define MAX_UNIFORMS GL_MAX_VERTEX_UNIFORM_COMPONENTS + GL_MAX_FRAGMENT_UNIFORM_COMPONENTS
-
+#define _RE_SCENEGRAPH_CHILD_CHUNK_AMOUNT 5
 //Graphics API defintions
 
 //Structs and Enums
@@ -30,9 +31,18 @@ typedef enum re_result_t
 	RE_ERROR
 } re_result_t;
 
+
+typedef struct _re_camera_data_t
+{
+	float near_plane;
+	float far_plane;
+	vec2 screen_size;
+}_re_camera_data_t;
+
 typedef struct re_global_data_t
 {
 	mat4x4 view_projection;
+	_re_camera_data_t camera_data;
 } re_global_data_t;
 
 typedef enum re_vertex_type_t
@@ -71,7 +81,9 @@ typedef struct re_user_data_layout_t
 typedef enum re_image_format
 {
 	RGBA8,
-	SRGB
+	SRGB,
+	DEPTH_STENCIL,
+	DEPTH
 
 }re_image_format;
 typedef enum re_image_type
@@ -132,6 +144,7 @@ typedef struct re_mesh_t
 	vec2* texcoords;
 	uint32_t* triangles;
 	uint16_t mesh_size;
+	uint16_t num_triangles;
 }re_mesh_t;
 
 
@@ -211,6 +224,7 @@ typedef struct re_camera_t
 
 }re_camera_t;
 
+
 typedef struct re_view_desc_t
 {
 	float fov_angle;
@@ -227,6 +241,7 @@ typedef struct re_view_desc_t
 re_context_t _re_context;
 #pragma region Containers
 //CONTAINER
+#pragma region LinkedList
 #define linked_list_decl(T)\
 typedef struct _##T##_node\
 { \
@@ -289,15 +304,27 @@ for(i = (e)._head;i != NULL; i = _linked_list_##T##_enumerate_func((i),(&v)))
 
 #pragma endregion
 
-struct linked_list(re_actor_t);
+
+struct re_scenegraph_t;
 
 typedef struct re_actor_t
 {
 	re_mesh_t mesh;
 	re_transform_t transform;
-	struct linked_list(re_actor_t)* children;
+	struct re_scenegraph_t* _scenegraph_node;
 }re_actor_t;
-linked_list_decl(re_actor_t);
+
+
+
+typedef struct re_scenegraph_t
+{
+	re_actor_t* root;
+	struct re_scenegraph_t** children;
+	struct re_scenegraph_t* parent;
+	uint16_t num_children;
+	
+}re_scenegraph_t;
+
 
 #pragma region Function defines
 REALM_ENGINE_FUNC void _re_handle_window_resize(GLFWwindow* window, int width, int height);
@@ -321,8 +348,13 @@ REALM_ENGINE_FUNC mat4x4 re_camera_projection(re_camera_t* camera);
 REALM_ENGINE_FUNC mat4x4 re_compute_view_projection(re_camera_t* camera);
 REALM_ENGINE_FUNC re_result_t re_read_image(const char* path, re_texture_t* texture, re_texture_desc_t desc);
 REALM_ENGINE_FUNC re_result_t re_free_texture_data(re_texture_t* texture);
-REALM_ENGINE_FUNC re_actor_t* re_actor_add_child(re_actor_t* parent, re_actor_t child);
-void init_actor(re_actor_t* actor);
+REALM_ENGINE_FUNC void re_actor_add_child(re_actor_t* parent, re_actor_t* child);
+REALM_ENGINE_FUNC void re_draw_scene_recursive(re_actor_t* node);
+REALM_ENGINE_FUNC re_result_t re_render_scene(re_actor_t* root);
+REALM_ENGINE_FUNC void init_actor(re_actor_t* actor);
+REALM_ENGINE_FUNC re_scenegraph_t* re_create_scenegraph(re_actor_t* node);
+REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh, vec3* positions, vec3* normals, vec2* texcoords, uint32_t mesh_size);
+REALM_ENGINE_FUNC void re_set_mesh_triangles(re_mesh_t* mesh, uint32_t* triangles, uint32_t num_triangles);
 #pragma endregion
 
 
@@ -330,6 +362,7 @@ void init_actor(re_actor_t* actor);
 #define RE_GFX_IMPL
 #endif
 #include "gfx_ogl.h"
+
 
 #define _GET_GLFW_USERPOINTER(ctx,window) re_context_t* ctx = (re_context_t*)glfwGetWindowUserPointer(window)
 #ifdef REALM_ENGINE_IMPL
@@ -602,19 +635,123 @@ REALM_ENGINE_FUNC re_result_t re_free_texture_data(re_texture_t* texture)
 
 
 
+REALM_ENGINE_FUNC re_scenegraph_t* re_create_scenegraph(re_actor_t* actor)
+{
+	re_scenegraph_t* graph;
+	graph = (re_scenegraph_t*)malloc(sizeof(re_scenegraph_t));
+	graph->parent = NULL;
+	graph->children =(re_scenegraph_t**) malloc(sizeof(re_scenegraph_t*) * _RE_SCENEGRAPH_CHILD_CHUNK_AMOUNT);
+	graph->num_children = 0;
+	graph->root = actor;
+	return graph;
+}
 
-void init_actor(re_actor_t* actor)
+
+REALM_ENGINE_FUNC void init_actor(re_actor_t* actor)
 {
 	memset(actor, 0, sizeof(re_actor_t));
-	actor->children = (linked_list(re_actor_t)*)malloc(sizeof(linked_list(re_actor_t)));
-	memset(actor->children, 0, sizeof(linked_list(re_actor_t)));
+	actor->_scenegraph_node = re_create_scenegraph(actor);
+	actor->transform = new_transform;
+
 }
 
-REALM_ENGINE_FUNC re_actor_t* re_actor_add_child(re_actor_t* parent, re_actor_t child)
+REALM_ENGINE_FUNC void re_actor_add_child(re_actor_t* parent, re_actor_t* child)
 {
-	return linked_list_append(re_actor_t, parent->children, child);
+	if (parent->_scenegraph_node->num_children % 5 == 0 && parent->_scenegraph_node->num_children != 0)
+	{
+		uint16_t num_elements = parent->_scenegraph_node->num_children;
+
+		parent->_scenegraph_node->children = (re_scenegraph_t**)realloc(parent->_scenegraph_node->children, sizeof(re_scenegraph_t*) * (num_elements / _RE_SCENEGRAPH_CHILD_CHUNK_AMOUNT) + (1 * _RE_SCENEGRAPH_CHILD_CHUNK_AMOUNT));
+	}
+	parent->_scenegraph_node->children[parent->_scenegraph_node->num_children] = child->_scenegraph_node;
+	parent->_scenegraph_node->num_children++;
+	child->_scenegraph_node->parent = parent;
+	
 }
 
+REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh,vec3* positions, vec3* normals, vec2* texcoords, uint32_t mesh_size)
+{
+	size_t size_positions = sizeof(vec3) * mesh_size;
+	size_t size_normals = sizeof(vec3) * mesh_size;
+	size_t size_uv = sizeof(vec2) * mesh_size;
+	mesh->positions = (vec3*)malloc(size_positions);
+	mesh->normals = (vec3*)malloc(size_normals);
+	mesh->texcoords = (vec2*)malloc(size_uv);
+	memcpy(mesh->positions, positions, size_positions);
+	
+	memcpy(mesh->normals, normals, size_normals);
+	memcpy(mesh->texcoords, texcoords, size_uv);
+	mesh->mesh_size = mesh_size;
+
+}
+
+REALM_ENGINE_FUNC void re_set_mesh_triangles(re_mesh_t* mesh, uint32_t* triangles, uint32_t num_triangles)
+{
+	mesh->triangles = (uint32_t*)malloc(sizeof(uint32_t) * num_triangles);
+	memcpy(mesh->triangles, triangles, sizeof(uint32_t) * num_triangles);
+	mesh->num_triangles = num_triangles;
+}
+
+REALM_ENGINE_FUNC void re_draw_scene_recursive(re_actor_t* root)
+{
+	if (root->mesh.mesh_size > 0)
+	{
+		re_upload_mesh_data(&root->mesh, &root->transform);
+		re_draw_triangles(root->mesh.num_triangles);
+	}
+	int i;
+	for(i = 0; i < root->_scenegraph_node->num_children;i++)
+	{
+		re_scenegraph_t* child = root->_scenegraph_node->children[i];
+		re_draw_scene_recursive(child->root);
+	}
+
+
+}
+
+REALM_ENGINE_FUNC re_result_t re_render_scene(re_actor_t* root)
+{
+	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
+
+
+	linked_list_traverse(re_renderpass_t, pass, pipeline->_main_renderpath._linked_list)
+	{
+
+
+		if (pass._user_pass)
+		{
+
+			re_bind_shader_block(pipeline->_re_user_data_block, RE_USER_DATA_REF, 1);
+			re_update_shader_block(pipeline->_re_user_data_block, RE_USER_DATA_REF, 0, pipeline->_re_user_data_block->size);
+		}
+
+		_re_refresh_framebuffer(pass._target_framebuffer);
+		//glBindTexture(GL_TEXTURE_2D, pass._target_framebuffer->_fb_texture._handle);
+		glBindFramebuffer(GL_FRAMEBUFFER, pass._target_framebuffer->_id);
+		re_clear_color();
+		glClear(GL_DEPTH_BUFFER_BIT);
+		
+		glUseProgram(pass.shader_program._program_id);
+		pass._rendpass_cb(&pass, NULL);
+		switch (pass.target)
+		{
+		case SCENE:
+			re_draw_scene_recursive(root);
+			break;
+		case SCREEN:
+			re_draw_triangles(6);
+			break;
+		default:
+			re_draw_triangles(6);
+			break;
+		}
+
+
+
+	}
+
+
+}
 
 #endif
 #endif

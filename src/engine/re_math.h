@@ -101,7 +101,7 @@ typedef struct re_transform_t
 #define _RAD_TO_DEG_CONSTANT (float)57.29577
 #define deg_to_rad(a) (a * _DEG_TO_RAD_CONSTANT)
 #define rad_to_deg(r) (r * _RAD_TO_DEG_CONSTANT)
-#define new_transform (re_transform_t){vec3_one,vec4_zero,vec3_zero,vec3_zero}
+#define new_transform ((re_transform_t){vec3_one,vec4_zero,vec3_zero,vec3_zero})
 
 
 #define VEC_FUNCTIONS(T,n) \

@@ -2,10 +2,13 @@ make.exe all CC=gcc -f "C:\dev\realm\Makefile" --dry-run --always-make --keep-go
 make: Entering directory 'c:/dev/realm'
 echo "==== Building GLFW (debug) ===="
 C:/ProgramData/chocolatey/lib/make/tools/install/bin/make.exe --no-print-directory -C deps/glfw -f Makefile config=debug
+ 
 echo Creating obj/Debug-windows-x86_64
 mkdir -p obj/Debug-windows-x86_64
+ 
 echo context.c
 gcc   -MMD -MP -D_GLFW_WIN32 -D_CRT_SECURE_NO_WARNINGS  -m64 -g  -o "obj/Debug-windows-x86_64/context.o" -MF "obj/Debug-windows-x86_64/context.d" -c "src/context.c"
+ 
 echo egl_context.c
 gcc   -MMD -MP -D_GLFW_WIN32 -D_CRT_SECURE_NO_WARNINGS  -m64 -g  -o "obj/Debug-windows-x86_64/egl_context.o" -MF "obj/Debug-windows-x86_64/egl_context.d" -c "src/egl_context.c"
 echo init.c
@@ -14,18 +17,24 @@ echo input.c
 gcc   -MMD -MP -D_GLFW_WIN32 -D_CRT_SECURE_NO_WARNINGS  -m64 -g  -o "obj/Debug-windows-x86_64/input.o" -MF "obj/Debug-windows-x86_64/input.d" -c "src/input.c"
 echo monitor.c
 gcc   -MMD -MP -D_GLFW_WIN32 -D_CRT_SECURE_NO_WARNINGS  -m64 -g  -o "obj/Debug-windows-x86_64/monitor.o" -MF "obj/Debug-windows-x86_64/monitor.d" -c "src/monitor.c"
+ 
 echo osmesa_context.c
 gcc   -MMD -MP -D_GLFW_WIN32 -D_CRT_SECURE_NO_WARNINGS  -m64 -g  -o "obj/Debug-windows-x86_64/osmesa_context.o" -MF "obj/Debug-windows-x86_64/osmesa_context.d" -c "src/osmesa_context.c"
+ 
 echo vulkan.c
 gcc   -MMD -MP -D_GLFW_WIN32 -D_CRT_SECURE_NO_WARNINGS  -m64 -g  -o "obj/Debug-windows-x86_64/vulkan.o" -MF "obj/Debug-windows-x86_64/vulkan.d" -c "src/vulkan.c"
+ 
 echo wgl_context.c
 gcc   -MMD -MP -D_GLFW_WIN32 -D_CRT_SECURE_NO_WARNINGS  -m64 -g  -o "obj/Debug-windows-x86_64/wgl_context.o" -MF "obj/Debug-windows-x86_64/wgl_context.d" -c "src/wgl_context.c"
+ 
 echo win32_init.c
 gcc   -MMD -MP -D_GLFW_WIN32 -D_CRT_SECURE_NO_WARNINGS  -m64 -g  -o "obj/Debug-windows-x86_64/win32_init.o" -MF "obj/Debug-windows-x86_64/win32_init.d" -c "src/win32_init.c"
+ 
 echo win32_joystick.c
 gcc   -MMD -MP -D_GLFW_WIN32 -D_CRT_SECURE_NO_WARNINGS  -m64 -g  -o "obj/Debug-windows-x86_64/win32_joystick.o" -MF "obj/Debug-windows-x86_64/win32_joystick.d" -c "src/win32_joystick.c"
 echo win32_monitor.c
 gcc   -MMD -MP -D_GLFW_WIN32 -D_CRT_SECURE_NO_WARNINGS  -m64 -g  -o "obj/Debug-windows-x86_64/win32_monitor.o" -MF "obj/Debug-windows-x86_64/win32_monitor.d" -c "src/win32_monitor.c"
+ 
 echo win32_thread.c
 gcc   -MMD -MP -D_GLFW_WIN32 -D_CRT_SECURE_NO_WARNINGS  -m64 -g  -o "obj/Debug-windows-x86_64/win32_thread.o" -MF "obj/Debug-windows-x86_64/win32_thread.d" -c "src/win32_thread.c"
 echo win32_time.c
@@ -39,8 +48,10 @@ mkdir -p bin/Debug-windows-x86_64
 echo Linking GLFW
 ar -rcs "bin/Debug-windows-x86_64/GLFW.lib" obj/Debug-windows-x86_64/context.o obj/Debug-windows-x86_64/egl_context.o obj/Debug-windows-x86_64/init.o obj/Debug-windows-x86_64/input.o obj/Debug-windows-x86_64/monitor.o obj/Debug-windows-x86_64/osmesa_context.o obj/Debug-windows-x86_64/vulkan.o obj/Debug-windows-x86_64/wgl_context.o obj/Debug-windows-x86_64/win32_init.o obj/Debug-windows-x86_64/win32_joystick.o obj/Debug-windows-x86_64/win32_monitor.o obj/Debug-windows-x86_64/win32_thread.o obj/Debug-windows-x86_64/win32_time.o obj/Debug-windows-x86_64/win32_window.o obj/Debug-windows-x86_64/window.o
 :
+ 
 echo "==== Building glad (debug) ===="
 C:/ProgramData/chocolatey/lib/make/tools/install/bin/make.exe --no-print-directory -C deps/glad -f Makefile config=debug
+ 
 echo Creating obj/Debug-windows-x86_64
 mkdir -p obj/Debug-windows-x86_64
 echo glad.c
@@ -50,14 +61,17 @@ mkdir -p bin/Debug-windows-x86_64
 echo Linking glad
 ar -rcs "bin/Debug-windows-x86_64/glad.lib" obj/Debug-windows-x86_64/glad.o
 :
+ 
 echo "==== Building realm_game (debug) ===="
 C:/ProgramData/chocolatey/lib/make/tools/install/bin/make.exe --no-print-directory -C . -f realm_game.make config=debug
+ 
 echo Creating obj/Debug-windows-x86_64/realm_game
 mkdir -p obj/Debug-windows-x86_64/realm_game
 echo main.c
 gcc   -MMD -MP -DGLFW_INCLUDE_NONE -Isrc -Ideps/glfw/include -Ideps/glad/include -Ipremake5.lua -m64 -g  -o "obj/Debug-windows-x86_64/realm_game/main.o" -MF "obj/Debug-windows-x86_64/realm_game/main.d" -c "src/main.c"
 echo resource.c
 gcc   -MMD -MP -DGLFW_INCLUDE_NONE -Isrc -Ideps/glfw/include -Ideps/glad/include -Ipremake5.lua -m64 -g  -o "obj/Debug-windows-x86_64/realm_game/resource.o" -MF "obj/Debug-windows-x86_64/realm_game/resource.d" -c "src/resource.c"
+ 
 echo Creating bin/Debug-windows-x86_64/realm_game
 mkdir -p bin/Debug-windows-x86_64/realm_game
 echo Linking realm_game

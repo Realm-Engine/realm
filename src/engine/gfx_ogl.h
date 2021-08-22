@@ -26,11 +26,20 @@ typedef struct re_shader_t
 	char* source;
 }re_shader_t;
 
+typedef struct _re_sampler_uniform_cache
+{
+	uint32_t* _hashes;
+	GLint* _locations;
+	size_t _num_elements;
+
+}_re_sampler_uniform_cache;
+
 typedef struct re_shader_program_t
 {
 	GLuint _program_id;
 	char* name;
 	re_shader_t source[2];
+	_re_sampler_uniform_cache* _sampler_cache;
 
 
 }re_shader_program_t;
@@ -63,7 +72,7 @@ typedef struct re_shader_block_t
 	void* _buffer_map;
 	uint32_t size;
 	uint32_t ref_index;
-	const char* name
+	const char* name;
 
 }re_shader_block_t;
 
@@ -142,6 +151,7 @@ typedef struct re_renderpath_t
 	linked_list(re_renderpass_t) _linked_list;
 	re_framebuffer_t* _scene_fb;
 	re_framebuffer_t* _screen_fb;
+	re_framebuffer_t* _depth_stencil_fb;
 
 
 }re_renderpath_t;
@@ -183,6 +193,7 @@ re_gfx_pipeline_t _re_gfx_pipeline;
 #define RE_GRAPHICS_PIPELINE &_re_gfx_pipeline
 #define _ENUM_CONVERSION_FUNCTION(T, v) REALM_ENGINE_FUNC GLenum _##T##_to_glenum(T v)
 #define re_grab_screentexture RE_GRAPHICS_PIPELINE._main_renderpath._scene_fb->_fb_texture
+#define re_grab_depthtexture RE_GRAPHICS_PIPELINE._main_renderpath._depth_stencil_fb->_fb_texture
 _ENUM_CONVERSION_FUNCTION(re_texture_filter_func, func);
 _ENUM_CONVERSION_FUNCTION(re_texture_wrap_func, wrap_func);
 _ENUM_CONVERSION_FUNCTION(re_image_type, type);
@@ -208,7 +219,7 @@ REALM_ENGINE_FUNC re_result_t re_bind_pipeline_attributes();
 REALM_ENGINE_FUNC re_result_t re_query_userdata_layout(re_renderpass_t* pass, re_user_data_layout_t* layout);
 REALM_ENGINE_FUNC int32_t re_get_uniform_index(re_user_data_layout_t* layout, const char* name);
 REALM_ENGINE_FUNC re_result_t re_set_userdata_vector(re_user_data_layout_t* layout, const char* name, vec4 value);
-REALM_ENGINE_FUNC re_result_t re_set_texture(re_shader_program_t program, const char* name, re_texture_t* texture);
+REALM_ENGINE_FUNC re_result_t re_set_texture(re_shader_program_t* program, const char* name, re_texture_t* texture);
 REALM_ENGINE_FUNC re_shader_block_t* re_create_shader_block(const char* block_name, void* initial_data, uint32_t initial_size);
 REALM_ENGINE_FUNC re_result_t re_bind_shader_block(re_shader_block_t* block, const char* reference, uint32_t binding_point);
 REALM_ENGINE_FUNC re_result_t re_update_shader_block(re_shader_block_t* block, void* data, uint32_t offset, uint32_t size);
@@ -217,6 +228,7 @@ REALM_ENGINE_FUNC re_renderpass_t* re_create_renderpass(re_renderpass_desc_t* de
 REALM_ENGINE_FUNC re_result_t re_use_renderpass(re_renderpass_t* pass);
 REALM_ENGINE_FUNC re_result_t _re_refresh_framebuffer(re_framebuffer_t* buffer);
 REALM_ENGINE_FUNC re_result_t re_update_vp(mat4x4 matrix);
+REALM_ENGINE_FUNC re_result_t re_set_camera_data(re_camera_t* camera);
 REALM_ENGINE_FUNC re_result_t re_use_framebuffer(re_framebuffer_t* fb);
 REALM_ENGINE_FUNC void _on_default_scene_render(re_renderpass_t* renderpass, void* userdata);
 REALM_ENGINE_FUNC void _on_default_screen_render(re_renderpass_t* renderpass, void* userdata);
@@ -227,7 +239,7 @@ REALM_ENGINE_FUNC re_result_t re_pipeline_end_draw();
 REALM_ENGINE_FUNC re_result_t re_draw_triangles(uint16_t numTris);
 REALM_ENGINE_FUNC void re_set_bg_color(float r, float g, float b, float a, uint8_t normalize);
 REALM_ENGINE_FUNC void re_clear_color();
-REALM_ENGINE_FUNC re_result_t re_render_scene(re_actor_t* root);
+
 #ifdef RE_GFX_IMPL
 
 _ENUM_CONVERSION_FUNCTION(re_texture_filter_func, func)
@@ -308,6 +320,54 @@ _ENUM_CONVERSION_FUNCTION(re_image_format, fmt)
 		break;
 	case SRGB:
 		return GL_SRGB;
+		break;
+	case DEPTH_STENCIL:
+		return GL_DEPTH_STENCIL;
+		break;
+	case DEPTH:
+		return GL_DEPTH_COMPONENT;
+		break;
+	default:
+		break;
+	}
+}
+
+REALM_ENGINE_FUNC GLenum _re_image_format_to_gl_format(re_image_format fmt)
+{
+	switch (fmt)
+	{
+	case RGBA8:
+		return GL_RGBA;
+		break;
+	case SRGB:
+		return GL_RGB;
+		break;
+	case DEPTH_STENCIL:
+		return GL_DEPTH_STENCIL;
+		break;
+	case DEPTH:
+		return GL_DEPTH_COMPONENT;
+		break;
+	default:
+		break;
+	}
+}
+
+REALM_ENGINE_FUNC GLenum _re_image_format_to_gl_data_type(re_image_format fmt)
+{
+	switch (fmt)
+	{
+	case RGBA8:
+		return GL_UNSIGNED_BYTE;
+		break;
+	case SRGB:
+		return GL_UNSIGNED_BYTE;
+		break;
+	case DEPTH_STENCIL:
+		return GL_DEPTH24_STENCIL8;
+		break;
+	case DEPTH:
+		return GL_FLOAT;
 		break;
 	default:
 		break;
@@ -478,13 +538,18 @@ REALM_ENGINE_FUNC re_result_t re_gen_texture(re_texture_t* texture)
 	GLenum wrap = _re_texture_wrap_func_to_glenum(texture->wrap);
 	GLenum filter = _re_texture_filter_func_to_glenum(texture->filter);
 	GLenum target = _re_image_type_to_glenum(texture->type);
+	GLenum internal_format = _re_image_format_to_glenum(texture->format);
+	GLenum format = _re_image_format_to_gl_format(texture->format);
+	GLenum type = _re_image_format_to_gl_data_type(texture->format);
 	glGenTextures(1, &texture->_handle);
 	glBindTexture(target, texture->_handle);
 	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrap);
 	glTexParameteri(target, GL_TEXTURE_WRAP_T, wrap);
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
 	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
-	glTexImage2D(target, 0, GL_RGB, texture->width, texture->height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture->data);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+	glTexImage2D(target, 0, internal_format, texture->width, texture->height, 0, format, type, texture->data);
 	glGenerateMipmap(target);
 	glBindTexture(target, 0);
 
@@ -713,11 +778,57 @@ REALM_ENGINE_FUNC re_result_t re_set_userdata_vector(re_user_data_layout_t* layo
 
 }
 
-REALM_ENGINE_FUNC re_result_t re_set_texture(re_shader_program_t program, const char* name, re_texture_t* texture)
+REALM_ENGINE_FUNC uint32_t re_adler32_str(const char* buffer)
 {
-	uint32_t location = glGetUniformLocation(program._program_id, name);
+	
+	const char* ptr = buffer;
+	size_t i = 0;
+	uint32_t s1 = 1;
+	uint32_t s2 = 0;
+	while (*ptr != '\0')
+	{
+		s1 = (s1 + *ptr) % 65521;
+		s2 = (s1 + s1) % 65521;
+		i++;
+		ptr++;
+	}
+	return (s2 << 16) | s1;
+
+}
+
+REALM_ENGINE_FUNC GLint _re_lookup_sampler_locations(re_shader_program_t* program, const char* name)
+{
+	_re_sampler_uniform_cache* cache = program->_sampler_cache;
+	GLint result = -1;
+	uint32_t hash = re_adler32_str(name);
+	int i;
+	for (i = 0; i < cache->_num_elements; i++)
+	{
+		if (hash == cache->_hashes[i])
+		{
+			result = cache->_locations[i];
+		}
+	}
+	if (result < 0)
+	{
+		result = glGetUniformLocation(program->_program_id, name);
+		
+		cache->_hashes[cache->_num_elements] = hash;
+		cache->_locations[cache->_num_elements] = result;
+		cache->_num_elements++;
+	}
+	return result;
+
+
+}
+
+REALM_ENGINE_FUNC re_result_t re_set_texture(re_shader_program_t* program, const char* name, re_texture_t* texture)
+{
+	GLint location = _re_lookup_sampler_locations(program, name);
 	glBindTextureUnit(location, texture->_handle);
 }
+
+
 
 
 
@@ -801,11 +912,14 @@ REALM_ENGINE_FUNC re_result_t _re_refresh_framebuffer(re_framebuffer_t* buffer)
 	GLenum wrap = _re_texture_wrap_func_to_glenum(texture.wrap);
 	GLenum filter = _re_texture_filter_func_to_glenum(texture.filter);
 	GLenum target = _re_image_type_to_glenum(texture.type);
+	GLenum internal_format = _re_image_format_to_glenum(texture.format);
+	GLenum format = _re_image_format_to_gl_format(texture.format);
+	GLenum type = _re_image_format_to_gl_data_type(texture.format);
 	glBindTexture(GL_TEXTURE_2D,texture._handle);
 	int width = 0;
 	int height = 0;
 	re_context_size(&width, &height);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	return RE_OK;
 
@@ -818,10 +932,18 @@ REALM_ENGINE_FUNC re_result_t re_update_vp( mat4x4 matrix)
 {
 
 	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
-	memcpy(pipeline->re_global_data, &matrix, sizeof(mat4x4) * 3);
+	memcpy(&pipeline->re_global_data->view_projection, &matrix, sizeof(mat4x4));
 
 
 	return RE_OK;
+}
+REALM_ENGINE_FUNC re_result_t re_set_camera_data(re_camera_t* camera)
+{
+	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
+	_re_camera_data_t* camera_data = &pipeline->re_global_data->camera_data;
+	camera_data->far_plane = camera->far_plane;
+	camera_data->near_plane = camera->near_plane;
+	camera_data->screen_size = new_vec2(camera->size.x, camera->size.y);
 }
 
 REALM_ENGINE_FUNC re_result_t re_use_framebuffer(re_framebuffer_t* fb)
@@ -831,8 +953,10 @@ REALM_ENGINE_FUNC re_result_t re_use_framebuffer(re_framebuffer_t* fb)
 
 REALM_ENGINE_FUNC void _on_default_scene_render(re_renderpass_t* renderpass, void* userdata)
 {
+	
+	
 	re_set_userdata_vector(&renderpass->_user_data_layout, "color", new_vec4(1.0, 1.0, 1.0, 0.0));
-
+	//re_set_texture(&renderpass->shader_program, "depthTexture", re_grab_depthtexture);
 
 }
 
@@ -840,52 +964,73 @@ REALM_ENGINE_FUNC void _on_default_scene_render(re_renderpass_t* renderpass, voi
 
 REALM_ENGINE_FUNC void _on_default_screen_render(re_renderpass_t* renderpass, void* userdata)
 {
+	//glDisable(GL_DEPTH_TEST);
 	re_upload_mesh_data(&_screen_mesh, &new_transform);
-	re_set_texture(renderpass->shader_program, "screenTexture", re_grab_screentexture);
+	re_set_texture(&renderpass->shader_program, "screenTexture", re_grab_screentexture);
+}
+
+REALM_ENGINE_FUNC void _on_default_depth_render(re_renderpass_t* renderpass, void* userdata)
+{
+	glEnable(GL_DEPTH_TEST);
+	glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 
-REALM_ENGINE_FUNC re_result_t _re_init_main_renderpath()
+REALM_ENGINE_FUNC re_result_t re_load_shaders(re_shader_program_t* program, const char* frag_path, const char* vert_path)
 {
-	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
 	char fragment[1024];
 	char vertex[1024];
 	memset(fragment, 0, sizeof(fragment));
 	memset(vertex, 0, sizeof(vertex));
-	re_read_text("./resources/screen_shader_frag.glsl", fragment);
-	re_read_text("./resources/screen_shader_vert.glsl", vertex);
+	re_read_text(frag_path, fragment);
+	re_read_text(vert_path, vertex);
+	program->source[0] = (re_shader_t){ .name = "Vertex",.source = vertex,.type = RE_VERTEX_SHADER };
+	program->source[1] = (re_shader_t){ .name = "Fragment",.source = fragment,.type = RE_FRAGMENT_SHADER };
+	re_compile_shader(&program->source[0]);
+	re_compile_shader(&program->source[1]);
+	re_init_program(program);
+	GLint max_tex_units = 0;
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_tex_units);
+	program->_sampler_cache = (_re_sampler_uniform_cache*)malloc(sizeof(_re_sampler_uniform_cache));
+	program->_sampler_cache->_locations = (GLint*)malloc(sizeof(GLint) * max_tex_units);
+	program->_sampler_cache->_hashes = (uint32_t*)malloc(sizeof(uint32_t) * max_tex_units);
+	program->_sampler_cache->_num_elements = 0;
+	return RE_OK;
+
+}
+
+REALM_ENGINE_FUNC re_result_t _re_init_main_renderpath()
+{
+	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
 	re_shader_program_t screen_shader;
 	screen_shader = (re_shader_program_t){
 		.name = "Screen shader",
-		.source = {
-			{.name = "Vertex",.source = vertex,.type = RE_VERTEX_SHADER},
-			{.name = "Fragment",.source = fragment,.type = RE_FRAGMENT_SHADER}
-		}
+	
 	};
-	re_compile_shader(&screen_shader.source[0]);
-	re_compile_shader(&screen_shader.source[1]);
-	re_init_program(&screen_shader);
-
-	memset(fragment, 0, sizeof(fragment));
-	memset(vertex, 0, sizeof(vertex));
-	re_read_text("./resources/scene_shader_frag.glsl", fragment);
-	re_read_text("./resources/scene_shader_vert.glsl", vertex);
+	re_load_shaders(&screen_shader, "./resources/screen_shader_frag.glsl", "./resources/screen_shader_vert.glsl");
 	re_shader_program_t scene_shader;
 	scene_shader = (re_shader_program_t){
 			.name = "Default",
-			.source = {
-				{.name = "Vertex Shader",.source = vertex,.type = RE_VERTEX_SHADER},
-				{.name = "Fragment Shader",.source = fragment, .type = RE_FRAGMENT_SHADER}
-			},
+			
 
 	};
-	re_compile_shader(&scene_shader.source[0]);
-	re_compile_shader(&scene_shader.source[1]);
-	re_init_program(&scene_shader);
+	re_load_shaders(&scene_shader, "./resources/scene_shader_frag.glsl", "./resources/scene_shader_vert.glsl");
+	re_shader_program_t depth_shader;
+	depth_shader = (re_shader_program_t)
+	{
+		.name = "Depth",
+
+	};
+	re_load_shaders(&depth_shader, "./resources/depth_shader_frag.glsl", "./resources/depth_shader_vert.glsl");
 	pipeline->_main_renderpath._scene_fb = re_create_framebuffer(&(re_framebuffer_desc_t) {
 		.attachment = RE_COLOR_ATTACHMENT,
 			.filter = LINEAR,
 			.format = SRGB
+	});
+	pipeline->_main_renderpath._depth_stencil_fb = re_create_framebuffer(&(re_framebuffer_desc_t) {
+		.attachment = RE_DEPTH_ATTACHMENT,
+			.filter = LINEAR,
+			.format = DEPTH
 	});
 	pipeline->_main_renderpath._screen_fb = (re_framebuffer_t*)malloc(sizeof(re_framebuffer_t));
 	memset(pipeline->_main_renderpath._screen_fb, 0, sizeof(re_framebuffer_t));
@@ -897,6 +1042,14 @@ REALM_ENGINE_FUNC re_result_t _re_init_main_renderpath()
 		._renderpass_cb = &_on_default_scene_render ,
 		.target = SCENE
 	};
+	re_renderpass_desc_t depth_pass_desc = (re_renderpass_desc_t){
+		.shader_program = &depth_shader,
+		.type = DEPTH_PASS,
+		.target_framebuffer = pipeline->_main_renderpath._depth_stencil_fb,
+		._renderpass_cb = &_on_default_depth_render,
+		.target = SCENE
+
+	};
 	re_renderpass_desc_t screen_shader_desc = (re_renderpass_desc_t){
 		.shader_program = &screen_shader,.type = COLOR_PASS,
 		.target_framebuffer = pipeline->_main_renderpath._screen_fb,
@@ -905,6 +1058,11 @@ REALM_ENGINE_FUNC re_result_t _re_init_main_renderpath()
 	};
 	re_renderpass_t* scene_pass = re_create_renderpass(&scene_shader_desc);
 	re_renderpass_t* screen_pass = re_create_renderpass(&screen_shader_desc);
+	re_renderpass_t* depth_pass = re_create_renderpass(&depth_pass_desc);
+	depth_pass->_user_pass = 0;
+	screen_pass->_user_pass = 0;
+	scene_pass->_user_pass = 0;
+	linked_list_append(re_renderpass_t, &pipeline->_main_renderpath._linked_list, *depth_pass);
 	linked_list_append(re_renderpass_t, &pipeline->_main_renderpath._linked_list, *scene_pass);
 	linked_list_append(re_renderpass_t, &pipeline->_main_renderpath._linked_list, *screen_pass);
 }
@@ -959,9 +1117,9 @@ REALM_ENGINE_FUNC re_result_t re_pipeline_start_draw()
 
 	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pipeline->_ibo);
 
-	uint32_t size = sizeof(mat4x4) * 3;
+	uint32_t size = sizeof(re_global_data_t);
 	re_bind_shader_block(pipeline->_re_global_data_block, RE_GLOBAL_DATA_REF, 0);
-	re_update_shader_block(pipeline->_re_global_data_block, &pipeline->re_global_data->view_projection, 0, size);
+	re_update_shader_block(pipeline->_re_global_data_block, pipeline->re_global_data, 0, size);
 	//re_use_renderpass(pipeline->_screen_pass);
 	/*re_bind_shader_block(pipeline->_re_user_data_block, RE_USER_DATA_REF, 1);
 	re_update_shader_block(pipeline->_re_user_data_block, RE_USER_DATA_REF, 0, pipeline->_re_user_data_block->size);*/
@@ -1015,50 +1173,8 @@ REALM_ENGINE_FUNC void re_clear_color()
 }
 
 
-REALM_ENGINE_FUNC re_result_t re_render_scene(re_actor_t* root)
-{
-	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
 
 
-	linked_list_traverse(re_renderpass_t, pass, pipeline->_main_renderpath._linked_list)
-	{
-		
 
-		if (pass._user_pass)
-		{
-			
-			re_bind_shader_block(pipeline->_re_user_data_block, RE_USER_DATA_REF, 1);
-			re_update_shader_block(pipeline->_re_user_data_block, RE_USER_DATA_REF, 0, pipeline->_re_user_data_block->size);
-		}
-		
-		_re_refresh_framebuffer(pass._target_framebuffer);
-		//glBindTexture(GL_TEXTURE_2D, pass._target_framebuffer->_fb_texture._handle);
-		glBindFramebuffer(GL_FRAMEBUFFER, pass._target_framebuffer->_id);
-		re_clear_color();
-		glUseProgram(pass.shader_program._program_id);
-		pass._rendpass_cb(&pass, NULL);
-		switch (pass.target)
-		{
-		case SCENE:
-			linked_list_traverse(re_actor_t, actor, *root->children)
-			{
-				re_upload_mesh_data(&actor.mesh, &actor.transform);
-				re_draw_triangles(6);
-			}
-			break;
-		case SCREEN:
-			re_draw_triangles(6);
-			break;
-		default:
-			re_draw_triangles(6);
-			break;
-		}
-		
-
-
-	}
-
-
-}
 #endif
 #endif // !GFX_IMPL
