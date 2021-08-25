@@ -1,3 +1,3 @@
 # realm
 
-Hobby game and Header only game engine
+Hobby game and header only game engine in C and OpenGL
