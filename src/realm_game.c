@@ -4,6 +4,7 @@
 
 void realm_main()
 {
+	
 	re_init((re_app_desc_t) {
 		.height = 720,
 			.width = 1280,
@@ -14,7 +15,8 @@ void realm_main()
 		.on_start = &realm_start,
 			.on_update = &realm_update,
 			.on_window_resize = &on_window_resize,
-			.on_user_key_action = &on_key_action
+			.on_user_key_action = &on_key_action,
+			.on_user_mouse_move = &on_mouse_pos
 
 	});
 
@@ -35,14 +37,16 @@ void realm_start(re_context_t ctx)
 			.near_plane = 0.1f,
 			.far_plane = 100.0f
 	});
-
+	
 
 	
 	re_set_pipeline_desc(&(re_gfx_pipeline_desc_t) {
-		.num_attribs = 2,
+		.num_attribs = 3,
 			.attributes = {
 					{.index = 0,.type = FLOAT3,.offset = 0,.attribute_slot = RE_POSITION_ATTRIBUTE},
-					{.index = 1, .type = FLOAT2, .offset = 12,.attribute_slot = RE_TEXCOORD_ATTRIBUTE}
+					{.index = 1,.type = FLOAT3,.offset = 12,.attribute_slot = RE_NORMAL_ATTRIBUTE},
+					{.index = 2, .type = FLOAT2, .offset = 24,.attribute_slot = RE_TEXCOORD_ATTRIBUTE},
+				
 		}
 	});
 	re_init_gfx_pipeline();
@@ -50,6 +54,7 @@ void realm_start(re_context_t ctx)
 
 	re_set_bg_color(153.0f, 46.0f, 137.0f, 255.0f, 1);
 	vec3_to_string(re_compute_camera_front(state.camera));
+	
 	scene_root = &actors[0];
 	scene_root->mesh.mesh_size = 0;
 	square_actor = &actors[1];
@@ -59,7 +64,10 @@ void realm_start(re_context_t ctx)
 	re_set_mesh_triangles(&square_actor->mesh, square_triangles, 6);
 
 	re_actor_add_child(scene_root, square_actor);
-	
+	re_set_material_vector(&square_actor->material_properties, "color", new_vec4(1, 1, 1, 1));
+	re_update_ambient_light(new_vec3(0.5f, 1.0, 1.0), 1.0);
+
+
 	//re_query_userdata_layout(&state.pipeline, layout);
 
 
@@ -69,12 +77,12 @@ void realm_update(re_context_t ctx)
 {
 	//re_clear_color();
 
-
 	mat4x4 vp = re_compute_view_projection(state.camera);
 
 
 	re_update_vp(vp);
 	re_set_camera_data(state.camera);
+	
 	re_pipeline_start_draw();
 	{
 		//re_upload_mesh_data(&square_actor->mesh, &square_actor->transform);
@@ -100,19 +108,24 @@ void on_key_action(re_context_t* ctx, re_key_action_t action, int32_t key)
 		switch (key)
 		{
 		case GLFW_KEY_W:
-			printf("moving forward");
+
 			move_vector = vec3_scalar_mul(re_compute_camera_front(state.camera), -0.1f);
 			break;
 		case GLFW_KEY_D:
 			move_vector = vec3_scalar_mul(re_compute_camera_right(state.camera), 0.1f);
 			break;
 		case GLFW_KEY_S:
-			printf("moving forward");
+
 			move_vector = vec3_scalar_mul(re_compute_camera_front(state.camera), 0.1f);
 			break;
 		case GLFW_KEY_A:
 			move_vector = vec3_scalar_mul(re_compute_camera_right(state.camera), -0.1f);
 			break;
+		case GLFW_KEY_E:
+			state.camera->camera_transform.rotation.y -= 0.01f;
+			break;
+		case GLFW_KEY_Q:
+			state.camera->camera_transform.rotation.y += 0.01f;
 
 		default:
 			break;
@@ -129,4 +142,31 @@ void on_mouse_action(re_context_t* ctx, re_mouse_button_action_t action, int32_t
 
 void on_mouse_pos(re_context_t* ctx, float x, float y, float last_x, float last_y)
 {
+	float xoffset = x - last_x;
+	float yoffset = last_y - y;
+	vec3 euler = quat_to_euler(state.camera->camera_transform.rotation);
+	float pitch = euler.x;
+	float yaw = euler.y;
+	float roll = euler.z;
+	xoffset *= 0.005f;
+	yoffset *= 0.005f;
+
+	yaw += xoffset;
+	pitch += yoffset;
+	if (pitch > 89.0f)
+	{
+		pitch = 89.0f;
+	}
+	if (pitch < -89.0f)
+	{
+		pitch = -89.0f;
+	}
+	vec3 dir;
+	
+	quaternion new_rotation = vec4_add(state.camera->camera_transform.rotation, new_vec4(xoffset, yoffset, 0, 0));
+	
+	//state.camera->camera_transform.rotation = new_rotation;
+
+
+
 }

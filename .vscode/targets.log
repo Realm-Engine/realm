@@ -5,8 +5,9 @@ make.exe all CC=gcc -f "C:\dev\realm\Makefile" --print-data-base --no-builtin-va
 # License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
+ 
 
-# Make data base, printed on Sun Aug 22 16:28:05 2021
+# Make data base, printed on Wed Aug 25 08:34:49 2021
 
 # Variables
 
@@ -27,7 +28,7 @@ USERPROFILE = D:\Users\Nathan
 # environment
 LOCALAPPDATA = D:\Users\Nathan\AppData\Local
 # environment
-VSCODE_IPC_HOOK_EXTHOST = \\.\pipe\vscode-ipc-8a5f88d6-e037-4d47-856b-1f6becc9ceda-sock
+VSCODE_IPC_HOOK_EXTHOST = \\.\pipe\vscode-ipc-925f925b-6b9f-4d3f-9af0-9056cd11442e-sock
 # environment
 VSCODE_CWD = D:\Program Files\Microsoft VS Code
 # environment
@@ -43,7 +44,7 @@ MAKE_COMMAND := C:/ProgramData/chocolatey/lib/make/tools/install/bin/make.exe
 # automatic
 @D = $(patsubst %/,%,$(patsubst %\,%,$(dir $@)))
 # environment
-CHROME_CRASHPAD_PIPE_NAME = \\.\pipe\crashpad_17160_NUNFAJNKQTMJWBFY
+CHROME_CRASHPAD_PIPE_NAME = \\.\pipe\crashpad_24804_FMLYFQHALXWIEOFD
 # environment
 VS160COMCOMNTOOLS = C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\
 # environment
@@ -109,7 +110,7 @@ MAKEFILE_LIST := C:\dev\realm\Makefile
 # environment
 VSCODE_VERBOSE_LOGGING = true
 # environment
-VSCODE_PID = 17160
+VSCODE_PID = 24804
 # makefile (from 'C:\dev\realm\Makefile', line 25)
 PROJECTS := GLFW glad realm_game
 # environment
@@ -349,7 +350,8 @@ GLFW:
 # % := 
 # automatic
 # ^ := 
-# automatic
+# a 
+utomatic
 # ? := 
 # automatic
 # | := 
@@ -430,6 +432,6 @@ help:
 # strcache performance: lookups = 38 / hit rate = 68%
 # hash-table stats:
 # Load=12/8192=0%, Rehash=0, Collisions=0/38=0%
-# Finished Make data base on Sun Aug 22 16:28:05 2021
+# Finished Make data base on Wed Aug 25 08:34:49 2021
 
  

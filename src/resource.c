@@ -25,10 +25,10 @@ static float square_model[4][3] = {
 };
 
 static float square_normal[4][3] = {
-	{0,0,0},
-	{0,0,0},
-	{0,0,0},
-	{0,0,0}
+	{0,0,1},
+	{0,0,1},
+	{0,0,1},
+	{0,0,1}
 };
 
 static float square_uv[4][2] = {
@@ -37,6 +37,7 @@ static float square_uv[4][2] = {
 	{1,1},
 	{1,0}
 };
+
 
 
 

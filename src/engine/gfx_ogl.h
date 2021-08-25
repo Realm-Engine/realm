@@ -160,7 +160,6 @@ typedef struct re_gfx_pipeline_t
 {
 
 	uint16_t num_attribs;
-
 	re_vertex_attr_desc_t attributes[GL_MAX_VERTEX_ATTRIBS];
 	uint16_t vertex_layout_size;
 	GLuint _vao;
@@ -185,6 +184,13 @@ static float _screen_uv[4][2] = {
 	{1,0},
 	{1,1},
 	{0,1}
+};
+
+static float _screen_normal[4][3] = {
+	{0,0,0},
+	{0,0,0},
+	{0,0,0},
+	{0,0,0}
 };
 re_mesh_t _screen_mesh;
 static uint32_t _screen_triangles[6] = { 0,1,2,2,3,0 };
@@ -239,6 +245,8 @@ REALM_ENGINE_FUNC re_result_t re_pipeline_end_draw();
 REALM_ENGINE_FUNC re_result_t re_draw_triangles(uint16_t numTris);
 REALM_ENGINE_FUNC void re_set_bg_color(float r, float g, float b, float a, uint8_t normalize);
 REALM_ENGINE_FUNC void re_clear_color();
+REALM_ENGINE_FUNC void re_update_main_light(vec3 direction, vec3 color, float strength);
+REALM_ENGINE_FUNC void re_update_ambient_light(vec3 color, float strength);
 
 #ifdef RE_GFX_IMPL
 
@@ -460,7 +468,7 @@ REALM_ENGINE_FUNC re_result_t re_compile_shader(re_shader_t* sh)
 		if (message != NULL)
 		{
 
-			printf("Error compiling shader \n %s\n", message);
+			printf("Error compiling shader %s \n %s\n",sh->name, message);
 			return RE_ERROR;
 
 		}
@@ -603,10 +611,15 @@ REALM_ENGINE_FUNC re_result_t re_upload_mesh_data(re_mesh_t* mesh, re_transform_
 	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
 	uint16_t pos_size = sizeof(vec3) * mesh->mesh_size;
 	uint16_t uv_size = sizeof(vec2) * mesh->mesh_size;
-	float mesh_data[pos_size + uv_size];
+	uint16_t normal_size = sizeof(vec3) * mesh->mesh_size;
+	float mesh_data[pos_size + uv_size + normal_size];
 	int i, j;
-	vec3* positions = re_apply_transform(*transform, mesh);
-	glBufferData(GL_ARRAY_BUFFER, pos_size + uv_size, 0, GL_DYNAMIC_DRAW);
+	vec3 positions[mesh->mesh_size];
+	vec3 normals[mesh->mesh_size];
+
+	re_apply_transform(*transform, mesh, &positions, &normals);
+	
+	glBufferData(GL_ARRAY_BUFFER, pos_size + uv_size + normal_size, 0, GL_DYNAMIC_DRAW);
 	for (i = 0; i < mesh->mesh_size; i++)
 	{
 		for (j = 0; j < pipeline->num_attribs; j++)
@@ -617,12 +630,14 @@ REALM_ENGINE_FUNC re_result_t re_upload_mesh_data(re_mesh_t* mesh, re_transform_
 			switch (attribute.attribute_slot)
 			{
 			case RE_POSITION_ATTRIBUTE:
-				memcpy(&mesh_data[dst], &positions[i], attri_size);
+				
 				glBufferSubData(GL_ARRAY_BUFFER, dst, attri_size, &positions[i]);
 				break;
 			case RE_TEXCOORD_ATTRIBUTE:
 				glBufferSubData(GL_ARRAY_BUFFER, dst, attri_size, &mesh->texcoords[i]);
 				break;
+			case RE_NORMAL_ATTRIBUTE:
+				glBufferSubData(GL_ARRAY_BUFFER, dst, attri_size, &normals[i]);
 			default:
 				break;
 			}
@@ -633,7 +648,6 @@ REALM_ENGINE_FUNC re_result_t re_upload_mesh_data(re_mesh_t* mesh, re_transform_
 
 
 	re_upload_index_data(mesh->triangles, 6);
-	free(positions);
 
 	return RE_OK;
 
@@ -693,7 +707,7 @@ REALM_ENGINE_FUNC re_result_t re_bind_pipeline_attributes()
 		re_vertex_attr_desc_t attribute = pipeline->attributes[i];
 		GLenum type = _re_type_to_gltype(attribute.type);
 		glEnableVertexAttribArray(attribute.index);
-		glVertexAttribPointer(attribute.index, SHADER_VAR_ELEMENTS(attribute.type), type, GL_FALSE, 5 * sizeof(float), (void*)attribute.offset);
+		glVertexAttribPointer(attribute.index, SHADER_VAR_ELEMENTS(attribute.type), type, GL_FALSE, 8 * sizeof(float), (void*)attribute.offset);
 		pipeline->vertex_layout_size += SHADER_VAR_SIZE(attribute.type);
 	}
 	return RE_OK;
@@ -721,6 +735,7 @@ REALM_ENGINE_FUNC re_result_t re_query_userdata_layout( re_renderpass_t* pass, r
 	layout->num_vars = num_uniforms;
 	layout->var_types = (re_user_data_var_types*)malloc(sizeof(re_user_data_var_types) * num_uniforms);
 	layout->var_names = (char**)malloc(num_uniforms * 64);
+	layout->_hashes = (uint32_t*)malloc(num_uniforms * sizeof(uint32_t));
 	layout->block_size = 0;
 	int32_t* types = (int32_t*)malloc(sizeof(int32_t) * num_uniforms);
 	glGetActiveUniformsiv(program._program_id, num_uniforms, (GLuint*)block_uniform_indices, GL_UNIFORM_NAME_LENGTH, name_length);
@@ -734,9 +749,11 @@ REALM_ENGINE_FUNC re_result_t re_query_userdata_layout( re_renderpass_t* pass, r
 
 		layout->var_names[i] = name;
 		layout->var_types[i] = _glenum_to_userdata_type(types[i]);
+		layout->_hashes[i] = re_adler32_str(name);
 		int elements = SHADER_VAR_ELEMENTS(layout->var_types[i]);
 		int byte_size = SHADER_VAR_BYTES(layout->var_types[i]);
 		layout->block_size += SHADER_VAR_SIZE(layout->var_types[i]);
+
 		block->size = layout->block_size;
 		printf("\n%s", name);
 
@@ -778,23 +795,7 @@ REALM_ENGINE_FUNC re_result_t re_set_userdata_vector(re_user_data_layout_t* layo
 
 }
 
-REALM_ENGINE_FUNC uint32_t re_adler32_str(const char* buffer)
-{
-	
-	const char* ptr = buffer;
-	size_t i = 0;
-	uint32_t s1 = 1;
-	uint32_t s2 = 0;
-	while (*ptr != '\0')
-	{
-		s1 = (s1 + *ptr) % 65521;
-		s2 = (s1 + s1) % 65521;
-		i++;
-		ptr++;
-	}
-	return (s2 << 16) | s1;
 
-}
 
 REALM_ENGINE_FUNC GLint _re_lookup_sampler_locations(re_shader_program_t* program, const char* name)
 {
@@ -937,6 +938,22 @@ REALM_ENGINE_FUNC re_result_t re_update_vp( mat4x4 matrix)
 
 	return RE_OK;
 }
+
+REALM_ENGINE_FUNC void re_update_ambient_light(vec3 color, float strength)
+{
+	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
+	pipeline->re_global_data->lighting_data.ambient_light = vec4_from_vec3(color, strength);
+
+}
+
+REALM_ENGINE_FUNC void re_update_main_light(vec3 direction, vec3 color, float strength)
+{
+	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
+	pipeline->re_global_data->lighting_data.mainlight_color = vec4_from_vec3(color, strength);
+	pipeline->re_global_data->lighting_data.mainlight_direction = vec4_from_vec3(direction, 0);
+
+
+}
 REALM_ENGINE_FUNC re_result_t re_set_camera_data(re_camera_t* camera)
 {
 	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
@@ -955,7 +972,7 @@ REALM_ENGINE_FUNC void _on_default_scene_render(re_renderpass_t* renderpass, voi
 {
 	
 	
-	re_set_userdata_vector(&renderpass->_user_data_layout, "color", new_vec4(1.0, 1.0, 1.0, 0.0));
+	//re_set_userdata_vector(&renderpass->_user_data_layout, "color", new_vec4(1.0, 1.0, 1.0, 0.0));
 	//re_set_texture(&renderpass->shader_program, "depthTexture", re_grab_depthtexture);
 
 }
@@ -1011,8 +1028,6 @@ REALM_ENGINE_FUNC re_result_t _re_init_main_renderpath()
 	re_shader_program_t scene_shader;
 	scene_shader = (re_shader_program_t){
 			.name = "Default",
-			
-
 	};
 	re_load_shaders(&scene_shader, "./resources/scene_shader_frag.glsl", "./resources/scene_shader_vert.glsl");
 	re_shader_program_t depth_shader;
@@ -1061,7 +1076,7 @@ REALM_ENGINE_FUNC re_result_t _re_init_main_renderpath()
 	re_renderpass_t* depth_pass = re_create_renderpass(&depth_pass_desc);
 	depth_pass->_user_pass = 0;
 	screen_pass->_user_pass = 0;
-	scene_pass->_user_pass = 0;
+	scene_pass->_user_pass = 1;
 	linked_list_append(re_renderpass_t, &pipeline->_main_renderpath._linked_list, *depth_pass);
 	linked_list_append(re_renderpass_t, &pipeline->_main_renderpath._linked_list, *scene_pass);
 	linked_list_append(re_renderpass_t, &pipeline->_main_renderpath._linked_list, *screen_pass);
@@ -1095,14 +1110,8 @@ REALM_ENGINE_FUNC re_result_t re_init_gfx_pipeline()
 	pipeline->_re_user_data_block = re_create_shader_block(RE_USER_DATA_REF, 0, 0);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	_re_init_main_renderpath();
-	_screen_mesh.positions = (vec3*)malloc(sizeof(_screen_mesh_positions));
-	_screen_mesh.texcoords = (vec2*)malloc(sizeof(_screen_uv));
-	_screen_mesh.mesh_size = 4;
-	_screen_mesh.triangles = (uint32_t*)malloc(sizeof(_screen_triangles));
-
-	memcpy(_screen_mesh.positions, _screen_mesh_positions, sizeof(_screen_mesh_positions));
-	memcpy(_screen_mesh.texcoords, _screen_uv, sizeof(_screen_uv));
-	memcpy(_screen_mesh.triangles, _screen_triangles, sizeof(_screen_triangles));
+	re_fill_mesh(&_screen_mesh, _screen_mesh_positions, _screen_normal, _screen_uv,4);
+	re_set_mesh_triangles(&_screen_mesh,_screen_triangles,6);
 	return RE_OK;
 
 }

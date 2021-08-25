@@ -1,11 +1,11 @@
 #version 430 core
 
-in float Color;
+in float SurfaceColor;
 
 out float fragment_color;
 
 void main()
 {
-	fragment_color =  Color;
+	fragment_color =  SurfaceColor;
 
 }

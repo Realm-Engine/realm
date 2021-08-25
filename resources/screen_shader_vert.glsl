@@ -1,6 +1,8 @@
 #version 430 core
 layout(location = 0) in vec3 _position;
-layout (location = 1) in vec2 _texture_uv;
+layout(location = 1) in vec3 _normal;
+layout (location = 2) in vec2 _texture_uv;
+
 
 out vec2 TextureCoords;
 

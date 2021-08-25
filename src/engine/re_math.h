@@ -86,6 +86,7 @@ typedef struct re_transform_t
 #define quat_as_vec4(q) (vec4)q
 #define quat_as_vec3(q) new_vec3(q.x,q.y,q.z)
 #define vec3_to_string(v) printf("X:%f Y:%f Z:%f " ,v.x,v.y,v.z)
+#define vec4_to_string(v) "X:%f Y:%f Z:%f W:%f",v.x,v.y,v.z,v.w
 #define mat4_zero (mat4x4){vec4_zero,vec4_zero,vec4_zero,vec4_zero}
 #define mat4_one (mat4x4){vec4_one,vec4_one,vec4_one,vec4_one}
 
@@ -96,12 +97,15 @@ typedef struct re_transform_t
 #define re_sqrt(x) sqrtf(x)
 #define re_acos(x) acosf(x);
 #define re_asin(x) asinf(x);
-#define re_atanf(x) atanf(x)
+#define re_atan(x) atanf(x)
+#define re_atan2(x,x2) atan2f(x,x2);
+#define re_abs(x) _Generic((x), float:fabsf,int: abs,default: abs)(x)
+#define re_copysign(x,y) copysignf(x,y)
 #define _DEG_TO_RAD_CONSTANT (float)0.017453
 #define _RAD_TO_DEG_CONSTANT (float)57.29577
 #define deg_to_rad(a) (a * _DEG_TO_RAD_CONSTANT)
 #define rad_to_deg(r) (r * _RAD_TO_DEG_CONSTANT)
-#define new_transform ((re_transform_t){vec3_one,vec4_zero,vec3_zero,vec3_zero})
+#define new_transform ((re_transform_t){vec3_one,new_vec4(0,0,0,1),vec3_zero,vec3_zero})
 
 
 #define VEC_FUNCTIONS(T,n) \
@@ -460,6 +464,55 @@ static inline mat4x4 compute_transform(re_transform_t transform)
 	M = mat4_mul(M, rotation);
 	M = mat4_translate(M, transform.position);
 	return M;
+
+}
+
+static inline vec3 quat_to_euler(quaternion Q)
+{
+	float yaw = 0;
+	float pitch = 0;
+	float roll = 0;
+
+	float sinr_cosp = 2 * (Q.w * Q.x + Q.y * Q.z);
+	float cosr_cosp = 1 - 2 * (Q.x * Q.x + Q.y * Q.y);
+	roll = re_atan2(sinr_cosp, cosr_cosp);
+	
+	float sinp = 2 * (Q.w * Q.y - Q.z * Q.x);
+	if (re_abs(sinp) >= 1)
+	{
+		pitch = re_copysign(PI / 2, sinp);
+	}
+	else
+	{
+		pitch = re_asin(sinp);
+	}
+
+	float siny_cosp = 2 * (Q.w * Q.z + Q.x * Q.y);
+	float cosy_cosp = 1 - 2 * (Q.y * Q.y + Q.z * Q.z);
+	yaw = re_atan2(siny_cosp, cosy_cosp);
+	return new_vec3(pitch, yaw, roll);
+
+}
+
+static inline quaternion euler_to_quat(vec3 euler)
+{
+	float pitch = euler.x;
+	float yaw = euler.y;
+	float roll = euler.z;
+	float cy = re_cos(yaw * 0.5f);
+	float sy = re_sin(yaw * 0.5f);
+	float cp = re_cos(pitch * 0.5f);
+	float sp = re_sin(pitch * 0.5f);
+	float cr = re_cos(roll * 0.5f);
+	float sr = re_sin(roll * 0.5f);
+
+	quaternion q;
+	q.w = cr * cp * cy + sr * sp * sy;
+	q.x = sr * cp * cy - cr * sp * sy;
+	q.y = cr * sp * cy + sr * cp * sy;
+	q.z = cr * cp * sy - sr * sp * cy;
+	return q;
+
 
 }
 

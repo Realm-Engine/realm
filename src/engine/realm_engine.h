@@ -14,6 +14,7 @@
 #define REALM_ENGINE_FUNC static inline
 #define MAX_UNIFORMS GL_MAX_VERTEX_UNIFORM_COMPONENTS + GL_MAX_FRAGMENT_UNIFORM_COMPONENTS
 #define _RE_SCENEGRAPH_CHILD_CHUNK_AMOUNT 5
+#define _RE_VECTOR_CHUNK_SIZE 5
 //Graphics API defintions
 
 //Structs and Enums
@@ -39,10 +40,18 @@ typedef struct _re_camera_data_t
 	vec2 screen_size;
 }_re_camera_data_t;
 
+typedef struct re_lighting_data_t
+{
+	vec4 ambient_light;
+	vec4 mainlight_direction;
+	vec4 mainlight_color;
+}re_lighting_data_t;
+
 typedef struct re_global_data_t
 {
 	mat4x4 view_projection;
 	_re_camera_data_t camera_data;
+	re_lighting_data_t lighting_data;
 } re_global_data_t;
 
 typedef enum re_vertex_type_t
@@ -70,6 +79,7 @@ typedef struct re_user_data_layout_t
 {
 	uint32_t num_vars;
 	char** var_names;
+	uint32_t* _hashes;
 	re_user_data_var_types* var_types;
 	int32_t* var_offsets;
 	uint32_t block_size;
@@ -152,7 +162,7 @@ typedef struct re_mesh_t
 typedef struct re_app_desc_t
 {
 	int width;
-	int height; 
+	int height;
 	char title[64];
 }re_app_desc_t;
 
@@ -301,17 +311,91 @@ T v = (e)._head->value;\
 _##T##_node* i;\
 for(i = (e)._head;i != NULL; i = _linked_list_##T##_enumerate_func((i),(&v)))
 #define linked_list_free(T,ll) _linked_list_##T##_free(ll);
+#define vector(T) _vector_##T
 
+
+#define vector_decl(T)\
+\
+typedef struct vector(T)\
+{\
+	T* elements;\
+	size_t count;\
+	size_t capacity;\
+}vector(T);\
+static inline vector(T) _new_vector_##T(size_t reserve)\
+{\
+	vector(T) v;\
+	v.elements = (T *)malloc(sizeof(T) * reserve);\
+	memset(v.elements,0,sizeof(T) * reserve);\
+	v.capacity = reserve;\
+	v.count = 0;\
+	return v;\
+}\
+static inline void _vector_##T##_resize(vector(T) * vector, size_t size)\
+{\
+	vector->capacity = size;\
+	vector->elements = ( T *)realloc(vector->elements,sizeof( T ) * size);\
+}\
+static inline T * _vector_##T##_insert(vector(T) * vector,T value)\
+{\
+	if(vector->count + 1 > vector->capacity)\
+	{\
+		size_t resize_amount = 0;\
+		if(vector->capacity == 0)\
+		{\
+			resize_amount = _RE_VECTOR_CHUNK_SIZE;\
+		}\
+		else\
+		{\
+			int mod = _RE_VECTOR_CHUNK_SIZE % vector->capacity;\
+			resize_amount = mod + vector->capacity;\
+		}\
+		_vector_##T##_resize(vector, resize_amount); \
+	}\
+	vector->elements[vector->count] = value; \
+	T * new_element = &vector->elements[vector->count];\
+	vector->count += 1;\
+	return new_element;\
+}\
+static inline T _vector_##T##_get(vector(T)* vector, size_t index )\
+{\
+	return vector->elements[index];\
+}\
+static inline void _vector_##T##_set(vector(T)* vector, size_t index, T value )\
+{\
+	vector->elements[index] = value;\
+}\
+
+
+#define vector_insert(T,vector,value) _vector_##T##_insert(vector,value)
+#define new_vector(T,size) _new_vector_##T(size)
+#define vector_resize(T,vector,size) _vector_##T##_resize(vector,size)
+#define vector_get(T,vector,index) _vector_##T##_get(vector,index)
+#define vector_set(T,vector,index,value) _vector_##T##_get(vector,index,value)
+
+vector_decl(int)
 #pragma endregion
 
 
 struct re_scenegraph_t;
+
+typedef struct re_material_property_t
+{
+	uint32_t id;
+	re_user_data_var_types type;
+	uint8_t* _data;
+}re_material_property_t;
+
+vector_decl(re_material_property_t)
+typedef vector(re_material_property_t) material_properties_list;
+
 
 typedef struct re_actor_t
 {
 	re_mesh_t mesh;
 	re_transform_t transform;
 	struct re_scenegraph_t* _scenegraph_node;
+	material_properties_list material_properties;
 }re_actor_t;
 
 
@@ -322,8 +406,9 @@ typedef struct re_scenegraph_t
 	struct re_scenegraph_t** children;
 	struct re_scenegraph_t* parent;
 	uint16_t num_children;
-	
+
 }re_scenegraph_t;
+
 
 
 #pragma region Function defines
@@ -337,7 +422,7 @@ REALM_ENGINE_FUNC void _re_poll_events();
 REALM_ENGINE_FUNC void _re_swap_buffers();
 REALM_ENGINE_FUNC void re_start();
 REALM_ENGINE_FUNC re_result_t re_context_size(int* width, int* height);
-REALM_ENGINE_FUNC vec3* re_apply_transform(re_transform_t transform, re_mesh_t* mesh);
+REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t* mesh,vec3* positions, vec3* normals);
 REALM_ENGINE_FUNC re_result_t re_read_text(const char* filePath, char* buffer);
 REALM_ENGINE_FUNC re_camera_t* re_create_camera(re_projection_type type, re_view_desc_t view_desc);
 REALM_ENGINE_FUNC vec3 re_compute_camera_front(re_camera_t* camera);
@@ -349,19 +434,25 @@ REALM_ENGINE_FUNC mat4x4 re_compute_view_projection(re_camera_t* camera);
 REALM_ENGINE_FUNC re_result_t re_read_image(const char* path, re_texture_t* texture, re_texture_desc_t desc);
 REALM_ENGINE_FUNC re_result_t re_free_texture_data(re_texture_t* texture);
 REALM_ENGINE_FUNC void re_actor_add_child(re_actor_t* parent, re_actor_t* child);
-REALM_ENGINE_FUNC void re_draw_scene_recursive(re_actor_t* node);
+
 REALM_ENGINE_FUNC re_result_t re_render_scene(re_actor_t* root);
 REALM_ENGINE_FUNC void init_actor(re_actor_t* actor);
 REALM_ENGINE_FUNC re_scenegraph_t* re_create_scenegraph(re_actor_t* node);
 REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh, vec3* positions, vec3* normals, vec2* texcoords, uint32_t mesh_size);
 REALM_ENGINE_FUNC void re_set_mesh_triangles(re_mesh_t* mesh, uint32_t* triangles, uint32_t num_triangles);
-#pragma endregion
+REALM_ENGINE_FUNC void re_set_material_vector(material_properties_list* material_list, const char* name, vec4 value);
+REALM_ENGINE_FUNC vec4 re_get_material_vector(material_properties_list* material_list, const char* name);
+REALM_ENGINE_FUNC void re_set_userdata_properties_from_materials(re_user_data_layout_t* layout, material_properties_list* materials);
+REALM_ENGINE_FUNC uint32_t re_adler32_str(const char* buffer);
 
 
 #ifndef RE_GFX_IMPL
 #define RE_GFX_IMPL
 #endif
 #include "gfx_ogl.h"
+#pragma endregion
+
+REALM_ENGINE_FUNC void re_draw_scene_recursive(re_actor_t* node, re_renderpass_t* renderpass);
 
 
 #define _GET_GLFW_USERPOINTER(ctx,window) re_context_t* ctx = (re_context_t*)glfwGetWindowUserPointer(window)
@@ -416,7 +507,7 @@ REALM_ENGINE_FUNC void _re_handle_mouse_pos(GLFWwindow* window, double x, double
 
 }
 
-REALM_ENGINE_FUNC void _re_handle_key_action(GLFWwindow* window, int key, int scancode,int action, int mods)
+REALM_ENGINE_FUNC void _re_handle_key_action(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	_GET_GLFW_USERPOINTER(ctx, window);
 	if (ctx->event_handlers.on_user_key_action != NULL)
@@ -442,14 +533,30 @@ REALM_ENGINE_FUNC void _re_handle_key_action(GLFWwindow* window, int key, int sc
 }
 
 
+REALM_ENGINE_FUNC uint32_t re_adler32_str(const char* buffer)
+{
 
+	const char* ptr = buffer;
+	size_t i = 0;
+	uint32_t s1 = 1;
+	uint32_t s2 = 0;
+	while (*ptr != '\0')
+	{
+		s1 = (s1 + *ptr) % 65521;
+		s2 = (s1 + s1) % 65521;
+		i++;
+		ptr++;
+	}
+	return (s2 << 16) | s1;
+
+}
 
 REALM_ENGINE_FUNC re_result_t re_init(re_app_desc_t app) {
 	if (!glfwInit())
 	{
 		printf("Could not init glfw!\n");
 	}
-	
+
 	memset(&_re_context.event_handlers, NULL, sizeof(re_event_handler_desc_t));
 	_re_context._window = glfwCreateWindow(app.width, app.height, app.title, NULL, NULL);
 	_re_context.app = app;
@@ -457,11 +564,12 @@ REALM_ENGINE_FUNC re_result_t re_init(re_app_desc_t app) {
 	glfwSetWindowUserPointer(_re_context._window, &_re_context);
 	glfwSetWindowSizeCallback(_re_context._window, &_re_handle_window_resize);
 	glfwSetMouseButtonCallback(_re_context._window, &_re_handle_mouse_action);
+	glfwGetCursorPos(_re_context._window, &_re_context._mouse_last_x, &_re_context._mouse_last_y);
 	glfwSetCursorPosCallback(_re_context._window, &_re_handle_mouse_pos);
 	glfwSetKeyCallback(_re_context._window, &_re_handle_key_action);
 	return RE_OK;
 
-	
+
 }
 
 
@@ -485,7 +593,7 @@ REALM_ENGINE_FUNC void re_start()
 	_re_context.event_handlers.on_start(_re_context);
 	while (!glfwWindowShouldClose(_re_context._window))
 	{
-		
+
 		_re_context.event_handlers.on_update(_re_context);
 		_re_swap_buffers();
 		_re_poll_events();
@@ -501,20 +609,20 @@ REALM_ENGINE_FUNC re_result_t re_context_size(int* width, int* height)
 	glfwGetWindowSize(_re_context._window, width, height);
 	return RE_OK;
 }
- 
-REALM_ENGINE_FUNC vec3* re_apply_transform(re_transform_t transform, re_mesh_t* mesh)
+
+REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t* mesh, vec3* positions, vec3* normals)
 {
-	
-	vec3* result = (vec3*)malloc(sizeof(vec3) * mesh->mesh_size);
+
 	mat4x4 model = compute_transform(transform);
 	int i;
 	for (i = 0; i < 4; i++)
 	{
-		vec4 ws = mat4_mul_vec4(model, vec4_from_vec3(mesh->positions[i], 1.0f));
-		result[i] = vec3_from_vec4(ws );
+		vec4 wsPos = mat4_mul_vec4(model, vec4_from_vec3(mesh->positions[i], 1.0f));
+		vec4 wsNormal = mat4_mul_vec4(model, vec4_from_vec3(mesh->normals[i], 1.0f));
+		positions[i] = vec3_from_vec4(wsPos);
+		normals[i] = vec3_from_vec4(wsNormal);
+		
 	}
-	
-	return result;
 
 }
 
@@ -541,24 +649,24 @@ REALM_ENGINE_FUNC re_result_t re_read_text(const char* filePath, char* buffer)
 
 }
 
-REALM_ENGINE_FUNC re_camera_t*  re_create_camera(re_projection_type type, re_view_desc_t view_desc)
+REALM_ENGINE_FUNC re_camera_t* re_create_camera(re_projection_type type, re_view_desc_t view_desc)
 {
 	re_camera_t* camera = (re_camera_t*)malloc(sizeof(re_camera_t));
 	camera->projection_type = type;
 	camera->camera_transform = new_transform;
+	
 	camera->size = view_desc.size;
 	camera->near_plane = view_desc.near_plane;
 	camera->far_plane = view_desc.far_plane;
 	camera->fov_degrees = view_desc.fov_angle;
-	camera->camera_transform.euler_rotation = new_vec3(0, 0, 0);
-	camera->camera_transform.rotation = vec4_zero;
+
 	return camera;
 
 }
 
 REALM_ENGINE_FUNC vec3 re_compute_camera_front(re_camera_t* camera)
 {
-	vec4 forward = mat4_mul_vec4(quat_rotation_matrix(camera->camera_transform.rotation), vec4_from_vec3(vec3_forward,1.0f));
+	vec4 forward = mat4_mul_vec4(quat_rotation_matrix(camera->camera_transform.rotation), vec4_from_vec3(vec3_forward, 1.0f));
 	return vec3_normalize(vec3_from_vec4(forward));
 
 }
@@ -578,11 +686,11 @@ REALM_ENGINE_FUNC vec3 re_compute_camera_right(re_camera_t* camera)
 REALM_ENGINE_FUNC mat4x4 re_camera_lookat(re_camera_t* camera)
 {
 	vec3 front = re_compute_camera_front(camera);
-	front = vec3_normalize(front);
+
 	vec3 up = re_compute_camera_up(camera);
 	vec3 centre = vec3_add(camera->camera_transform.position, front);
 	mat4x4 R = mat4_lookat(camera->camera_transform.position, centre, up);
-	
+
 	return R;
 
 }
@@ -610,13 +718,13 @@ REALM_ENGINE_FUNC mat4x4 re_compute_view_projection(re_camera_t* camera)
 {
 	mat4x4 projection = re_camera_projection(camera);
 	mat4x4 view = re_camera_lookat(camera);
-	
+
 	//mat4x4 view = compute_transform(camera->camera_transform);
 	return mat4_mul(projection, view);
 
 }
 
-REALM_ENGINE_FUNC re_result_t re_read_image(const char* path, re_texture_t* texture,re_texture_desc_t desc)
+REALM_ENGINE_FUNC re_result_t re_read_image(const char* path, re_texture_t* texture, re_texture_desc_t desc)
 {
 	texture->data = stbi_load(path, &texture->width, &texture->height, &texture->channels, 0);
 	texture->filter = desc.filter;
@@ -640,7 +748,7 @@ REALM_ENGINE_FUNC re_scenegraph_t* re_create_scenegraph(re_actor_t* actor)
 	re_scenegraph_t* graph;
 	graph = (re_scenegraph_t*)malloc(sizeof(re_scenegraph_t));
 	graph->parent = NULL;
-	graph->children =(re_scenegraph_t**) malloc(sizeof(re_scenegraph_t*) * _RE_SCENEGRAPH_CHILD_CHUNK_AMOUNT);
+	graph->children = (re_scenegraph_t**)malloc(sizeof(re_scenegraph_t*) * _RE_SCENEGRAPH_CHILD_CHUNK_AMOUNT);
 	graph->num_children = 0;
 	graph->root = actor;
 	return graph;
@@ -652,6 +760,99 @@ REALM_ENGINE_FUNC void init_actor(re_actor_t* actor)
 	memset(actor, 0, sizeof(re_actor_t));
 	actor->_scenegraph_node = re_create_scenegraph(actor);
 	actor->transform = new_transform;
+	actor->material_properties = new_vector(re_material_property_t, _RE_VECTOR_CHUNK_SIZE);
+
+}
+
+REALM_ENGINE_FUNC void re_set_material_vector(material_properties_list* material_list,const char* name, vec4 value)
+{
+	int i;
+	uint32_t hash = re_adler32_str(name);
+
+	re_material_property_t* target_property = NULL;
+	for (i = 0; i < material_list->count; i++)
+	{
+		re_material_property_t property = vector_get(re_material_property_t, material_list, i);
+		if (property.id == hash)
+		{
+			target_property = &property;
+		}
+	}
+	if (target_property == NULL)
+	{
+		re_material_property_t new_property = (re_material_property_t){
+			.id = hash,
+			.type = RE_VECTOR,
+			._data = (uint8_t*)malloc(sizeof(vec4))
+			
+		};
+		
+		target_property = vector_insert(re_material_property_t, material_list, new_property);
+
+
+	}
+
+	memcpy(target_property->_data, &value, sizeof(vec4));
+}
+
+REALM_ENGINE_FUNC vec4 re_get_material_vector(material_properties_list* material_list, const char* name)
+{
+	uint32_t hash = re_adler32_str(name);
+
+	re_material_property_t* target_property = NULL;
+	int i;
+	for (i = 0; i < material_list->count; i++)
+	{
+		re_material_property_t property = vector_get(re_material_property_t, material_list, i);
+		if (property.id == hash)
+		{
+			target_property = &property;
+		}
+	}
+	vec4 result;
+	if (target_property != NULL)
+	{
+		memcpy(&result, target_property->_data, sizeof(vec4));
+
+
+	}
+	else
+	{
+		result = vec4_zero;
+	}
+
+	return result;
+}
+
+REALM_ENGINE_FUNC void re_set_userdata_properties_from_materials(re_user_data_layout_t* layout, material_properties_list* materials)
+{
+	int i;
+	for (i = 0; i < layout->num_vars; i++)
+	{
+		re_material_property_t target_property;
+		int j;
+		for (j = 0; j < materials->count; j++)
+		{
+			if (vector_get(re_material_property_t, materials, j).id == layout->_hashes[i])
+			{
+				target_property = vector_get(re_material_property_t, materials, j);
+			}
+
+
+		}
+
+		switch (layout->var_types[i])
+		{
+		case RE_VECTOR:
+			re_set_userdata_vector(layout, layout->var_names[i], re_get_material_vector(materials, layout->var_names[i]));
+			break;
+		default:
+			break;
+		}
+
+
+	}
+
 
 }
 
@@ -666,10 +867,10 @@ REALM_ENGINE_FUNC void re_actor_add_child(re_actor_t* parent, re_actor_t* child)
 	parent->_scenegraph_node->children[parent->_scenegraph_node->num_children] = child->_scenegraph_node;
 	parent->_scenegraph_node->num_children++;
 	child->_scenegraph_node->parent = parent;
-	
+
 }
 
-REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh,vec3* positions, vec3* normals, vec2* texcoords, uint32_t mesh_size)
+REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh, vec3* positions, vec3* normals, vec2* texcoords, uint32_t mesh_size)
 {
 	size_t size_positions = sizeof(vec3) * mesh_size;
 	size_t size_normals = sizeof(vec3) * mesh_size;
@@ -678,7 +879,7 @@ REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh,vec3* positions, vec3* norma
 	mesh->normals = (vec3*)malloc(size_normals);
 	mesh->texcoords = (vec2*)malloc(size_uv);
 	memcpy(mesh->positions, positions, size_positions);
-	
+
 	memcpy(mesh->normals, normals, size_normals);
 	memcpy(mesh->texcoords, texcoords, size_uv);
 	mesh->mesh_size = mesh_size;
@@ -692,18 +893,19 @@ REALM_ENGINE_FUNC void re_set_mesh_triangles(re_mesh_t* mesh, uint32_t* triangle
 	mesh->num_triangles = num_triangles;
 }
 
-REALM_ENGINE_FUNC void re_draw_scene_recursive(re_actor_t* root)
+REALM_ENGINE_FUNC void re_draw_scene_recursive(re_actor_t* root,re_renderpass_t* renderpass)
 {
 	if (root->mesh.mesh_size > 0)
 	{
+		re_set_userdata_properties_from_materials(&renderpass->_user_data_layout, &root->material_properties);
 		re_upload_mesh_data(&root->mesh, &root->transform);
 		re_draw_triangles(root->mesh.num_triangles);
 	}
 	int i;
-	for(i = 0; i < root->_scenegraph_node->num_children;i++)
+	for (i = 0; i < root->_scenegraph_node->num_children; i++)
 	{
 		re_scenegraph_t* child = root->_scenegraph_node->children[i];
-		re_draw_scene_recursive(child->root);
+		re_draw_scene_recursive(child->root,renderpass);
 	}
 
 
@@ -730,13 +932,13 @@ REALM_ENGINE_FUNC re_result_t re_render_scene(re_actor_t* root)
 		glBindFramebuffer(GL_FRAMEBUFFER, pass._target_framebuffer->_id);
 		re_clear_color();
 		glClear(GL_DEPTH_BUFFER_BIT);
-		
+
 		glUseProgram(pass.shader_program._program_id);
 		pass._rendpass_cb(&pass, NULL);
 		switch (pass.target)
 		{
 		case SCENE:
-			re_draw_scene_recursive(root);
+			re_draw_scene_recursive(root,&pass);
 			break;
 		case SCREEN:
 			re_draw_triangles(6);
