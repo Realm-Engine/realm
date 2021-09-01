@@ -170,6 +170,7 @@ typedef struct _re_camera_data_t
 	float near_plane;
 	float far_plane;
 	vec2 screen_size;
+	vec4 camera_position;
 }_re_camera_data_t;
 
 typedef struct re_mainlight_t
@@ -877,6 +878,8 @@ REALM_ENGINE_FUNC re_result_t re_set_camera_data(re_camera_t* camera)
 	camera_data->far_plane = camera->far_plane;
 	camera_data->near_plane = camera->near_plane;
 	camera_data->screen_size = new_vec2(camera->size.x, camera->size.y);
+
+	camera_data->camera_position = mat4_mul_vec4(re_camera_lookat(camera), new_vec4(0, 0, 0, 1));
 }
 
 REALM_ENGINE_FUNC re_result_t re_free_texture_data(re_texture_t* texture)

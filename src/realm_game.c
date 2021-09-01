@@ -66,9 +66,9 @@ void realm_start(re_context_t ctx)
 	scene_root = &actors[0];
 	scene_root->mesh.mesh_size = 0;
 	square_actor = &actors[1];
-	light.color = vec3_one;
-	light.instensity = 1.0f;
-	light.transform.position = new_vec3(0, 2.0f, 0);
+	light.color = new_vec3(1.0,0.0,0.3);
+	light.instensity = 0.5f;
+	light.transform.position = new_vec3(-1.0, -0.5f, 0);
 	init_actor(scene_root);
 	init_actor(square_actor);
 	re_fill_mesh(&square_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);
@@ -77,12 +77,13 @@ void realm_start(re_context_t ctx)
 	square_actor->transform.position = new_vec3(0, -0.0f, -1.0f);
 	re_actor_add_child(scene_root, square_actor);
 	re_set_material_vector(&square_actor->material_properties, "color", new_vec4(1, 1, 1, 1));
-	re_update_ambient_light(vec3_scalar_mul(new_vec3(43,85,112),(float)1/255), 0.5f);
+	re_update_ambient_light(vec3_scalar_mul(new_vec3(43,85,112),(float)1/255), 0.0f);
 	re_add_pointlight(&light);
 	state.mainlight.color = new_vec3(255, 255, 255);
 	state.mainlight.color = vec3_scalar_mul(state.mainlight.color, (float)1 / 255);
-	state.mainlight.intensity = 0.0f;
+	state.mainlight.intensity = 1.0f;
 	state.mainlight.transform = new_transform;
+	
 	//state.mainlight.transform.rotation = euler_to_quat(new_vec3(deg_to_rad(90), 20, 0));
 	re_set_material_texture(&square_actor->material_textures, "diffuseMap", *wall_texture);
 	re_set_material_texture(&square_actor->material_textures, "normalMap", *wall_normal_texture);
@@ -99,7 +100,7 @@ void realm_update(re_context_t ctx)
 
 	float t = glfwGetTime();
 	float sint = re_sin(t);
-	state.mainlight.transform.rotation.y += sint * 0.01;
+	//state.mainlight.transform.rotation.y += sint * 0.01;
 	
 	re_update_vp(vp);
 	re_set_camera_data(state.camera);

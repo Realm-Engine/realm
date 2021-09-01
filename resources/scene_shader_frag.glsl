@@ -15,26 +15,19 @@ struct lightingData
 	pointLights pointLightData;
 };
 
-
-
-
-
-vec3 re_get_ambient_color(lightingData ld)
+struct camera
 {
-	return ld.ambientLight.xyz * ld.ambientLight.w;
-}
+	float near_plane;
+	float far_plane;
+	vec2 screen_size;
+	vec4 position;
+};
 
-in RESurfaceData
-{
-	vec4 surfaceColor;
-	vec2 uv;
-	vec3 normalWS;
-	vec2 viewPortSize;
-	lightingData surfaceLightingData;
-	vec3 posWS;
-	vec4 posCS;
-}RESurfaceDataIn;
-
+layout(std140,binding = 0) uniform _reGlobalData {
+	mat4 _vp;
+	camera _camera;
+	lightingData _lightingData;
+};
 
 struct FragmentInputData
 {
@@ -45,6 +38,22 @@ struct FragmentInputData
 	vec2 uv;
 
 };
+
+in RESurfaceData
+{
+	vec4 surfaceColor;
+	vec2 uv;
+	vec3 normalWS;
+	vec2 viewPortSize;
+	vec3 posWS;
+	vec4 posCS;
+}RESurfaceDataIn;
+
+
+vec3 re_get_ambient_color(lightingData ld)
+{
+	return ld.ambientLight.xyz * ld.ambientLight.w;
+}
 
 vec2 re_get_screenspace_uv()
 {
@@ -85,14 +94,21 @@ vec3 re_calc_pointlights_color(lightingData lighting,vec3 normal, vec3 fragPos)
 		vec3 direction = normalize(pos - fragPos);
 		float diff = max(dot(normal,direction),0.0);
 		vec3 diffuse = diff * color;
-		result = result + diffuse;
+		float specStrength = 0.5;
+		vec3 viewDir = normalize(_camera.position.xyz - fragPos);
+		vec3 reflectDir = reflect(-direction,normal);
+
+		float specularPower = pow(max(dot(viewDir,reflectDir),0.0),32);
+		float specular = specStrength * specularPower;
+
+		result = result + (diffuse * specular);
 	}
 	return result;
 }
 
 vec4 re_calculate_fragment(FragmentInputData fragIn)
 {
-	lightingData lighting = fragIn.surfaceLightingData;
+	lightingData lighting = _lightingData;
 
 	vec3 normalSample = re_calc_normalTS(fragIn.uv);
 	vec3 normal = normalize(normalSample * 2.0 - 1.0);
@@ -110,16 +126,16 @@ vec4 re_calculate_fragment(FragmentInputData fragIn)
 
 }
 
+
 void main()
 {
 	FragmentInputData fragIn;
 	fragIn.surfaceColor = RESurfaceDataIn.surfaceColor;
 	fragIn.normalWS = RESurfaceDataIn.normalWS;
-	fragIn.surfaceLightingData = RESurfaceDataIn.surfaceLightingData;
+
 	fragIn.posWS = RESurfaceDataIn.posWS;
 	fragIn.uv = RESurfaceDataIn.uv;
 	vec4 fragment = re_calculate_fragment(fragIn);
-
 	FragColor = fragment;
 
 }

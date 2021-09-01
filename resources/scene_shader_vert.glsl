@@ -3,13 +3,14 @@ layout(location = 0) in vec3 _position;
 layout(location = 1) in vec3 _normal;
 layout (location = 2) in vec2 _texture_uv;
 
+
 struct camera
 {
 	float near_plane;
 	float far_plane;
 	vec2 screen_size;
+	vec4 position;
 };
-
 
 struct pointLights
 {	
@@ -52,7 +53,6 @@ out RESurfaceData
 	vec2 uv;
 	vec3 normalWS;
 	vec2 viewPortSize;
-	lightingData surfaceLightingData;
 	vec3 posWS;
 	vec4 posCS;
 }RESurfaceDataOut;
@@ -66,7 +66,6 @@ void main() {
 		RESurfaceDataOut.viewPortSize = _camera.screen_size;
 		RESurfaceDataOut.surfaceColor = color;
 		RESurfaceDataOut.uv = _texture_uv;
-		RESurfaceDataOut.surfaceLightingData = _lightingData;
 		RESurfaceDataOut.normalWS = _normal;
 		gl_Position = RESurfaceDataOut.posCS;
 
