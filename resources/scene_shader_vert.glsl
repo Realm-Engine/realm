@@ -11,11 +11,19 @@ struct camera
 };
 
 
+struct pointLights
+{	
+	vec4 positions[4];
+	vec4 colors[4];
+	vec2 numLights;
+};
+
 struct lightingData
 {
 	vec4 ambientLight;
 	vec4 mainLightDirection;
 	vec4 mainLightColor;
+	pointLights pointLightData;
 };
 
 
@@ -45,16 +53,22 @@ out RESurfaceData
 	vec3 normalWS;
 	vec2 viewPortSize;
 	lightingData surfaceLightingData;
+	vec3 posWS;
+	vec4 posCS;
 }RESurfaceDataOut;
 
 
 
+
 void main() {
-		gl_Position = re_world_to_clipspace(_position);
+		RESurfaceDataOut.posCS = re_world_to_clipspace(_position);
+		RESurfaceDataOut.posWS = _position;
 		RESurfaceDataOut.viewPortSize = _camera.screen_size;
 		RESurfaceDataOut.surfaceColor = color;
 		RESurfaceDataOut.uv = _texture_uv;
 		RESurfaceDataOut.surfaceLightingData = _lightingData;
 		RESurfaceDataOut.normalWS = _normal;
+		gl_Position = RESurfaceDataOut.posCS;
+
 }
 

@@ -8,6 +8,7 @@
 typedef struct realm_state
 {
 	re_camera_t* camera;
+	re_mainlight_t mainlight;
 }realm_state;
 
 
@@ -19,6 +20,9 @@ re_actor_t actors[64];
 re_actor_t* scene_root;
 re_actor_t* square_actor;
 re_actor_t* other_actor;
+re_texture_t* wall_texture;
+re_texture_t* wall_normal_texture;
+re_pointlight_t light;
 void realm_start(re_context_t ctx);
 void realm_update(re_context_t ctx);
 void on_window_resize(re_context_t* ctx, int32_t width, int32_t height);

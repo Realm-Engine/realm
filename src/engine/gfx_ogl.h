@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include<stdio.h>
 
+vector_decl(GLint)
 
 typedef enum re_shader_type_t
 {
@@ -26,10 +27,12 @@ typedef struct re_shader_t
 	char* source;
 }re_shader_t;
 
+
+
 typedef struct _re_sampler_uniform_cache
 {
-	uint32_t* _hashes;
-	GLint* _locations;
+	vector(uint32_t) _hashes;
+	vector(GLint) _locations;
 	size_t _num_elements;
 
 }_re_sampler_uniform_cache;
@@ -39,7 +42,7 @@ typedef struct re_shader_program_t
 	GLuint _program_id;
 	char* name;
 	re_shader_t source[2];
-	_re_sampler_uniform_cache* _sampler_cache;
+	_re_sampler_uniform_cache _sampler_cache;
 
 
 }re_shader_program_t;
@@ -200,6 +203,7 @@ re_gfx_pipeline_t _re_gfx_pipeline;
 #define _ENUM_CONVERSION_FUNCTION(T, v) REALM_ENGINE_FUNC GLenum _##T##_to_glenum(T v)
 #define re_grab_screentexture RE_GRAPHICS_PIPELINE._main_renderpath._scene_fb->_fb_texture
 #define re_grab_depthtexture RE_GRAPHICS_PIPELINE._main_renderpath._depth_stencil_fb->_fb_texture
+#define ogl_texture_unit(unit) (GL_TEXTURE0+unit)
 _ENUM_CONVERSION_FUNCTION(re_texture_filter_func, func);
 _ENUM_CONVERSION_FUNCTION(re_texture_wrap_func, wrap_func);
 _ENUM_CONVERSION_FUNCTION(re_image_type, type);
@@ -233,8 +237,6 @@ REALM_ENGINE_FUNC re_result_t re_set_userdata_block(void* data, uint32_t size);
 REALM_ENGINE_FUNC re_renderpass_t* re_create_renderpass(re_renderpass_desc_t* desc);
 REALM_ENGINE_FUNC re_result_t re_use_renderpass(re_renderpass_t* pass);
 REALM_ENGINE_FUNC re_result_t _re_refresh_framebuffer(re_framebuffer_t* buffer);
-REALM_ENGINE_FUNC re_result_t re_update_vp(mat4x4 matrix);
-REALM_ENGINE_FUNC re_result_t re_set_camera_data(re_camera_t* camera);
 REALM_ENGINE_FUNC re_result_t re_use_framebuffer(re_framebuffer_t* fb);
 REALM_ENGINE_FUNC void _on_default_scene_render(re_renderpass_t* renderpass, void* userdata);
 REALM_ENGINE_FUNC void _on_default_screen_render(re_renderpass_t* renderpass, void* userdata);
@@ -245,8 +247,8 @@ REALM_ENGINE_FUNC re_result_t re_pipeline_end_draw();
 REALM_ENGINE_FUNC re_result_t re_draw_triangles(uint16_t numTris);
 REALM_ENGINE_FUNC void re_set_bg_color(float r, float g, float b, float a, uint8_t normalize);
 REALM_ENGINE_FUNC void re_clear_color();
-REALM_ENGINE_FUNC void re_update_main_light(vec3 direction, vec3 color, float strength);
-REALM_ENGINE_FUNC void re_update_ambient_light(vec3 color, float strength);
+
+
 
 #ifdef RE_GFX_IMPL
 
@@ -323,8 +325,11 @@ _ENUM_CONVERSION_FUNCTION(re_image_format, fmt)
 	GLenum result;
 	switch (fmt)
 	{
-	case RGBA8:
+	case RGB:
 		return GL_RGB;
+		break;
+	case RGBA8:
+		return GL_RGBA;
 		break;
 	case SRGB:
 		return GL_SRGB;
@@ -344,6 +349,9 @@ REALM_ENGINE_FUNC GLenum _re_image_format_to_gl_format(re_image_format fmt)
 {
 	switch (fmt)
 	{
+	case RGB:
+		return GL_RGB;
+		break;
 	case RGBA8:
 		return GL_RGBA;
 		break;
@@ -365,6 +373,9 @@ REALM_ENGINE_FUNC GLenum _re_image_format_to_gl_data_type(re_image_format fmt)
 {
 	switch (fmt)
 	{
+	case RGB:
+		return GL_UNSIGNED_BYTE;
+		break;
 	case RGBA8:
 		return GL_UNSIGNED_BYTE;
 		break;
@@ -504,6 +515,35 @@ REALM_ENGINE_FUNC re_result_t re_init_program(re_shader_program_t* program_data)
 		printf("%s\n", result);
 		return RE_ERROR;
 	}
+
+	uint32_t num_uniforms = 0;
+	glGetProgramiv(program_data->_program_id,GL_ACTIVE_UNIFORMS,&num_uniforms);
+	for (i = 0; i < num_uniforms; i++)
+	{
+		GLenum type;
+		glGetActiveUniformsiv(program_data->_program_id, 1, &i, GL_UNIFORM_TYPE, &type);
+		if (type == GL_SAMPLER_2D)
+		{
+			GLint name_len = 0;
+			glGetActiveUniformsiv(program_data->_program_id, 1, &i, GL_UNIFORM_NAME_LENGTH, &name_len);
+			char name[name_len];
+
+			
+			glGetActiveUniformName(program_data->_program_id, i, name_len, &name_len, &name);
+			printf("Sampler name: %s\n", name);
+			GLint location = glGetUniformLocation(program_data->_program_id, name);
+			_re_sampler_uniform_cache* cache = &program_data->_sampler_cache;
+			uint32_t hash = re_adler32_str(name);
+			vector_insert(GLint, &cache->_locations, location);
+			vector_insert(uint32_t, &cache->_hashes, hash);
+
+		}
+
+
+
+	}
+
+
 	return RE_OK;
 
 
@@ -555,8 +595,8 @@ REALM_ENGINE_FUNC re_result_t re_gen_texture(re_texture_t* texture)
 	glTexParameteri(target, GL_TEXTURE_WRAP_T, wrap);
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
 	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+	/*glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);*/
 	glTexImage2D(target, 0, internal_format, texture->width, texture->height, 0, format, type, texture->data);
 	glGenerateMipmap(target);
 	glBindTexture(target, 0);
@@ -799,24 +839,23 @@ REALM_ENGINE_FUNC re_result_t re_set_userdata_vector(re_user_data_layout_t* layo
 
 REALM_ENGINE_FUNC GLint _re_lookup_sampler_locations(re_shader_program_t* program, const char* name)
 {
-	_re_sampler_uniform_cache* cache = program->_sampler_cache;
+	_re_sampler_uniform_cache cache = program->_sampler_cache;
 	GLint result = -1;
 	uint32_t hash = re_adler32_str(name);
 	int i;
-	for (i = 0; i < cache->_num_elements; i++)
+	for (i = 0; i < cache._hashes.count; i++)
 	{
-		if (hash == cache->_hashes[i])
+		if (hash == cache._hashes.elements[i])
 		{
-			result = cache->_locations[i];
+			result = cache._locations.elements[i];
 		}
 	}
 	if (result < 0)
 	{
 		result = glGetUniformLocation(program->_program_id, name);
 		
-		cache->_hashes[cache->_num_elements] = hash;
-		cache->_locations[cache->_num_elements] = result;
-		cache->_num_elements++;
+		vector_insert(uint32_t, &cache._hashes, hash);
+		vector_insert(GLint, &cache._locations, result);
 	}
 	return result;
 
@@ -939,29 +978,6 @@ REALM_ENGINE_FUNC re_result_t re_update_vp( mat4x4 matrix)
 	return RE_OK;
 }
 
-REALM_ENGINE_FUNC void re_update_ambient_light(vec3 color, float strength)
-{
-	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
-	pipeline->re_global_data->lighting_data.ambient_light = vec4_from_vec3(color, strength);
-
-}
-
-REALM_ENGINE_FUNC void re_update_main_light(vec3 direction, vec3 color, float strength)
-{
-	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
-	pipeline->re_global_data->lighting_data.mainlight_color = vec4_from_vec3(color, strength);
-	pipeline->re_global_data->lighting_data.mainlight_direction = vec4_from_vec3(direction, 0);
-
-
-}
-REALM_ENGINE_FUNC re_result_t re_set_camera_data(re_camera_t* camera)
-{
-	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
-	_re_camera_data_t* camera_data = &pipeline->re_global_data->camera_data;
-	camera_data->far_plane = camera->far_plane;
-	camera_data->near_plane = camera->near_plane;
-	camera_data->screen_size = new_vec2(camera->size.x, camera->size.y);
-}
 
 REALM_ENGINE_FUNC re_result_t re_use_framebuffer(re_framebuffer_t* fb)
 {
@@ -995,23 +1011,26 @@ REALM_ENGINE_FUNC void _on_default_depth_render(re_renderpass_t* renderpass, voi
 
 REALM_ENGINE_FUNC re_result_t re_load_shaders(re_shader_program_t* program, const char* frag_path, const char* vert_path)
 {
-	char fragment[1024];
-	char vertex[1024];
-	memset(fragment, 0, sizeof(fragment));
-	memset(vertex, 0, sizeof(vertex));
+
+	/*memset(fragment, 0, sizeof(fragment));
+	memset(vertex, 0, sizeof(vertex));*/
+	long fragment_size = re_get_file_size(frag_path);
+	long vertex_size = re_get_file_size(vert_path);
+
+	char fragment[fragment_size];
+	char vertex[vertex_size];
 	re_read_text(frag_path, fragment);
 	re_read_text(vert_path, vertex);
 	program->source[0] = (re_shader_t){ .name = "Vertex",.source = vertex,.type = RE_VERTEX_SHADER };
 	program->source[1] = (re_shader_t){ .name = "Fragment",.source = fragment,.type = RE_FRAGMENT_SHADER };
 	re_compile_shader(&program->source[0]);
 	re_compile_shader(&program->source[1]);
-	re_init_program(program);
 	GLint max_tex_units = 0;
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_tex_units);
-	program->_sampler_cache = (_re_sampler_uniform_cache*)malloc(sizeof(_re_sampler_uniform_cache));
-	program->_sampler_cache->_locations = (GLint*)malloc(sizeof(GLint) * max_tex_units);
-	program->_sampler_cache->_hashes = (uint32_t*)malloc(sizeof(uint32_t) * max_tex_units);
-	program->_sampler_cache->_num_elements = 0;
+	program->_sampler_cache._hashes = new_vector(uint32_t, max_tex_units);
+	program->_sampler_cache._locations = new_vector(GLint, max_tex_units);
+	re_init_program(program);
+
 	return RE_OK;
 
 }
@@ -1040,7 +1059,7 @@ REALM_ENGINE_FUNC re_result_t _re_init_main_renderpath()
 	pipeline->_main_renderpath._scene_fb = re_create_framebuffer(&(re_framebuffer_desc_t) {
 		.attachment = RE_COLOR_ATTACHMENT,
 			.filter = LINEAR,
-			.format = SRGB
+			.format = RGB
 	});
 	pipeline->_main_renderpath._depth_stencil_fb = re_create_framebuffer(&(re_framebuffer_desc_t) {
 		.attachment = RE_DEPTH_ATTACHMENT,
@@ -1106,6 +1125,7 @@ REALM_ENGINE_FUNC re_result_t re_init_gfx_pipeline()
 	pipeline->_re_global_data_block = re_create_shader_block(RE_GLOBAL_DATA_REF, 0, 0);
 	pipeline->re_global_data = (re_global_data_t*)malloc(sizeof(re_global_data_t));
 	memset(pipeline->re_global_data, 0, sizeof(re_global_data_t));
+
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	pipeline->_re_user_data_block = re_create_shader_block(RE_USER_DATA_REF, 0, 0);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -1127,6 +1147,7 @@ REALM_ENGINE_FUNC re_result_t re_pipeline_start_draw()
 	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pipeline->_ibo);
 
 	uint32_t size = sizeof(re_global_data_t);
+
 	re_bind_shader_block(pipeline->_re_global_data_block, RE_GLOBAL_DATA_REF, 0);
 	re_update_shader_block(pipeline->_re_global_data_block, pipeline->re_global_data, 0, size);
 	//re_use_renderpass(pipeline->_screen_pass);
