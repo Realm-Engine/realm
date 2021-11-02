@@ -479,7 +479,7 @@ REALM_ENGINE_FUNC re_result_t re_compile_shader(re_shader_t* sh)
 		if (message != NULL)
 		{
 
-			printf("Error compiling shader %s \n %s\n",sh->name, message);
+			re_log(RE_HIGH,"Error compiling shader %s \n %s\n",sh->name, message);
 			return RE_ERROR;
 
 		}
@@ -493,6 +493,8 @@ REALM_ENGINE_FUNC re_result_t re_compile_shader(re_shader_t* sh)
 
 REALM_ENGINE_FUNC re_result_t re_init_program(re_shader_program_t* program_data)
 {
+	
+	re_log(RE_NONE, "Linking shader program %s\n", program_data->name);
 
 	int i;
 	program_data->_program_id = glCreateProgram();
@@ -512,7 +514,7 @@ REALM_ENGINE_FUNC re_result_t re_init_program(re_shader_program_t* program_data)
 	if (!success)
 	{
 		glGetProgramInfoLog(program_data->_program_id, 256, NULL, result);
-		printf("%s\n", result);
+		re_log(RE_HIGH,"Could not link program %s\n%s\n",program_data->name, result);
 		return RE_ERROR;
 	}
 
@@ -530,7 +532,7 @@ REALM_ENGINE_FUNC re_result_t re_init_program(re_shader_program_t* program_data)
 
 			
 			glGetActiveUniformName(program_data->_program_id, i, name_len, &name_len, &name);
-			printf("Sampler name: %s\n", name);
+		
 			GLint location = glGetUniformLocation(program_data->_program_id, name);
 			_re_sampler_uniform_cache* cache = &program_data->_sampler_cache;
 			uint32_t hash = re_adler32_str(name);
@@ -630,10 +632,19 @@ REALM_ENGINE_FUNC re_framebuffer_t* re_create_framebuffer(re_framebuffer_desc_t*
 
 REALM_ENGINE_FUNC re_result_t re_init_gfx()
 {
+	re_log(RE_NONE, "Initializing OpenGL\n");
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	const GLubyte* vendor = glGetString(GL_VENDOR);
+	const GLubyte* renderer = glGetString(GL_RENDERER);
+	const GLubyte* version = glGetString(GL_VERSION);
+	re_log(RE_NONE, "GPU Info\n");
+	re_log(RE_NONE, "Vendor:%s\n", vendor);
+	re_log(RE_NONE, "Device:%s\n", renderer);
+	re_log(RE_NONE, "API Info\n");
+	re_log(RE_NONE, "Version:%s\n", version);
 	return RE_OK;
 
 
@@ -674,7 +685,7 @@ REALM_ENGINE_FUNC re_result_t re_upload_mesh_data(re_mesh_t* mesh, re_transform_
 				glBufferSubData(GL_ARRAY_BUFFER, dst, attri_size, &positions[i]);
 				break;
 			case RE_TEXCOORD_ATTRIBUTE:
-				glBufferSubData(GL_ARRAY_BUFFER, dst, attri_size, &mesh->texcoords[i]);
+				glBufferSubData(GL_ARRAY_BUFFER, dst, attri_size, &mesh->texcoords.elements[i]);
 				break;
 			case RE_NORMAL_ATTRIBUTE:
 				glBufferSubData(GL_ARRAY_BUFFER, dst, attri_size, &normals[i]);
@@ -687,7 +698,7 @@ REALM_ENGINE_FUNC re_result_t re_upload_mesh_data(re_mesh_t* mesh, re_transform_
 
 
 
-	re_upload_index_data(mesh->triangles, 6);
+	re_upload_index_data(mesh->triangles, mesh->num_triangles);
 
 	return RE_OK;
 
@@ -1046,13 +1057,13 @@ REALM_ENGINE_FUNC re_result_t _re_init_main_renderpath()
 	re_load_shaders(&screen_shader, "./resources/screen_shader_frag.glsl", "./resources/screen_shader_vert.glsl");
 	re_shader_program_t scene_shader;
 	scene_shader = (re_shader_program_t){
-			.name = "Default",
+			.name = "Scene shader",
 	};
 	re_load_shaders(&scene_shader, "./resources/scene_shader_frag.glsl", "./resources/scene_shader_vert.glsl");
 	re_shader_program_t depth_shader;
 	depth_shader = (re_shader_program_t)
 	{
-		.name = "Depth",
+		.name = "Depth prepass",
 
 	};
 	re_load_shaders(&depth_shader, "./resources/depth_shader_frag.glsl", "./resources/depth_shader_vert.glsl");
@@ -1103,6 +1114,7 @@ REALM_ENGINE_FUNC re_result_t _re_init_main_renderpath()
 
 REALM_ENGINE_FUNC re_result_t re_init_gfx_pipeline()
 {
+	re_log(RE_NONE, "Creating graphics pipeline\n");
 	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
 	glGenVertexArrays(1, &pipeline->_vao);
 

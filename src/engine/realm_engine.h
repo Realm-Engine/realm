@@ -37,7 +37,7 @@ typedef struct _##T##_node\
 	struct _##T##_node * next;\
 	T value;\
 }_##T##_node;\
-static inline _##T##_node* _linked_list_##T##_enumerate_func(_##T##_node* current, T* val)\
+static  _##T##_node* _linked_list_##T##_enumerate_func(_##T##_node* current, T* val)\
 {\
 	if(current->next == NULL)\
 	{\
@@ -46,7 +46,7 @@ static inline _##T##_node* _linked_list_##T##_enumerate_func(_##T##_node* curren
 	*val = current->next->value;\
 	return current->next;\
 }\
-static inline _##T##_node* _##T##_node_create(T val)\
+static  _##T##_node* _##T##_node_create(T val)\
 {\
 	_##T##_node* node = (_##T##_node*)malloc(sizeof(_##T##_node));\
 	node->value = val;\
@@ -57,7 +57,7 @@ typedef struct _linked_list_##T\
 {\
 	_##T##_node * _head;\
 } _linked_list_##T;\
-static inline _##T##_node* _linked_list_##T##_append(_linked_list_##T * ll,T value)\
+static  _##T##_node* _linked_list_##T##_append(_linked_list_##T * ll,T value)\
 {\
 	_##T##_node* current = ll->_head;\
 	if(current == NULL)\
@@ -72,7 +72,7 @@ static inline _##T##_node* _linked_list_##T##_append(_linked_list_##T * ll,T val
 	current->next = _##T##_node_create(value);\
 	return current->next;\
 }\
-static inline void _linked_list_##T##_free(_linked_list_##T * ll)\
+static  void _linked_list_##T##_free(_linked_list_##T * ll)\
 {\
 	_##T##_node* current = ll->_head;\
 	while(current != NULL)\
@@ -101,7 +101,7 @@ typedef struct vector(T)\
 	size_t count;\
 	size_t capacity;\
 }vector(T);\
-static inline vector(T) _new_vector_##T(size_t reserve)\
+static  vector(T) _new_vector_##T(size_t reserve)\
 {\
 	vector(T) v;\
 	v.elements = (T *)malloc(sizeof(T) * reserve);\
@@ -110,12 +110,12 @@ static inline vector(T) _new_vector_##T(size_t reserve)\
 	v.count = 0;\
 	return v;\
 }\
-static inline void _vector_##T##_resize(vector(T) * vector, size_t size)\
+static  void _vector_##T##_resize(vector(T) * vector, size_t size)\
 {\
 	vector->capacity = size;\
 	vector->elements = ( T *)realloc(vector->elements,sizeof( T ) * size);\
 }\
-static inline T * _vector_##T##_insert(vector(T) * vector,T value)\
+static  T * _vector_##T##_insert(vector(T) * vector,T value)\
 {\
 	if(vector->count + 1 > vector->capacity)\
 	{\
@@ -136,28 +136,32 @@ static inline T * _vector_##T##_insert(vector(T) * vector,T value)\
 	vector->count += 1;\
 	return new_element;\
 }\
-static inline T _vector_##T##_get(vector(T)* vector, size_t index )\
+static  T _vector_##T##_get(vector(T)* vector, size_t index )\
 {\
 	return vector->elements[index];\
 }\
-static inline void _vector_##T##_set(vector(T)* vector, size_t index, T value )\
+static  void _vector_##T##_set(vector(T)* vector, size_t index, T value )\
 {\
 	vector->elements[index] = value;\
 }\
-
+static  void _vector_##T##_free(vector(T)* vector)\
+{\
+	free(vector->elements);\
+}\
 
 #define vector_insert(T,vector,value) _vector_##T##_insert(vector,value)
 #define new_vector(T,size) _new_vector_##T(size)
 #define vector_resize(T,vector,size) _vector_##T##_resize(vector,size)
 #define vector_get(T,vector,index) _vector_##T##_get(vector,index)
 #define vector_set(T,vector,index,value) _vector_##T##_get(vector,index,value)
-
-vector_decl(uint32_t)
-
-
+#define vector_free(T,vector) _vector_##T##_free(vector)
 #pragma endregion
 
 
+vector_decl(uint32_t)
+vector_decl(vec4);
+vector_decl(vec3);
+vector_decl(vec2);
 typedef enum re_result_t
 {
 	RE_OK,
@@ -188,11 +192,10 @@ typedef struct re_pointlight_t
 	re_transform_t transform;
 	vec3 color;
 	float instensity;
-	
+
 
 }re_pointlight_t;
 
-vector_decl(vec4);
 
 
 typedef struct re_pointlights_data
@@ -428,9 +431,9 @@ typedef vector(re_material_property_t) re_material_properties_list;
 
 typedef struct re_mesh_t
 {
-	vec3* positions;
-	vec3* normals;
-	vec2* texcoords;
+	vector(vec3) positions;
+	vector(vec3) normals;
+	vector(vec2) texcoords;
 	uint32_t* triangles;
 	uint16_t mesh_size;
 	uint16_t num_triangles;
@@ -467,6 +470,13 @@ typedef struct re_scenegraph_t
 
 }re_scenegraph_t;
 
+typedef enum re_log_severeity
+{
+	RE_NONE,
+	RE_LOW,
+	RE_WARNING,
+	RE_HIGH
+}re_log_severeity;
 
 
 #pragma region Function defines
@@ -480,7 +490,7 @@ REALM_ENGINE_FUNC void _re_poll_events();
 REALM_ENGINE_FUNC void _re_swap_buffers();
 REALM_ENGINE_FUNC void re_start();
 REALM_ENGINE_FUNC re_result_t re_context_size(int* width, int* height);
-REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t* mesh,vec3* positions, vec3* normals);
+REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t* mesh, vec3* positions, vec3* normals);
 REALM_ENGINE_FUNC re_result_t re_read_text(const char* filePath, char* buffer);
 REALM_ENGINE_FUNC re_camera_t* re_create_camera(re_projection_type type, re_view_desc_t view_desc);
 REALM_ENGINE_FUNC vec3 re_compute_camera_front(re_camera_t* camera);
@@ -508,6 +518,8 @@ REALM_ENGINE_FUNC vec4 re_get_material_vector(re_material_properties_list* mater
 REALM_ENGINE_FUNC void re_set_userdata_properties_from_materials(re_user_data_layout_t* layout, re_material_properties_list* materials);
 REALM_ENGINE_FUNC uint32_t re_adler32_str(const char* buffer);
 REALM_ENGINE_FUNC long re_get_file_size(const char* file);
+REALM_ENGINE_FUNC void re_log(re_log_severeity severeity, const char* msg, ...);
+
 
 #define material_id(name) re_adler32_str(name);
 
@@ -516,6 +528,10 @@ REALM_ENGINE_FUNC long re_get_file_size(const char* file);
 #endif
 #include "gfx_ogl.h"
 #pragma endregion
+
+#ifdef RE_OBJ_IMPL
+#include "re_obj_loader.h"
+#endif
 
 REALM_ENGINE_FUNC void re_draw_scene_recursive(re_actor_t* node, re_renderpass_t* renderpass);
 
@@ -617,9 +633,11 @@ REALM_ENGINE_FUNC uint32_t re_adler32_str(const char* buffer)
 }
 
 REALM_ENGINE_FUNC re_result_t re_init(re_app_desc_t app) {
+	re_log(RE_NONE, "Starting Realm Engine...\n");
+	re_log(RE_NONE, "Initializing GLFW\n");
 	if (!glfwInit())
 	{
-		printf("Could not init glfw!\n");
+		re_log(RE_HIGH, "Could not init glfw!\n");
 	}
 
 	memset(&_re_context.event_handlers, NULL, sizeof(re_event_handler_desc_t));
@@ -655,6 +673,7 @@ REALM_ENGINE_FUNC void _re_swap_buffers()
 
 REALM_ENGINE_FUNC void re_start()
 {
+	re_log(RE_NONE, "Starting Realm Engine main loop\n");
 	_re_context.event_handlers.on_start(_re_context);
 	while (!glfwWindowShouldClose(_re_context._window))
 	{
@@ -684,11 +703,11 @@ REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t*
 	int i;
 	for (i = 0; i < 4; i++)
 	{
-		vec4 wsPos = mat4_mul_vec4(model, vec4_from_vec3(mesh->positions[i], 1.0f));
-		vec4 wsNormal = mat4_mul_vec4(trans_inv, vec4_from_vec3(mesh->normals[i], 1.0f));
+		vec4 wsPos = mat4_mul_vec4(model, vec4_from_vec3(mesh->positions.elements[i], 1.0f));
+		vec4 wsNormal = mat4_mul_vec4(trans_inv, vec4_from_vec3(mesh->normals.elements[i], 1.0f));
 		positions[i] = vec3_from_vec4(wsPos);
 		normals[i] = vec3_from_vec4(wsNormal);
-		
+
 	}
 
 }
@@ -737,7 +756,7 @@ REALM_ENGINE_FUNC re_camera_t* re_create_camera(re_projection_type type, re_view
 	re_camera_t* camera = (re_camera_t*)malloc(sizeof(re_camera_t));
 	camera->projection_type = type;
 	camera->camera_transform = new_transform;
-	
+
 	camera->size = view_desc.size;
 	camera->near_plane = view_desc.near_plane;
 	camera->far_plane = view_desc.far_plane;
@@ -986,22 +1005,22 @@ REALM_ENGINE_FUNC re_result_t re_set_material_texture(re_material_textures_t* li
 
 }
 
-REALM_ENGINE_FUNC void re_set_material_vector(re_material_properties_list* material_list,const char* name, vec4 value)
+REALM_ENGINE_FUNC void re_set_material_vector(re_material_properties_list* material_list, const char* name, vec4 value)
 {
-	
+
 	uint32_t id = material_id(name);
 
-	re_material_property_t* target_property = re_find_material_property(material_list,id);
-	
+	re_material_property_t* target_property = re_find_material_property(material_list, id);
+
 	if (target_property == NULL)
 	{
 		re_material_property_t new_property = (re_material_property_t){
 			.id = id,
 			.type = RE_VECTOR,
 			._data = (uint8_t*)malloc(sizeof(vec4))
-			
+
 		};
-		
+
 		target_property = vector_insert(re_material_property_t, material_list, new_property);
 
 
@@ -1014,8 +1033,8 @@ REALM_ENGINE_FUNC vec4 re_get_material_vector(re_material_properties_list* mater
 {
 	uint32_t id = material_id(name);
 
-	re_material_property_t* target_property = re_find_material_property(material_list,id);
-	
+	re_material_property_t* target_property = re_find_material_property(material_list, id);
+
 	vec4 result;
 	if (target_property != NULL)
 	{
@@ -1069,7 +1088,7 @@ REALM_ENGINE_FUNC re_set_samplers_from_material(re_material_textures_t* list, re
 	for (i = 0; i < list->textures.count; i++)
 	{
 		re_texture_t texture = re_get_material_texture(list, list->texture_ids.elements[i]);
-		
+
 
 	}
 }
@@ -1093,13 +1112,13 @@ REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh, vec3* positions, vec3* norm
 	size_t size_positions = sizeof(vec3) * mesh_size;
 	size_t size_normals = sizeof(vec3) * mesh_size;
 	size_t size_uv = sizeof(vec2) * mesh_size;
-	mesh->positions = (vec3*)malloc(size_positions);
-	mesh->normals = (vec3*)malloc(size_normals);
-	mesh->texcoords = (vec2*)malloc(size_uv);
-	memcpy(mesh->positions, positions, size_positions);
+	mesh->normals = new_vector(vec3, mesh_size);
+	mesh->positions = new_vector(vec3, mesh_size);
+	mesh->texcoords = new_vector(vec2, mesh_size);
+	memcpy(mesh->positions.elements, positions, size_positions);
 
-	memcpy(mesh->normals, normals, size_normals);
-	memcpy(mesh->texcoords, texcoords, size_uv);
+	memcpy(mesh->normals.elements, normals, size_normals);
+	memcpy(mesh->texcoords.elements, texcoords, size_uv);
 	mesh->mesh_size = mesh_size;
 
 }
@@ -1111,7 +1130,7 @@ REALM_ENGINE_FUNC void re_set_mesh_triangles(re_mesh_t* mesh, uint32_t* triangle
 	mesh->num_triangles = num_triangles;
 }
 
-REALM_ENGINE_FUNC void re_set_userdata_textures(re_material_textures_t* textures,re_shader_program_t* program)
+REALM_ENGINE_FUNC void re_set_userdata_textures(re_material_textures_t* textures, re_shader_program_t* program)
 {
 	int i, j;
 	_re_sampler_uniform_cache samplers = program->_sampler_cache;
@@ -1134,7 +1153,7 @@ REALM_ENGINE_FUNC void re_set_userdata_textures(re_material_textures_t* textures
 
 }
 
-REALM_ENGINE_FUNC void re_draw_scene_recursive(re_actor_t* root,re_renderpass_t* renderpass)
+REALM_ENGINE_FUNC void re_draw_scene_recursive(re_actor_t* root, re_renderpass_t* renderpass)
 {
 	if (root->mesh.mesh_size > 0)
 	{
@@ -1147,7 +1166,7 @@ REALM_ENGINE_FUNC void re_draw_scene_recursive(re_actor_t* root,re_renderpass_t*
 	for (i = 0; i < root->_scenegraph_node->num_children; i++)
 	{
 		re_scenegraph_t* child = root->_scenegraph_node->children[i];
-		re_draw_scene_recursive(child->root,renderpass);
+		re_draw_scene_recursive(child->root, renderpass);
 	}
 
 
@@ -1180,7 +1199,7 @@ REALM_ENGINE_FUNC re_result_t re_render_scene(re_actor_t* root)
 		switch (pass.target)
 		{
 		case SCENE:
-			re_draw_scene_recursive(root,&pass);
+			re_draw_scene_recursive(root, &pass);
 			break;
 		case SCREEN:
 			re_draw_triangles(6);
@@ -1196,6 +1215,42 @@ REALM_ENGINE_FUNC re_result_t re_render_scene(re_actor_t* root)
 
 
 }
+
+#define LOG_SIZE 256
+#ifdef REALM_ENGINE_DEBUG
+void re_log(re_log_severeity severity, const char* format, ...)
+{
+
+	char* buffer = _alloca(LOG_SIZE);
+	memset(buffer, 0, LOG_SIZE);
+	int size_label = 0;
+	switch (severity)
+	{
+	case RE_NONE:
+		size_label = sprintf(buffer, "[Realm Engine::LOG] ");
+		break;
+	case RE_LOW:
+		size_label = sprintf(buffer, "[Realm Engine::LOW] ");
+		break;
+	case RE_WARNING:
+		size_label = sprintf(buffer, "[Realm Engine::WARNING] ");
+		break;
+	case RE_HIGH:
+		size_label = sprintf(buffer, "[Realm Engine::HIGH] ");
+		break;
+
+	default:
+
+		break;
+	}
+	va_list argptr;
+	va_start(argptr, format);
+	vsnprintf(&buffer[size_label], LOG_SIZE - size_label, format, argptr);
+	va_end(argptr);
+	printf(buffer);
+
+}
+#endif
 
 #endif
 #endif

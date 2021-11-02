@@ -1,5 +1,6 @@
 
 #define REALM_ENGINE_IMPL
+#define REALM_ENGINE_DEBUG
 #include "realm_game.h"
 
 void realm_main()
@@ -27,7 +28,6 @@ void realm_main()
 void realm_start(re_context_t ctx)
 {
 
-	printf("Start");
 	int width = 0;
 	int height = 0;
 	re_context_size(&width, &height);
@@ -67,13 +67,22 @@ void realm_start(re_context_t ctx)
 	scene_root->mesh.mesh_size = 0;
 	square_actor = &actors[1];
 	light.color = new_vec3(1.0,0.0,0.3);
-	light.instensity = 0.5f;
+	light.instensity = 1.0f;
 	light.transform.position = new_vec3(-1.0, -0.5f, 0);
 	init_actor(scene_root);
 	init_actor(square_actor);
-	re_fill_mesh(&square_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);
-	re_set_mesh_triangles(&square_actor->mesh, square_triangles, 6);
+	//re_parse_obj_geo("./resources/Plane.obj",&square_actor->mesh);
+	tinyobj_attrib_t shape_attrib;
+	tinyobj_shape_t* shapes = NULL;
+	size_t num_shapes;
+	tinyobj_material_t* materials = NULL;
+	size_t num_materials;
+	//tinyobj_parse_obj(&shape_attrib, &shapes, &num_shapes, &materials, &num_materials, "./resources/Plane.obj",read_obj_file, NULL, TINYOBJ_FLAG_TRIANGULATE);
+	//obj_to_mesh(&shape_attrib, shapes, &square_actor->mesh);
+	//re_set_mesh_triangles(&square_actor->mesh, square_triangles, 6);
+	//re_fill_mesh(&square_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);
 	//square_actor->transform.rotation = euler_to_quat(new_vec3(deg_to_rad(90), 0, 0));
+	
 	square_actor->transform.position = new_vec3(0, -0.0f, -1.0f);
 	re_actor_add_child(scene_root, square_actor);
 	re_set_material_vector(&square_actor->material_properties, "color", new_vec4(1, 1, 1, 1));
@@ -88,7 +97,82 @@ void realm_start(re_context_t ctx)
 	re_set_material_texture(&square_actor->material_textures, "diffuseMap", *wall_texture);
 	re_set_material_texture(&square_actor->material_textures, "normalMap", *wall_normal_texture);
 	//re_query_userdata_layout(&state.pipeline, layout);
+	 
 
+}
+
+void obj_to_mesh(tinyobj_attrib_t* attributes, tinyobj_shape_t* shapes, re_mesh_t* mesh)
+{
+	vector(vec3) vertices = new_vector(vec3, attributes->num_faces);
+	vector(vec3) normals = new_vector(vec3, attributes->num_normals);
+	vector(vec2) texcoords = new_vector(vec2, attributes->num_faces);
+	vector(uint32_t) faces = new_vector(uint32_t, attributes->num_faces);
+	vec3* mesh_vertices = (vec3*)malloc(sizeof(vec3) * attributes->num_vertices);
+	vec3* mesh_normals = (vec3*)malloc(sizeof(vec3) * attributes->num_vertices);
+	vec3* mesh_texcoords = (vec3*)malloc(sizeof(vec3) * attributes->num_vertices);
+	int i, j;
+	/*for (i = 0; i < attributes->num_vertices; i++)
+	{
+		vec3 vertex = new_vec3(attributes->vertices[i], attributes->vertices[i + 1], attributes->vertices[i + 2]);
+
+		vector_insert(vec3, &vertices,vertex );
+
+
+	}
+	for (i = 0; i < attributes->num_normals; i++)
+	{
+		vec3 normal = new_vec3(attributes->normals[i], attributes->normals[i + 1], attributes->normals[i + 2]);
+		vector_insert(vec3, &normals, normal);
+	}
+
+	for (i = 0; i < attributes->num_texcoords; i++)
+	{
+		vec2 texcoord = new_vec2(attributes->texcoords[i], attributes->texcoords[i + 1]);
+		vector_insert(vec2, &texcoords, texcoord);
+	}*/
+
+	for (i = 0; i < attributes->num_faces; i++)
+	{
+		tinyobj_vertex_index_t idx = attributes->faces[i];
+		re_log(RE_NONE, "\nV: %d \nVN: %d, \nVT: %d\n", idx.v_idx, idx.vn_idx, idx.vt_idx);
+		vertices.elements[idx.v_idx] = new_vec3(attributes->vertices[idx.v_idx], attributes->vertices[idx.v_idx + 1], attributes->vertices[idx.v_idx + 2]);
+		normals.elements[idx.vn_idx] = new_vec3(attributes->normals[idx.vn_idx], attributes->normals[idx.vn_idx + 1], attributes->normals[idx.vn_idx + 2]);
+		texcoords.elements[idx.vt_idx] = new_vec2(attributes->texcoords[idx.vt_idx], attributes->texcoords[idx.vt_idx + 1]);
+		vertices.count++;
+		normals.count++;
+		texcoords.count++;
+		vector_insert(uint32_t, &faces, i);
+	}
+	re_fill_mesh(mesh, vertices.elements, normals.elements, texcoords.elements, attributes->num_faces);
+	re_set_mesh_triangles(mesh, faces.elements, attributes->num_faces);
+
+
+
+}
+
+
+void read_obj_file(void* ctx, const char* filename, const int is_mtl, const char* obj_filename, char** buff, size_t* len)
+{
+
+	if (!obj_filename) {
+		re_log(RE_ERROR, "No filename provided");
+		(*buff) = NULL;
+		(*len) = 0;
+		return;
+	}
+
+	const char* ext = strrchr(obj_filename, '.');
+	size_t length = 0;
+	if (strcmp(ext, ".obj") == 0)
+	{
+		char tmp[1024];
+		char* base_dir_name = NULL;
+		long size = re_get_file_size(obj_filename);
+		*buff = malloc(sizeof(size));
+		re_read_text(obj_filename, *buff);
+		*len = size;
+		
+	}
 
 }
 
@@ -170,12 +254,10 @@ void on_mouse_action(re_context_t* ctx, re_mouse_button_action_t action, int32_t
 {
 	if (button == GLFW_MOUSE_BUTTON_RIGHT && (action == GLFW_PRESS ))
 	{
-		printf("Mouse right\n");
 		state.mainlight.transform.rotation.y += 0.1f;
 	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT && (action == GLFW_PRESS))
 	{
-		printf("Mouse right\n");
 		state.mainlight.transform.rotation.y -= 0.1f;
 	}
 

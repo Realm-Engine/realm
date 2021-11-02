@@ -1,5 +1,6 @@
 #pragma once
 #include <math.h>
+
 #define RELAM_ENGINE_FUNC static inline
 
 
@@ -65,30 +66,31 @@ typedef struct re_transform_t
 
 
 #define PI  3.14159265359
-#define new_vec2(x,y) (vec2){x,y}
-#define new_vec3(x,y,z)		(vec3){x,y,z}
-#define new_vec4(x,y,z,w)	(vec4){x,y,z,w}
-#define new_mat4x4(x,y,z,w) (mat4x4){x,y,z,w}
-#define vec4_from_vec3(v,w) (vec4){v.x,v.y,v.z,w}
-#define vec3_from_vec4(v) (vec3){v.x,v.y,v.z}
-#define vec3_up	(vec3){0,1,0}
-#define vec3_forward (vec3){0,0,1}
-#define vec3_back (vec3){0,0,-1}
-#define vec3_right (vec3){1,0,0}
-#define vec3_one (vec3){1,1,1}
-#define vec4_one (vec4){1,1,1,1}
-#define vec2_zero (vec2) {0,0}
-#define vec3_zero (vec3){0,0,0}
-#define vec4_zero (vec4){0,0,0,0}
+#define new_vec2(x,y) ((vec2){x,y})
+#define new_vec3(x,y,z)		((vec3){x,y,z})
+#define new_vec4(x,y,z,w)	((vec4){x,y,z,w})
+#define new_mat4x4(x,y,z,w) ((mat4x4){x,y,z,w})
+#define vec4_from_vec3(v,w) ((vec4){v.x,v.y,v.z,w})
+#define vec3_from_vec4(v) ((vec3){v.x,v.y,v.z})
+#define vec3_up	((vec3){0,1,0})
+#define vec3_forward ((vec3){0,0,1})
+#define vec3_back ((vec3){0,0,-1})
+#define vec3_right ((vec3){1,0,0})
+#define vec3_one ((vec3){1,1,1})
+#define vec4_one ((vec4){1,1,1,1})
+#define vec2_zero ((vec2) {0,0})
+#define vec3_zero ((vec3){0,0,0})
+#define vec4_zero ((vec4){0,0,0,0})
 #define vec4_up vec4_from_vec3(vec3_up)
 #define new_quaternion(x,y,z,w) new_vec4(x,y,z,w)
-#define vec4_as_quat(v) (quaternion)v
-#define quat_as_vec4(q) (vec4)q
-#define quat_as_vec3(q) new_vec3(q.x,q.y,q.z)
-#define vec3_to_string(v) printf("X:%f Y:%f Z:%f " ,v.x,v.y,v.z)
-#define vec4_to_string(v) "X:%f Y:%f Z:%f W:%f",v.x,v.y,v.z,v.w
-#define mat4_zero (mat4x4){vec4_zero,vec4_zero,vec4_zero,vec4_zero}
-#define mat4_one (mat4x4){vec4_one,vec4_one,vec4_one,vec4_one}
+#define vec4_as_quat(v) ((quaternion)v)
+#define quat_as_vec4(q) ((vec4)q)
+#define quat_as_vec3(q) (new_vec3(q.x,q.y,q.z))
+#define vec3_to_string(v) (printf("X:%f Y:%f Z:%f " ,v.x,v.y,v.z))
+#define vec2_to_string(v) ("X:%f, Y:%d",v.x,v.y)
+#define vec4_to_string(v) ("X:%f Y:%f Z:%f W:%f",v.x,v.y,v.z,v.w)
+#define mat4_zero ((mat4x4){vec4_zero,vec4_zero,vec4_zero,vec4_zero})
+#define mat4_one ((mat4x4){vec4_one,vec4_one,vec4_one,vec4_one})
 
 
 #define re_cos(x) cosf(x)
@@ -113,7 +115,8 @@ static inline T T##_scale(const T a, T b) \
 {\
 	T r;\
 	memset(&r,0,sizeof(T));\
-	for(int i = 0; i < n; i++)\
+	int i;\
+	for(i = 0; i < n; i++)\
 	{\
 		r.ptr_raw[i] = a.ptr_raw[i] * b.ptr_raw[i];\
 	}\
@@ -122,7 +125,8 @@ static inline T T##_scale(const T a, T b) \
 static inline float T##_len(T v)\
 {\
 	float result = 0;\
-	for(int i = 0; i < n; i++)\
+	int i;\
+	for(i = 0; i < n; i++)\
 	{\
 		result += v.ptr_raw[i] * v.ptr_raw[i];\
 	}\
@@ -131,7 +135,8 @@ static inline float T##_len(T v)\
 static inline float T##_dot(const T a, const T b)\
 {\
 	float r = 0;\
-	for(int i = 0; i < n; i++)\
+	int i;\
+	for(i = 0; i < n; i++)\
 	{\
 		r+=a.ptr_raw[i] * b.ptr_raw[i];\
 	}\
@@ -141,7 +146,8 @@ static inline T T##_add(const T a, const T b)\
 {\
 	T r;\
 	memset(&r, 0, sizeof(T));\
-	for(int i = 0; i < n;i++)\
+	int i;\
+	for(i = 0; i < n;i++)\
 	{\
 		r.ptr_raw[i] = a.ptr_raw[i] + b.ptr_raw[i];\
 	}\
@@ -151,7 +157,8 @@ static inline T T##_subtract(const T a, const T b)\
 {\
 	T r;\
 	memset(&r, 0, sizeof(T));\
-	for(int i = 0; i < n;i++)\
+	int i;\
+	for(i = 0; i < n;i++)\
 	{\
 		r.ptr_raw[i] = a.ptr_raw[i] - b.ptr_raw[i];\
 	}\
@@ -161,7 +168,8 @@ static inline T T##_scalar_mul(const T a, float scalar)\
 {\
 	T r;\
 	memset(&r, 0, sizeof(T));\
-	for(int i = 0; i < n;i++)\
+	int i;\
+	for(i = 0; i < n;i++)\
 	{\
 		r.ptr_raw[i] = a.ptr_raw[i] * scalar;\
 	}\
@@ -181,7 +189,8 @@ static inline T T##_square(const T v)\
 {\
 	T r;\
 	memset(&r, 0, sizeof(T));\
-	for(int i = 0;i < n; i++)\
+	int i;\
+	for( i = 0;i < n; i++)\
 	{\
 		r.ptr_raw[i] = v.ptr_raw[i] * v.ptr_raw[i];\
 	}\
@@ -220,14 +229,14 @@ static inline mat4x4 mat4_mul(const mat4x4 a, const mat4x4 b)
 {
 	mat4x4 r;
 	memset(&r, 0, sizeof(mat4x4));
-
-	for (int i = 0; i < 4; i++)
+	int i,j,k;
+	for (i = 0; i < 4; i++)
 	{
 
 
-		for (int j = 0; j < 4; j++)
+		for (j = 0; j < 4; j++)
 		{
-			for (int k = 0; k < 4; k++)
+			for (k = 0; k < 4; k++)
 			{
 				r.ptr_raw[i].ptr_raw[j] += a.ptr_raw[k].ptr_raw[j] * b.ptr_raw[i].ptr_raw[k];
 
@@ -249,10 +258,11 @@ static inline vec4 mat4_mul_vec4(const mat4x4 M, const vec4 v)
 {
 	vec4 r;
 	memset(&r, 0, sizeof(vec4));
-	for (int j = 0; j < 4; j++)
+	int j, i;
+	for ( j = 0; j < 4; j++)
 	{
 
-		for (int i = 0; i < 4; i++)
+		for ( i = 0; i < 4; i++)
 		{
 			r.ptr_raw[j] += M.ptr_raw[i].ptr_raw[j] * v.ptr_raw[i];
 

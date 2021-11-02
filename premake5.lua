@@ -15,6 +15,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 IncludeDir = {}
 IncludeDir["GLFW" ]= "./deps/glfw/include"
 IncludeDir["glad" ]= "./deps/glad/include"
+IncludeDir["tinyobjloader"] = "./deps/tinyobjloader"
 group "Dependencies"
 include "./deps/glfw"
 include "./deps/glad"
@@ -40,7 +41,8 @@ project "realm_game"
         "src",
         "%{IncludeDir.GLFW}",
         "%{IncludeDir.glad}",
-        "premake5.lua"
+        "premake5.lua",
+        "%{IncludeDir.tinyobjloader}"
     }
     links
     {
@@ -57,8 +59,6 @@ project "realm_game"
     filter "files:%{wks.location}/resources/**"
         buildaction "Embed"
     
-    configuration "windows"
-        postbuildcommands { "{COPYDIR} \"%{wks.location}/resources\" \"bin/" .. outputdir .. "/%{prj.name}/resources\""}
     filter "configurations:Debug"
         runtime "Debug"
         symbols "on"
@@ -66,3 +66,4 @@ project "realm_game"
     filter "configurations:Release"
         runtime "Release"
         optimize "on"
+        postbuildcommands { "{COPYDIR} \"%{wks.location}/resources\" \"bin/" .. outputdir .. "/%{prj.name}/resources\""}
