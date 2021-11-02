@@ -7,3 +7,6 @@
 [submodule "src/engine/extensions/realm_ext_assetimporter"]
 	path = src/engine/extensions/realm_ext_assetimporter
 	url = https://github.com/MashedTatoes/realm_ext_assetimporter.git
+[submodule "deps/tinyobjloader"]
+	path = deps/tinyobjloader
+	url = https://github.com/syoyo/tinyobjloader-c.git
