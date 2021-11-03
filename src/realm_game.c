@@ -80,9 +80,9 @@ void realm_start(re_context_t ctx)
 	//tinyobj_parse_obj(&shape_attrib, &shapes, &num_shapes, &materials, &num_materials, "./resources/Plane.obj",read_obj_file, NULL, TINYOBJ_FLAG_TRIANGULATE);
 	//obj_to_mesh(&shape_attrib, shapes, &square_actor->mesh);
 	
-	/*re_set_mesh_triangles(&square_actor->mesh, square_triangles, 6);
-	re_fill_mesh(&square_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);*/
-	generate_plane(vec3_forward, 64, &square_actor->mesh);
+	re_set_mesh_triangles(&square_actor->mesh, square_triangles, 6);
+	re_fill_mesh(&square_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);
+	//generate_plane(vec3_forward, 64, &square_actor->mesh);
 	//square_actor->transform.rotation = euler_to_quat(new_vec3(deg_to_rad(90), 0, 0));
 	
 	square_actor->transform.position = new_vec3(0, -0.0f, -1.0f);
@@ -143,7 +143,7 @@ void obj_to_mesh(tinyobj_attrib_t* attributes, tinyobj_shape_t* shapes, re_mesh_
 		vertices.count++;
 		normals.count++;
 		texcoords.count++;
-		vector_insert(uint32_t, &faces, i);
+		vector_append(uint32_t, &faces, i);
 	}
 
 	
@@ -180,19 +180,16 @@ void generate_plane(vec3 normal,uint32_t resolution,re_mesh_t* mesh)
 			
 			point = vec3_add(point, vec3_scalar_mul(axisB, 2 * t.y - 1));
 
-			vertices.elements[vidx] = point;
-			vertices.count += 1;
-			normals.elements[vidx] = normal;
-			normals.count += 1;
+			vector_insert(vec3, &vertices, vidx, point);
+			vector_insert(vec3, &normals, vidx, normal);
 			if (x != resolution - 1 && y != resolution - 1)
 			{
-				triangles.elements[triIndex + 0] = vidx;
-				triangles.elements[triIndex + 1] = vidx  + 1;
-				triangles.elements[triIndex + 2] = vidx + resolution;
-				triangles.elements[triIndex + 3] = vidx + resolution;
-				triangles.elements[triIndex + 4] = vidx +resolution+ 1;
-				triangles.elements[triIndex + 5] = vidx;
-				triangles.count += 6;
+				vector_insert(uint32_t, &triangles, triIndex + 0, vidx);
+				vector_insert(uint32_t, &triangles, triIndex + 1, vidx + 1);
+				vector_insert(uint32_t, &triangles, triIndex + 2, vidx + resolution);
+				vector_insert(uint32_t, &triangles, triIndex + 3, vidx + resolution);
+				vector_insert(uint32_t, &triangles, triIndex + 4, vidx + resolution + 1);
+				vector_insert(uint32_t, &triangles, triIndex + 5, vidx);
 
 
 			}

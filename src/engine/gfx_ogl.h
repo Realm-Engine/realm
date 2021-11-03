@@ -536,8 +536,8 @@ REALM_ENGINE_FUNC re_result_t re_init_program(re_shader_program_t* program_data)
 			GLint location = glGetUniformLocation(program_data->_program_id, name);
 			_re_sampler_uniform_cache* cache = &program_data->_sampler_cache;
 			uint32_t hash = re_adler32_str(name);
-			vector_insert(GLint, &cache->_locations, location);
-			vector_insert(uint32_t, &cache->_hashes, hash);
+			vector_append(GLint, &cache->_locations, location);
+			vector_append(uint32_t, &cache->_hashes, hash);
 
 		}
 
@@ -698,7 +698,7 @@ REALM_ENGINE_FUNC re_result_t re_upload_mesh_data(re_mesh_t* mesh, re_transform_
 
 
 
-	re_upload_index_data(mesh->triangles, mesh->num_triangles);
+	re_upload_index_data(mesh->triangles.elements, mesh->triangles.count);
 
 	return RE_OK;
 
@@ -865,8 +865,8 @@ REALM_ENGINE_FUNC GLint _re_lookup_sampler_locations(re_shader_program_t* progra
 	{
 		result = glGetUniformLocation(program->_program_id, name);
 		
-		vector_insert(uint32_t, &cache._hashes, hash);
-		vector_insert(GLint, &cache._locations, result);
+		vector_append(uint32_t, &cache._hashes, hash);
+		vector_append(GLint, &cache._locations, result);
 	}
 	return result;
 

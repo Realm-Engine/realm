@@ -6,7 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "re_math.h"
-
+#include "containers/vector.h"
+#include "containers/linked_list.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define RE_GLOBAL_DATA_REF "_reGlobalData"
@@ -31,130 +32,6 @@ struct re_gfx_pipeline_t;*/
 #pragma region Containers
 //CONTAINER
 #pragma region LinkedList
-#define linked_list_decl(T)\
-typedef struct _##T##_node\
-{ \
-	struct _##T##_node * next;\
-	T value;\
-}_##T##_node;\
-static  _##T##_node* _linked_list_##T##_enumerate_func(_##T##_node* current, T* val)\
-{\
-	if(current->next == NULL)\
-	{\
-		return NULL;\
-	}\
-	*val = current->next->value;\
-	return current->next;\
-}\
-static  _##T##_node* _##T##_node_create(T val)\
-{\
-	_##T##_node* node = (_##T##_node*)malloc(sizeof(_##T##_node));\
-	node->value = val;\
-	node->next = NULL;\
-	return node;\
-}\
-typedef struct _linked_list_##T\
-{\
-	_##T##_node * _head;\
-} _linked_list_##T;\
-static  _##T##_node* _linked_list_##T##_append(_linked_list_##T * ll,T value)\
-{\
-	_##T##_node* current = ll->_head;\
-	if(current == NULL)\
-	{\
-		ll->_head = _##T##_node_create(value);\
-		return ll->_head;\
-	}\
-	while(current->next != NULL)\
-	{\
-		current = current->next;\
-	}\
-	current->next = _##T##_node_create(value);\
-	return current->next;\
-}\
-static  void _linked_list_##T##_free(_linked_list_##T * ll)\
-{\
-	_##T##_node* current = ll->_head;\
-	while(current != NULL)\
-	{\
-		_##T##_node* temp = current;\
-		current = current->next;\
-		free(temp);\
-	}\
-}\
-
-#define linked_list(T) _linked_list_##T
-#define linked_list_append(T,ll,v) _linked_list_##T##_append(ll,v);
-#define linked_list_traverse(T,v,e)\
-T v = (e)._head->value;\
-_##T##_node* i;\
-for(i = (e)._head;i != NULL; i = _linked_list_##T##_enumerate_func((i),(&v)))
-#define linked_list_free(T,ll) _linked_list_##T##_free(ll);
-#define vector(T) _vector_##T
-
-
-#define vector_decl(T)\
-\
-typedef struct vector(T)\
-{\
-	T* elements;\
-	size_t count;\
-	size_t capacity;\
-}vector(T);\
-static  vector(T) _new_vector_##T(size_t reserve)\
-{\
-	vector(T) v;\
-	v.elements = (T *)malloc(sizeof(T) * reserve);\
-	memset(v.elements,0,sizeof(T) * reserve);\
-	v.capacity = reserve;\
-	v.count = 0;\
-	return v;\
-}\
-static  void _vector_##T##_resize(vector(T) * vector, size_t size)\
-{\
-	vector->capacity = size;\
-	vector->elements = ( T *)realloc(vector->elements,sizeof( T ) * size);\
-}\
-static  T * _vector_##T##_insert(vector(T) * vector,T value)\
-{\
-	if(vector->count + 1 > vector->capacity)\
-	{\
-		size_t resize_amount = 0;\
-		if(vector->capacity == 0)\
-		{\
-			resize_amount = _RE_VECTOR_CHUNK_SIZE;\
-		}\
-		else\
-		{\
-			int mod = _RE_VECTOR_CHUNK_SIZE % vector->capacity;\
-			resize_amount = mod + vector->capacity;\
-		}\
-		_vector_##T##_resize(vector, resize_amount); \
-	}\
-	vector->elements[vector->count] = value; \
-	T * new_element = &vector->elements[vector->count];\
-	vector->count += 1;\
-	return new_element;\
-}\
-static  T _vector_##T##_get(vector(T)* vector, size_t index )\
-{\
-	return vector->elements[index];\
-}\
-static  void _vector_##T##_set(vector(T)* vector, size_t index, T value )\
-{\
-	vector->elements[index] = value;\
-}\
-static  void _vector_##T##_free(vector(T)* vector)\
-{\
-	free(vector->elements);\
-}\
-
-#define vector_insert(T,vector,value) _vector_##T##_insert(vector,value)
-#define new_vector(T,size) _new_vector_##T(size)
-#define vector_resize(T,vector,size) _vector_##T##_resize(vector,size)
-#define vector_get(T,vector,index) _vector_##T##_get(vector,index)
-#define vector_set(T,vector,index,value) _vector_##T##_get(vector,index,value)
-#define vector_free(T,vector) _vector_##T##_free(vector)
 
 #define hash_table_decl(T,V)
 
@@ -438,9 +315,9 @@ typedef struct re_mesh_t
 	vector(vec3) positions;
 	vector(vec3) normals;
 	vector(vec2) texcoords;
-	uint32_t* triangles;
+	vector(uint32_t) triangles;
 	uint16_t mesh_size;
-	uint16_t num_triangles;
+
 
 }re_mesh_t;
 
@@ -1002,8 +879,8 @@ REALM_ENGINE_FUNC re_result_t re_set_material_texture(re_material_textures_t* li
 	if (target_index == -1)
 	{
 
-		vector_insert(re_texture_t, &list->textures, value);
-		vector_insert(uint32_t, &list->texture_ids, id);
+		vector_append(re_texture_t, &list->textures, value);
+		vector_append(uint32_t, &list->texture_ids, id);
 		target_index = list->textures.count - 1;
 
 	}
@@ -1032,7 +909,7 @@ REALM_ENGINE_FUNC void re_set_material_vector(re_material_properties_list* mater
 
 		};
 
-		target_property = vector_insert(re_material_property_t, material_list, new_property);
+		target_property = vector_append(re_material_property_t, material_list, new_property);
 
 
 	}
@@ -1129,17 +1006,18 @@ REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh, vec3* positions, vec3* norm
 	memset(mesh->normals.elements, 0, size_normals);
 	memset(mesh->positions.elements, 0, size_positions);
 	memset(mesh->texcoords.elements, 0, size_uv);
+	
 	if (positions != NULL);
 	{
-		memcpy(mesh->positions.elements, positions, size_positions);
+		vector_append_range(vec3, &mesh->positions, positions, mesh_size);
 	}
 	if (normals != NULL)
 	{
-		memcpy(mesh->normals.elements, normals, size_normals);
+		vector_append_range(vec3, &mesh->normals, normals, mesh_size);
 	}
 	if (texcoords != NULL)
 	{
-		memcpy(mesh->texcoords.elements, texcoords, size_uv);
+		vector_append_range(vec2, &mesh->texcoords, texcoords, mesh_size);
 	}
 	
 	mesh->mesh_size = mesh_size;
@@ -1148,9 +1026,9 @@ REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh, vec3* positions, vec3* norm
 
 REALM_ENGINE_FUNC void re_set_mesh_triangles(re_mesh_t* mesh, uint32_t* triangles, uint32_t num_triangles)
 {
-	mesh->triangles = (uint32_t*)malloc(sizeof(uint32_t) * num_triangles);
-	memcpy(mesh->triangles, triangles, sizeof(uint32_t) * num_triangles);
-	mesh->num_triangles = num_triangles;
+	mesh->triangles = new_vector(uint32_t, num_triangles);
+	vector_append_range(uint32_t, &mesh->triangles, triangles, num_triangles);
+	
 }
 
 REALM_ENGINE_FUNC void re_set_userdata_textures(re_material_textures_t* textures, re_shader_program_t* program)
@@ -1183,7 +1061,7 @@ REALM_ENGINE_FUNC void re_draw_scene_recursive(re_actor_t* root, re_renderpass_t
 		re_set_userdata_properties_from_materials(&renderpass->_user_data_layout, &root->material_properties);
 		re_set_userdata_textures(&root->material_textures, &renderpass->shader_program);
 		re_upload_mesh_data(&root->mesh, &root->transform);
-		re_draw_triangles(root->mesh.num_triangles);
+		re_draw_triangles(root->mesh.triangles.count);
 	}
 	int i;
 	for (i = 0; i < root->_scenegraph_node->num_children; i++)
@@ -1321,9 +1199,9 @@ void _re_print_mesh(const re_mesh_t* mesh)
 
 	}
 	printf("\n");
-	for (i = 0; i < mesh->num_triangles; i++)
+	for (i = 0; i < mesh->triangles.count; i++)
 	{
-		printf("\nIndice %d:\t %d\n", i, mesh->triangles[i]);
+		printf("\nIndice %d:\t %d\n", i, mesh->triangles.elements[i]);
 	}
 	printf("\n");
 }
