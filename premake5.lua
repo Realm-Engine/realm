@@ -33,6 +33,7 @@ project "realm_game"
     {
         "src/**.h",
         "src/**.c",
+        "resources/**.glsl"
         
 
     }

@@ -79,8 +79,10 @@ void realm_start(re_context_t ctx)
 	size_t num_materials;
 	//tinyobj_parse_obj(&shape_attrib, &shapes, &num_shapes, &materials, &num_materials, "./resources/Plane.obj",read_obj_file, NULL, TINYOBJ_FLAG_TRIANGULATE);
 	//obj_to_mesh(&shape_attrib, shapes, &square_actor->mesh);
-	//re_set_mesh_triangles(&square_actor->mesh, square_triangles, 6);
-	//re_fill_mesh(&square_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);
+	
+	/*re_set_mesh_triangles(&square_actor->mesh, square_triangles, 6);
+	re_fill_mesh(&square_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);*/
+	generate_plane(vec3_forward, 64, &square_actor->mesh);
 	//square_actor->transform.rotation = euler_to_quat(new_vec3(deg_to_rad(90), 0, 0));
 	
 	square_actor->transform.position = new_vec3(0, -0.0f, -1.0f);
@@ -134,7 +136,7 @@ void obj_to_mesh(tinyobj_attrib_t* attributes, tinyobj_shape_t* shapes, re_mesh_
 	for (i = 0; i < attributes->num_faces; i++)
 	{
 		tinyobj_vertex_index_t idx = attributes->faces[i];
-		re_log(RE_NONE, "\nV: %d \nVN: %d, \nVT: %d\n", idx.v_idx, idx.vn_idx, idx.vt_idx);
+		
 		vertices.elements[idx.v_idx] = new_vec3(attributes->vertices[idx.v_idx], attributes->vertices[idx.v_idx + 1], attributes->vertices[idx.v_idx + 2]);
 		normals.elements[idx.vn_idx] = new_vec3(attributes->normals[idx.vn_idx], attributes->normals[idx.vn_idx + 1], attributes->normals[idx.vn_idx + 2]);
 		texcoords.elements[idx.vt_idx] = new_vec2(attributes->texcoords[idx.vt_idx], attributes->texcoords[idx.vt_idx + 1]);
@@ -143,11 +145,70 @@ void obj_to_mesh(tinyobj_attrib_t* attributes, tinyobj_shape_t* shapes, re_mesh_
 		texcoords.count++;
 		vector_insert(uint32_t, &faces, i);
 	}
+
+	
+
 	re_fill_mesh(mesh, vertices.elements, normals.elements, texcoords.elements, attributes->num_faces);
+
+	
 	re_set_mesh_triangles(mesh, faces.elements, attributes->num_faces);
+	
 
 
+}
 
+void generate_plane(vec3 normal,uint32_t resolution,re_mesh_t* mesh)
+{
+	vec3 axisA = new_vec3(normal.y, normal.z, normal.x);
+	vec3 axisB = vec3_cross(normal, axisA);
+
+	vector(vec3) vertices = new_vector(vec3, resolution * resolution);
+	vector(uint32_t) triangles = new_vector(uint32_t, (resolution - 1) * (resolution - 1) * 6);
+	vector(vec3) normals = new_vector(vec3, resolution * resolution);
+	int triIndex = 0;
+
+	int y, x;
+
+	for (y = 0; y < resolution; y++)
+	{
+		for (x = 0; x < resolution; x++)
+		{
+			int vidx = x + y * resolution;
+			vec2 t = new_vec2(x / (resolution - 1.f), y / (resolution - 1.f));
+
+			vec3 point = vec3_add(normal, vec3_scalar_mul(axisA, (2 * t.x - 1)));
+			
+			point = vec3_add(point, vec3_scalar_mul(axisB, 2 * t.y - 1));
+
+			vertices.elements[vidx] = point;
+			vertices.count += 1;
+			normals.elements[vidx] = normal;
+			normals.count += 1;
+			if (x != resolution - 1 && y != resolution - 1)
+			{
+				triangles.elements[triIndex + 0] = vidx;
+				triangles.elements[triIndex + 1] = vidx  + 1;
+				triangles.elements[triIndex + 2] = vidx + resolution;
+				triangles.elements[triIndex + 3] = vidx + resolution;
+				triangles.elements[triIndex + 4] = vidx +resolution+ 1;
+				triangles.elements[triIndex + 5] = vidx;
+				triangles.count += 6;
+
+
+			}
+
+		}
+	}
+
+	re_fill_mesh(mesh, vertices.elements, normals.elements, NULL, resolution * resolution);
+	re_set_mesh_triangles(mesh, triangles.elements, triangles.count);
+	
+
+}
+
+re_mesh_t* generate_sphere(uint32_t resolution)
+{
+	
 }
 
 

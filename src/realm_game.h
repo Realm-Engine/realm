@@ -34,4 +34,6 @@ void on_mouse_pos(re_context_t* ctx, float x, float y, float last_x, float last_
 void realm_main();
 void read_obj_file(void* ctx, const char* filename, int is_mtl, const char* obj_filename, char** buff, size_t* len);
 void obj_to_mesh( tinyobj_attrib_t* attributes,  tinyobj_shape_t* shapes, re_mesh_t* mesh);
+re_mesh_t* generate_sphere(uint32_t resolution);
+void generate_plane(vec3 normal, uint32_t resolution, re_mesh_t* mesh);
 #endif // !REALM_GAME_H

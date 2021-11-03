@@ -87,7 +87,7 @@ typedef struct re_transform_t
 #define quat_as_vec4(q) ((vec4)q)
 #define quat_as_vec3(q) (new_vec3(q.x,q.y,q.z))
 #define vec3_to_string(v) (printf("X:%f Y:%f Z:%f " ,v.x,v.y,v.z))
-#define vec2_to_string(v) ("X:%f, Y:%d",v.x,v.y)
+#define vec2_to_string(v) "X:%f, Y:%f",v.x,v.y
 #define vec4_to_string(v) ("X:%f Y:%f Z:%f W:%f",v.x,v.y,v.z,v.w)
 #define mat4_zero ((mat4x4){vec4_zero,vec4_zero,vec4_zero,vec4_zero})
 #define mat4_one ((mat4x4){vec4_one,vec4_one,vec4_one,vec4_one})

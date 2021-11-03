@@ -155,6 +155,10 @@ static  void _vector_##T##_free(vector(T)* vector)\
 #define vector_get(T,vector,index) _vector_##T##_get(vector,index)
 #define vector_set(T,vector,index,value) _vector_##T##_get(vector,index,value)
 #define vector_free(T,vector) _vector_##T##_free(vector)
+
+#define hash_table_decl(T,V)
+
+
 #pragma endregion
 
 
@@ -519,6 +523,13 @@ REALM_ENGINE_FUNC void re_set_userdata_properties_from_materials(re_user_data_la
 REALM_ENGINE_FUNC uint32_t re_adler32_str(const char* buffer);
 REALM_ENGINE_FUNC long re_get_file_size(const char* file);
 REALM_ENGINE_FUNC void re_log(re_log_severeity severeity, const char* msg, ...);
+REALM_ENGINE_FUNC void _re_print(const char* str);
+REALM_ENGINE_FUNC void _re_print_mesh(const re_mesh_t* mesh);
+REALM_ENGINE_FUNC void _re_print_vec3(vec3 v);
+REALM_ENGINE_FUNC void _re_print_vec2(vec2 v);
+
+
+#define re_print(x) _Generic((x), re_mesh_t*: _re_print_mesh,vec3: _re_print_vec3,vec2: _re_print_vec2,default: _re_print )(x)
 
 
 #define material_id(name) re_adler32_str(name);
@@ -1115,10 +1126,22 @@ REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh, vec3* positions, vec3* norm
 	mesh->normals = new_vector(vec3, mesh_size);
 	mesh->positions = new_vector(vec3, mesh_size);
 	mesh->texcoords = new_vector(vec2, mesh_size);
-	memcpy(mesh->positions.elements, positions, size_positions);
-
-	memcpy(mesh->normals.elements, normals, size_normals);
-	memcpy(mesh->texcoords.elements, texcoords, size_uv);
+	memset(mesh->normals.elements, 0, size_normals);
+	memset(mesh->positions.elements, 0, size_positions);
+	memset(mesh->texcoords.elements, 0, size_uv);
+	if (positions != NULL);
+	{
+		memcpy(mesh->positions.elements, positions, size_positions);
+	}
+	if (normals != NULL)
+	{
+		memcpy(mesh->normals.elements, normals, size_normals);
+	}
+	if (texcoords != NULL)
+	{
+		memcpy(mesh->texcoords.elements, texcoords, size_uv);
+	}
+	
 	mesh->mesh_size = mesh_size;
 
 }
@@ -1251,6 +1274,59 @@ void re_log(re_log_severeity severity, const char* format, ...)
 
 }
 #endif
+
+void _re_print(const char* str)
+{
+	printf(str);
+}
+
+void _re_print_vec3(vec3 v)
+{
+	vec3_to_string(v);
+
+
+}
+
+void _re_print_vec2(vec2 v)
+{
+	printf(vec2_to_string(v));
+
+
+}
+
+void _re_print_mesh(const re_mesh_t* mesh)
+{
+	int i;
+	for (i = 0; i < mesh->mesh_size; i++)
+	{
+		printf("\nVertex: %d\t", i);
+		re_print(mesh->positions.elements[i]);
+		
+
+	}
+	printf("\n");
+	for (i = 0; i < mesh->mesh_size; i++)
+	{
+		printf("\nNormal: %d\t", i);
+		re_print(mesh->normals.elements[i]);
+
+
+	}
+	printf("\n");
+	for (i = 0; i < mesh->mesh_size; i++)
+	{
+		printf("\nTexcoord: %d\t", i);
+		re_print(mesh->texcoords.elements[i]);
+
+
+	}
+	printf("\n");
+	for (i = 0; i < mesh->num_triangles; i++)
+	{
+		printf("\nIndice %d:\t %d\n", i, mesh->triangles[i]);
+	}
+	printf("\n");
+}
 
 #endif
 #endif

@@ -669,7 +669,7 @@ REALM_ENGINE_FUNC re_result_t re_upload_mesh_data(re_mesh_t* mesh, re_transform_
 	vec3 normals[mesh->mesh_size];
 
 	re_apply_transform(*transform, mesh, &positions, &normals);
-	
+	//re_print(mesh);
 	glBufferData(GL_ARRAY_BUFFER, pos_size + uv_size + normal_size, 0, GL_DYNAMIC_DRAW);
 	for (i = 0; i < mesh->mesh_size; i++)
 	{
