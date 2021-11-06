@@ -589,7 +589,7 @@ REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t*
 	mat4x4 inv_model = mat4_inverse(model);
 	mat4x4 trans_inv = mat4_transpose(inv_model);
 	int i;
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < mesh->mesh_size; i++)
 	{
 		vec4 wsPos = mat4_mul_vec4(model, vec4_from_vec3(mesh->positions.elements[i], 1.0f));
 		vec4 wsNormal = mat4_mul_vec4(trans_inv, vec4_from_vec3(mesh->normals.elements[i], 1.0f));

@@ -73,9 +73,11 @@ typedef struct re_transform_t
 #define vec4_from_vec3(v,w) ((vec4){v.x,v.y,v.z,w})
 #define vec3_from_vec4(v) ((vec3){v.x,v.y,v.z})
 #define vec3_up	((vec3){0,1,0})
+#define vec3_down ((vec3){0,-1,0})
 #define vec3_forward ((vec3){0,0,1})
 #define vec3_back ((vec3){0,0,-1})
 #define vec3_right ((vec3){1,0,0})
+#define vec3_left ((vec3){-11,0,0})
 #define vec3_one ((vec3){1,1,1})
 #define vec4_one ((vec4){1,1,1,1})
 #define vec2_zero ((vec2) {0,0})
@@ -582,6 +584,7 @@ static inline quaternion euler_to_quat(vec3 euler)
 
 
 }
+
 
 
 

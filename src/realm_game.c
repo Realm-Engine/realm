@@ -80,9 +80,9 @@ void realm_start(re_context_t ctx)
 	//tinyobj_parse_obj(&shape_attrib, &shapes, &num_shapes, &materials, &num_materials, "./resources/Plane.obj",read_obj_file, NULL, TINYOBJ_FLAG_TRIANGULATE);
 	//obj_to_mesh(&shape_attrib, shapes, &square_actor->mesh);
 	
-	re_set_mesh_triangles(&square_actor->mesh, square_triangles, 6);
-	re_fill_mesh(&square_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);
-	//generate_plane(vec3_forward, 64, &square_actor->mesh);
+	//re_set_mesh_triangles(&square_actor->mesh, square_triangles, 6);
+	//re_fill_mesh(&square_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);
+	generate_cube(2, &square_actor->mesh);
 	//square_actor->transform.rotation = euler_to_quat(new_vec3(deg_to_rad(90), 0, 0));
 	
 	square_actor->transform.position = new_vec3(0, -0.0f, -1.0f);
@@ -157,7 +157,40 @@ void obj_to_mesh(tinyobj_attrib_t* attributes, tinyobj_shape_t* shapes, re_mesh_
 
 }
 
-void generate_plane(vec3 normal,uint32_t resolution,re_mesh_t* mesh)
+void generate_cube(uint32_t resolution, re_mesh_t* mesh)
+{
+	int i;
+	vec3 directions[6] =
+	{
+		vec3_up,
+		vec3_down,
+		vec3_forward,
+		vec3_back,
+		vec3_right,
+		vec3_left
+
+
+	};
+	vector(vec3) positions = new_vector(vec3, (resolution * resolution) * 6);
+	vector(vec3) normals = new_vector(vec3, (resolution * resolution) * 6);
+	vector(vec2) uv = new_vector(vec2, (resolution * resolution) * 6);
+	vector(uint32_t) indices = new_vector(uint32_t, ((resolution * resolution) * 6) * 6);
+	for (i = 0; i < 6; i++)
+	{
+		re_mesh_t tmp;
+		generate_plane(directions[i], resolution, &tmp, i * (resolution-1 * resolution - 1));
+		vector_append_range(vec3, &positions, tmp.positions.elements, tmp.positions.count);
+		vector_append_range(vec3, &normals, tmp.normals.elements, tmp.normals.count);
+		vector_append_range(vec2, &uv, tmp.texcoords.elements, tmp.texcoords.count);
+		vector_append_range(uint32_t, &indices, tmp.triangles.elements, tmp.triangles.count);
+
+	}
+	re_fill_mesh(mesh, positions.elements, normals.elements, uv.elements, positions.count);
+	re_set_mesh_triangles(mesh, indices.elements, indices.count);
+	re_print(mesh);
+}
+
+void generate_plane(vec3 normal,uint32_t resolution,re_mesh_t* mesh,uint32_t index_offset)
 {
 	vec3 axisA = new_vec3(normal.y, normal.z, normal.x);
 	vec3 axisB = vec3_cross(normal, axisA);
@@ -165,6 +198,7 @@ void generate_plane(vec3 normal,uint32_t resolution,re_mesh_t* mesh)
 	vector(vec3) vertices = new_vector(vec3, resolution * resolution);
 	vector(uint32_t) triangles = new_vector(uint32_t, (resolution - 1) * (resolution - 1) * 6);
 	vector(vec3) normals = new_vector(vec3, resolution * resolution);
+	vector(vec2) uv = new_vector(vec2, resolution * resolution);
 	int triIndex = 0;
 
 	int y, x;
@@ -182,14 +216,17 @@ void generate_plane(vec3 normal,uint32_t resolution,re_mesh_t* mesh)
 
 			vector_insert(vec3, &vertices, vidx, point);
 			vector_insert(vec3, &normals, vidx, normal);
+			vector_insert(vec2, &uv, vidx, t);
+			vidx += index_offset;
 			if (x != resolution - 1 && y != resolution - 1)
 			{
 				vector_insert(uint32_t, &triangles, triIndex + 0, vidx);
-				vector_insert(uint32_t, &triangles, triIndex + 1, vidx + 1);
+				vector_insert(uint32_t, &triangles, triIndex + 1, vidx + resolution + 1);
 				vector_insert(uint32_t, &triangles, triIndex + 2, vidx + resolution);
-				vector_insert(uint32_t, &triangles, triIndex + 3, vidx + resolution);
+				vector_insert(uint32_t, &triangles, triIndex + 3, vidx);
+				vector_insert(uint32_t, &triangles, triIndex + 5, vidx + 1);
 				vector_insert(uint32_t, &triangles, triIndex + 4, vidx + resolution + 1);
-				vector_insert(uint32_t, &triangles, triIndex + 5, vidx);
+				
 
 
 			}
@@ -197,7 +234,7 @@ void generate_plane(vec3 normal,uint32_t resolution,re_mesh_t* mesh)
 		}
 	}
 
-	re_fill_mesh(mesh, vertices.elements, normals.elements, NULL, resolution * resolution);
+	re_fill_mesh(mesh, vertices.elements, normals.elements, uv.elements, resolution * resolution);
 	re_set_mesh_triangles(mesh, triangles.elements, triangles.count);
 	
 
