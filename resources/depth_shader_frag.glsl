@@ -1,4 +1,5 @@
 #version 430 core
+#glsl_begin
 
 in float SurfaceColor;
 
@@ -9,3 +10,5 @@ void main()
 	fragment_color =  SurfaceColor;
 
 }
+
+#glsl_end

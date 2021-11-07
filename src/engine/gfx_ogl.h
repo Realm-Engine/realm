@@ -8,7 +8,7 @@
 #include "math.h"
 #include <stdlib.h>
 #include<stdio.h>
-
+#define _RE_SHADERLANG_VER_STR "#version 430 core\n\0"
 vector_decl(GLint)
 
 typedef enum re_shader_type_t
@@ -1023,24 +1023,37 @@ REALM_ENGINE_FUNC void _on_default_depth_render(re_renderpass_t* renderpass, voi
 REALM_ENGINE_FUNC re_result_t re_load_shaders(re_shader_program_t* program, const char* frag_path, const char* vert_path)
 {
 
-	/*memset(fragment, 0, sizeof(fragment));
-	memset(vertex, 0, sizeof(vertex));*/
-	long fragment_size = re_get_file_size(frag_path);
-	long vertex_size = re_get_file_size(vert_path);
 
-	char fragment[fragment_size];
-	char vertex[vertex_size];
-	re_read_text(frag_path, fragment);
-	re_read_text(vert_path, vertex);
-	program->source[0] = (re_shader_t){ .name = "Vertex",.source = vertex,.type = RE_VERTEX_SHADER };
-	program->source[1] = (re_shader_t){ .name = "Fragment",.source = fragment,.type = RE_FRAGMENT_SHADER };
-	re_compile_shader(&program->source[0]);
-	re_compile_shader(&program->source[1]);
+	
+	{
+		long fragment_size = re_get_file_size(frag_path);
+		long vertex_size = re_get_file_size(vert_path);
+		uint32_t new_vertex_size = 0;
+		uint32_t new_fragment_size = 0;
+		char* processed_fragment;
+		char* processed_vertex;
+		char fragment[fragment_size + 1];
+		char vertex[vertex_size + 1];
+		memset(fragment, 0, sizeof(fragment));
+		memset(vertex, 0, sizeof(vertex));
+		re_read_text(frag_path, fragment, fragment_size);
+		re_read_text(vert_path, vertex, vertex_size);
+		processed_vertex = re_preprocess_shader(vertex, vertex_size, &new_vertex_size);
+		processed_fragment = re_preprocess_shader(fragment, fragment_size, &new_fragment_size);
+		program->source[0] = (re_shader_t){ .name = "Vertex",.source = processed_vertex,.type = RE_VERTEX_SHADER };
+		program->source[1] = (re_shader_t){ .name = "Fragment",.source = processed_fragment,.type = RE_FRAGMENT_SHADER };
+		re_compile_shader(&program->source[0]);
+		re_compile_shader(&program->source[1]);
+		re_init_program(program);
+		free(processed_fragment);
+		free(processed_vertex);
+	}
+
+
 	GLint max_tex_units = 0;
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_tex_units);
 	program->_sampler_cache._hashes = new_vector(uint32_t, max_tex_units);
 	program->_sampler_cache._locations = new_vector(GLint, max_tex_units);
-	re_init_program(program);
 
 	return RE_OK;
 
@@ -1050,23 +1063,29 @@ REALM_ENGINE_FUNC re_result_t _re_init_main_renderpath()
 {
 	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
 	re_shader_program_t screen_shader;
+	re_shader_program_t scene_shader;
+	re_shader_program_t depth_shader;
+
 	screen_shader = (re_shader_program_t){
 		.name = "Screen shader",
 	
 	};
 	re_load_shaders(&screen_shader, "./resources/screen_shader_frag.glsl", "./resources/screen_shader_vert.glsl");
-	re_shader_program_t scene_shader;
-	scene_shader = (re_shader_program_t){
-			.name = "Scene shader",
-	};
-	re_load_shaders(&scene_shader, "./resources/scene_shader_frag.glsl", "./resources/scene_shader_vert.glsl");
-	re_shader_program_t depth_shader;
+	
 	depth_shader = (re_shader_program_t)
 	{
 		.name = "Depth prepass",
 
 	};
 	re_load_shaders(&depth_shader, "./resources/depth_shader_frag.glsl", "./resources/depth_shader_vert.glsl");
+	
+	scene_shader = (re_shader_program_t){
+			.name = "Scene shader",
+	};
+	
+	
+	re_load_shaders(&scene_shader, "./resources/scene_shader_frag.glsl", "./resources/scene_shader_vert.glsl");
+	
 	pipeline->_main_renderpath._scene_fb = re_create_framebuffer(&(re_framebuffer_desc_t) {
 		.attachment = RE_COLOR_ATTACHMENT,
 			.filter = LINEAR,

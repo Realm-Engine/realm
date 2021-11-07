@@ -246,30 +246,6 @@ re_mesh_t* generate_sphere(uint32_t resolution)
 }
 
 
-void read_obj_file(void* ctx, const char* filename, const int is_mtl, const char* obj_filename, char** buff, size_t* len)
-{
-
-	if (!obj_filename) {
-		re_log(RE_ERROR, "No filename provided");
-		(*buff) = NULL;
-		(*len) = 0;
-		return;
-	}
-
-	const char* ext = strrchr(obj_filename, '.');
-	size_t length = 0;
-	if (strcmp(ext, ".obj") == 0)
-	{
-		char tmp[1024];
-		char* base_dir_name = NULL;
-		long size = re_get_file_size(obj_filename);
-		*buff = malloc(sizeof(size));
-		re_read_text(obj_filename, *buff);
-		*len = size;
-		
-	}
-
-}
 
 void realm_update(re_context_t ctx)
 {

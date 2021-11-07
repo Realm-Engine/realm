@@ -35,8 +35,8 @@ project "realm_game"
         "src/**.c",
         "src/containers/**.h",
         "src/containers/**.c",
-        "resources/**.glsl"
-        
+        "resources/**.glsl",
+        "src/engine/engine_resources/**.glsl"
 
     }
     includedirs
@@ -51,7 +51,7 @@ project "realm_game"
     {
         "GLFW",
         "glad",
-        "opengl32",
+        "opengl32"
         
     }
     defines
@@ -69,4 +69,8 @@ project "realm_game"
     filter "configurations:Release"
         runtime "Release"
         optimize "on"
-        postbuildcommands { "{COPYDIR} \"%{wks.location}/resources\" \"bin/" .. outputdir .. "/%{prj.name}/resources\""}
+        postbuildcommands 
+        { 
+                "{COPYDIR} \"%{wks.location}/resources\" \"bin/" .. outputdir .. "/%{prj.name}/resources\"",
+                "{COPYDIR} \"%{wks.location}/src/engine/engine_resources\" \"bin/" .. outputdir .. "/%{prj.name}/resources\""
+        }

@@ -32,7 +32,7 @@ void on_key_action(re_context_t* ctx, re_key_action_t action, int32_t key);
 void on_mouse_action(re_context_t* ctx, re_mouse_button_action_t action, int32_t button);
 void on_mouse_pos(re_context_t* ctx, float x, float y, float last_x, float last_y);
 void realm_main();
-void read_obj_file(void* ctx, const char* filename, int is_mtl, const char* obj_filename, char** buff, size_t* len);
+
 void obj_to_mesh( tinyobj_attrib_t* attributes,  tinyobj_shape_t* shapes, re_mesh_t* mesh);
 re_mesh_t* generate_sphere(uint32_t resolution);
 void generate_cube(uint32_t resolution, re_mesh_t* mesh);

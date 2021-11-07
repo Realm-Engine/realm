@@ -16,6 +16,8 @@
 #define MAX_UNIFORMS GL_MAX_VERTEX_UNIFORM_COMPONENTS + GL_MAX_FRAGMENT_UNIFORM_COMPONENTS
 #define _RE_SCENEGRAPH_CHILD_CHUNK_AMOUNT 5
 #define _RE_VECTOR_CHUNK_SIZE 5
+#define _RE_VERTEX_CORE "src/engine/engine_resources/re_vertex_core.glsl"
+#define _RE_FRAGMENT_CORE "src/engine/engine_resources/re_fragment_core.glsl"
 
 //Graphics API defintions
 
@@ -360,6 +362,9 @@ typedef enum re_log_severeity
 }re_log_severeity;
 
 
+
+
+
 #pragma region Function defines
 REALM_ENGINE_FUNC void _re_handle_window_resize(GLFWwindow* window, int width, int height);
 REALM_ENGINE_FUNC void _re_handle_mouse_action(GLFWwindow* window, int button, int action, int mods);
@@ -372,7 +377,7 @@ REALM_ENGINE_FUNC void _re_swap_buffers();
 REALM_ENGINE_FUNC void re_start();
 REALM_ENGINE_FUNC re_result_t re_context_size(int* width, int* height);
 REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t* mesh, vec3* positions, vec3* normals);
-REALM_ENGINE_FUNC re_result_t re_read_text(const char* filePath, char* buffer);
+REALM_ENGINE_FUNC re_result_t re_read_text(const char* filePath, char* buffer, size_t size);
 REALM_ENGINE_FUNC re_camera_t* re_create_camera(re_projection_type type, re_view_desc_t view_desc);
 REALM_ENGINE_FUNC vec3 re_compute_camera_front(re_camera_t* camera);
 REALM_ENGINE_FUNC vec3 re_compute_camera_up(re_camera_t* camera);
@@ -401,10 +406,11 @@ REALM_ENGINE_FUNC uint32_t re_adler32_str(const char* buffer);
 REALM_ENGINE_FUNC long re_get_file_size(const char* file);
 REALM_ENGINE_FUNC void re_log(re_log_severeity severeity, const char* msg, ...);
 REALM_ENGINE_FUNC void _re_print(const char* str);
+
 REALM_ENGINE_FUNC void _re_print_mesh(const re_mesh_t* mesh);
 REALM_ENGINE_FUNC void _re_print_vec3(vec3 v);
 REALM_ENGINE_FUNC void _re_print_vec2(vec2 v);
-
+REALM_ENGINE_FUNC char* re_preprocess_shader(const char* shader, size_t size, size_t* new_size);
 
 #define re_print(x) _Generic((x), re_mesh_t*: _re_print_mesh,vec3: _re_print_vec3,vec2: _re_print_vec2,default: _re_print )(x)
 
@@ -416,7 +422,8 @@ REALM_ENGINE_FUNC void _re_print_vec2(vec2 v);
 #endif
 #include "gfx_ogl.h"
 #pragma endregion
-
+REALM_ENGINE_FUNC char* _re_preprocess_fragment(const char* src, re_renderpass_target target, size_t size, size_t* new_size);
+REALM_ENGINE_FUNC char* _re_preprocess_vertex(const char* src, re_renderpass_target target, size_t size, size_t* new_size);
 #ifdef RE_OBJ_IMPL
 #include "re_obj_loader.h"
 #endif
@@ -610,13 +617,16 @@ REALM_ENGINE_FUNC long re_get_file_size(const char* path)
 	}
 
 	fseek(fp, 0, SEEK_END);
-	return ftell(fp);
+	size_t size = ftell(fp);
+	fclose(fp);
+	return size;
 
 
 }
 
-REALM_ENGINE_FUNC re_result_t re_read_text(const char* filePath, char* buffer)
+REALM_ENGINE_FUNC re_result_t re_read_text(const char* filePath, char* buffer, size_t size)
 {
+
 	FILE* fp;
 	fp = fopen(filePath, "r");
 	if (fp == NULL)
@@ -625,13 +635,8 @@ REALM_ENGINE_FUNC re_result_t re_read_text(const char* filePath, char* buffer)
 	}
 	char ch = 0;
 	char* ptr = buffer;
+	fread(buffer, size + 1, 1, fp);
 
-	while ((ch = fgetc(fp)) != EOF)
-	{
-		*ptr = ch;
-		ptr++;
-	}
-	*ptr = '\0';
 	fclose(fp);
 	return RE_OK;
 
@@ -1006,7 +1011,7 @@ REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh, vec3* positions, vec3* norm
 	memset(mesh->normals.elements, 0, size_normals);
 	memset(mesh->positions.elements, 0, size_positions);
 	memset(mesh->texcoords.elements, 0, size_uv);
-	
+
 	if (positions != NULL);
 	{
 		vector_append_range(vec3, &mesh->positions, positions, mesh_size);
@@ -1019,7 +1024,7 @@ REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh, vec3* positions, vec3* norm
 	{
 		vector_append_range(vec2, &mesh->texcoords, texcoords, mesh_size);
 	}
-	
+
 	mesh->mesh_size = mesh_size;
 
 }
@@ -1028,7 +1033,7 @@ REALM_ENGINE_FUNC void re_set_mesh_triangles(re_mesh_t* mesh, uint32_t* triangle
 {
 	mesh->triangles = new_vector(uint32_t, num_triangles);
 	vector_append_range(uint32_t, &mesh->triangles, triangles, num_triangles);
-	
+
 }
 
 REALM_ENGINE_FUNC void re_set_userdata_textures(re_material_textures_t* textures, re_shader_program_t* program)
@@ -1153,6 +1158,201 @@ void re_log(re_log_severeity severity, const char* format, ...)
 }
 #endif
 
+REALM_ENGINE_FUNC char* _re_preprocess_vertex(const char* src, re_renderpass_target target, size_t size, size_t* new_size)
+{
+	char* attribute_data = (char*)malloc(128);
+	char* struct_data = NULL;
+
+	memset(attribute_data, 0, 128);
+	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
+
+	size_t attribute_data_size = 0;
+	size_t struct_data_size = 0;
+	char fmt[] = "layout(location = %d) in %s %s;\n";
+	if (pipeline->attributes != NULL)
+	{
+		int i;
+		for (i = 0; i < pipeline->num_attribs; i++)
+		{
+			re_vertex_attr_desc_t attribute = pipeline->attributes[i];
+			char attribute_name[32];
+			char attribute_type[32];
+
+			switch (attribute.attribute_slot)
+			{
+			case RE_POSITION_ATTRIBUTE:
+				strcpy(attribute_name, "_position");
+				strcpy(attribute_type, "vec3");
+				break;
+			case RE_NORMAL_ATTRIBUTE:
+				strcpy(attribute_name, "_normal");
+				strcpy(attribute_type, "vec3");
+				break;
+			case RE_TEXCOORD_ATTRIBUTE:
+				strcpy(attribute_name, "_texture_uv");
+				strcpy(attribute_type, "vec2");
+				break;
+			default:
+				break;
+			}
+			
+			size_t len = strlen(fmt) + strlen(attribute_name) + strlen(attribute_type) + 1;
+			char attr[len + 1];
+			memset(attr, 0, sizeof(attr));
+			uint32_t result = sprintf_s(attr,sizeof(attr), fmt, attribute.index, attribute_type, attribute_name);
+			if (result < 0)
+			{
+				re_log(RE_ERROR, "Error processing shader\n");
+			}
+			else
+			{
+				memcpy(&attribute_data[attribute_data_size], attr, result);
+				attribute_data_size += result;
+
+			}
+		}
+		attribute_data_size++;
+		struct_data_size = re_get_file_size(_RE_VERTEX_CORE);
+		struct_data = (char*)malloc(struct_data_size + 1);
+		memset(struct_data, '\n', struct_data_size + 1);
+		re_read_text(_RE_VERTEX_CORE, struct_data, struct_data_size);
+
+
+
+	}
+
+	size_t shader_ver_str_len = 0;
+#ifdef _RE_SHADERLANG_VER_STR
+	shader_ver_str_len = strlen(_RE_SHADERLANG_VER_STR);
+#endif // _RE_SHADER_VER_STR
+
+
+	* new_size = size + struct_data_size + attribute_data_size + shader_ver_str_len ;
+
+	char* new_shader = malloc(*new_size + 1);
+#ifdef _RE_SHADERLANG_VER_STR
+	memcpy(new_shader, _RE_SHADERLANG_VER_STR, shader_ver_str_len);
+#endif // _RE_SHADERLANG_VER_STR
+
+
+	memcpy(&new_shader[shader_ver_str_len], attribute_data, attribute_data_size);
+
+	memcpy(&new_shader[attribute_data_size + shader_ver_str_len], struct_data, struct_data_size);
+	memcpy(&new_shader[attribute_data_size + struct_data_size + shader_ver_str_len], src, size);
+	new_shader[struct_data_size + shader_ver_str_len + size + struct_data_size] = '\0';
+	free(struct_data);
+	free(attribute_data);
+	
+	return new_shader;
+
+}
+
+REALM_ENGINE_FUNC char* _re_preprocess_fragment(const char* src, re_renderpass_target target, size_t size, size_t* new_size)
+{
+
+	char* struct_data = NULL;
+	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
+
+	size_t struct_data_size = 0;
+
+	struct_data_size = re_get_file_size(_RE_FRAGMENT_CORE);
+	struct_data = (char*)malloc(struct_data_size + 1);
+	memset(struct_data, '\n', struct_data_size + 1);
+	re_read_text(_RE_FRAGMENT_CORE, struct_data, struct_data_size);
+	size_t shader_ver_str_len = 0;
+#ifdef _RE_SHADERLANG_VER_STR
+	shader_ver_str_len = strlen(_RE_SHADERLANG_VER_STR);
+#endif // !_RE_SHADERLANG_VER_STR
+	* new_size = size + struct_data_size + shader_ver_str_len;
+
+	char* new_shader = malloc(*new_size + 1);
+#ifdef _RE_SHADERLANG_VER_STR
+	memcpy(new_shader, _RE_SHADERLANG_VER_STR, shader_ver_str_len);
+#endif // _RE_SHADERLANG_VER_STR
+
+	memcpy(&new_shader[shader_ver_str_len], struct_data, struct_data_size);
+	memcpy(&new_shader[struct_data_size + shader_ver_str_len], src, size);
+	new_shader[struct_data_size + shader_ver_str_len + size] = '\0';
+	free(struct_data);
+	return new_shader;
+}
+
+REALM_ENGINE_FUNC char* re_preprocess_shader(const char* src, size_t size, size_t* new_size)
+{
+	*new_size = size;
+	char* line;
+
+	uint32_t line_count = 0;
+	line = strtok(src, "\n");
+	re_shader_type_t shader_type;
+	re_renderpass_target target;
+	char glsl_src[size];
+	uint8_t fmt_glsl_src = 0;
+	size_t glsl_src_size = 0;
+	char* glsl_src_curr = glsl_src;
+	if (src != NULL)
+	{
+		while (line != NULL)
+		{
+			if (strstr(line, "#shader_type") != NULL)
+			{
+				if (strstr(line, "vertex") != NULL)
+				{
+					shader_type = RE_VERTEX_SHADER;
+				}
+				else if (strstr(line, "fragment") != NULL)
+				{
+					shader_type = RE_FRAGMENT_SHADER;
+				}
+			}
+			else if (strstr(line, "#target") != NULL)
+			{
+				if (strstr(line, "screen") != NULL)
+				{
+					target = SCREEN;
+				}
+				else if (strstr(line, "scene") != NULL)
+				{
+					target = SCENE;
+				}
+			}
+			else if (strstr(line, "#glsl_start") != NULL)
+			{
+				fmt_glsl_src = 1;
+			}
+			else if (strstr(line, "#glsl_end") != NULL)
+			{
+				fmt_glsl_src = 0;
+			}
+			else
+			{
+				if (fmt_glsl_src)
+				{
+					glsl_src_size += sprintf(glsl_src_curr, "%s\n", line);
+					glsl_src_curr = &glsl_src[glsl_src_size];
+				}
+			}
+
+			line = strtok(NULL, "\n");
+			line_count++;
+
+		}
+	}
+	if (shader_type == RE_VERTEX_SHADER)
+	{
+		return _re_preprocess_vertex(glsl_src, target, size, new_size);
+	}
+	else if (shader_type == RE_FRAGMENT_SHADER)
+	{
+		return _re_preprocess_fragment(glsl_src, target, size, new_size);
+	}
+	else
+	{
+		re_log(RE_ERROR, "Invalid shader target\n");
+	}
+
+}
+
 void _re_print(const char* str)
 {
 	printf(str);
@@ -1179,7 +1379,7 @@ void _re_print_mesh(const re_mesh_t* mesh)
 	{
 		printf("\nVertex: %d\t", i);
 		re_print(mesh->positions.elements[i]);
-		
+
 
 	}
 	printf("\n");
