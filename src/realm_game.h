@@ -31,7 +31,7 @@ void on_window_resize(re_context_t* ctx, int32_t width, int32_t height);
 void on_key_action(re_context_t* ctx, re_key_action_t action, int32_t key);
 void on_mouse_action(re_context_t* ctx, re_mouse_button_action_t action, int32_t button);
 void on_mouse_pos(re_context_t* ctx, float x, float y, float last_x, float last_y);
-void realm_main();
+
 
 void obj_to_mesh( tinyobj_attrib_t* attributes,  tinyobj_shape_t* shapes, re_mesh_t* mesh);
 re_mesh_t* generate_sphere(uint32_t resolution);

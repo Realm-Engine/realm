@@ -206,12 +206,6 @@ vector_decl(re_texture_t)
 
 
 
-typedef struct re_app_desc_t
-{
-	int width;
-	int height;
-	char title[64];
-}re_app_desc_t;
 
 typedef enum re_key_action_t
 {
@@ -249,6 +243,14 @@ typedef struct re_event_handler_desc_t
 
 }re_event_handler_desc_t;
 
+typedef struct re_app_desc_t
+{
+	int width;
+	int height;
+	char title[64];
+	re_event_handler_desc_t* evh;
+}re_app_desc_t;
+
 
 typedef struct re_context_t
 {
@@ -264,8 +266,8 @@ typedef struct re_context_t
 
 typedef enum re_projection_type
 {
-	PERSPECTIVE,
-	ORTHOGRAPHIC
+	RE_PERSPECTIVE,
+	RE_ORTHOGRAPHIC
 
 
 }re_projection_type;
@@ -355,10 +357,10 @@ typedef struct re_scenegraph_t
 
 typedef enum re_log_severeity
 {
-	RE_NONE,
-	RE_LOW,
-	RE_WARNING,
-	RE_HIGH
+	RE_LOG_NONE,
+	RE_LOG_LOW,
+	RE_LOG_WARNING,
+	RE_LOG_HIGH
 }re_log_severeity;
 
 
@@ -370,7 +372,7 @@ REALM_ENGINE_FUNC void _re_handle_window_resize(GLFWwindow* window, int width, i
 REALM_ENGINE_FUNC void _re_handle_mouse_action(GLFWwindow* window, int button, int action, int mods);
 REALM_ENGINE_FUNC void _re_handle_mouse_pos(GLFWwindow* window, double x, double y);
 REALM_ENGINE_FUNC void _re_handle_key_action(GLFWwindow* window, int key, int scancode, int action, int mods);
-REALM_ENGINE_FUNC re_result_t re_init(re_app_desc_t app);
+REALM_ENGINE_FUNC re_result_t re_init(re_app_desc_t* app);
 REALM_ENGINE_FUNC void re_set_event_handler(re_event_handler_desc_t ev);
 REALM_ENGINE_FUNC void _re_poll_events();
 REALM_ENGINE_FUNC void _re_swap_buffers();
@@ -527,17 +529,17 @@ REALM_ENGINE_FUNC uint32_t re_adler32_str(const char* buffer)
 
 }
 
-REALM_ENGINE_FUNC re_result_t re_init(re_app_desc_t app) {
-	re_log(RE_NONE, "Starting Realm Engine...\n");
-	re_log(RE_NONE, "Initializing GLFW\n");
+REALM_ENGINE_FUNC re_result_t re_init(re_app_desc_t* app) {
+	re_log(RE_LOG_NONE, "Starting Realm Engine...\n");
+	re_log(RE_LOG_NONE, "Initializing GLFW\n");
 	if (!glfwInit())
 	{
-		re_log(RE_HIGH, "Could not init glfw!\n");
+		re_log(RE_LOG_HIGH, "Could not init glfw!\n");
 	}
 
 	memset(&_re_context.event_handlers, NULL, sizeof(re_event_handler_desc_t));
-	_re_context._window = glfwCreateWindow(app.width, app.height, app.title, NULL, NULL);
-	_re_context.app = app;
+	_re_context._window = glfwCreateWindow(app->width, app->height, app->title, NULL, NULL);
+	_re_context.app = *app;
 	glfwMakeContextCurrent(_re_context._window);
 	glfwSetWindowUserPointer(_re_context._window, &_re_context);
 	glfwSetWindowSizeCallback(_re_context._window, &_re_handle_window_resize);
@@ -545,9 +547,24 @@ REALM_ENGINE_FUNC re_result_t re_init(re_app_desc_t app) {
 	glfwGetCursorPos(_re_context._window, &_re_context._mouse_last_x, &_re_context._mouse_last_y);
 	glfwSetCursorPosCallback(_re_context._window, &_re_handle_mouse_pos);
 	glfwSetKeyCallback(_re_context._window, &_re_handle_key_action);
+	
+
+
+	re_log(RE_LOG_NONE, "Initializing OpenGL\n");
+	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	const GLubyte* vendor = glGetString(GL_VENDOR);
+	const GLubyte* renderer = glGetString(GL_RENDERER);
+	const GLubyte* version = glGetString(GL_VERSION);
+	re_log(RE_LOG_NONE, "GPU Info\n");
+	re_log(RE_LOG_NONE, "Vendor:%s\n", vendor);
+	re_log(RE_LOG_NONE, "Device:%s\n", renderer);
+	re_log(RE_LOG_NONE, "API Info\n");
+	re_log(RE_LOG_NONE, "Version:%s\n", version);
+	re_set_event_handler(*app->evh);
 	return RE_OK;
-
-
 }
 
 
@@ -568,7 +585,7 @@ REALM_ENGINE_FUNC void _re_swap_buffers()
 
 REALM_ENGINE_FUNC void re_start()
 {
-	re_log(RE_NONE, "Starting Realm Engine main loop\n");
+	re_log(RE_LOG_NONE, "Starting Realm Engine main loop\n");
 	_re_context.event_handlers.on_start(_re_context);
 	while (!glfwWindowShouldClose(_re_context._window))
 	{
@@ -698,10 +715,10 @@ REALM_ENGINE_FUNC mat4x4 re_camera_projection(re_camera_t* camera)
 	mat4x4 projection;
 	switch (camera->projection_type)
 	{
-	case PERSPECTIVE:
+	case RE_PERSPECTIVE:
 		projection = re_perspective(deg_to_rad(camera->fov_degrees), camera->size.x / camera->size.y, camera->near_plane, camera->far_plane);
 		break;
-	case ORTHOGRAPHIC:
+	case RE_ORTHOGRAPHIC:
 		projection = re_orthographic(camera->size.x, 0, 0, camera->size.y, camera->near_plane, camera->far_plane);
 		break;
 	default:
@@ -1104,10 +1121,10 @@ REALM_ENGINE_FUNC re_result_t re_render_scene(re_actor_t* root)
 		pass._rendpass_cb(&pass, NULL);
 		switch (pass.target)
 		{
-		case SCENE:
+		case RE_TARGET_SCENE:
 			re_draw_scene_recursive(root, &pass);
 			break;
-		case SCREEN:
+		case RE_TARGET_SCREEN:
 			re_draw_triangles(6);
 			break;
 		default:
@@ -1132,21 +1149,21 @@ void re_log(re_log_severeity severity, const char* format, ...)
 	int size_label = 0;
 	switch (severity)
 	{
-	case RE_NONE:
+	case RE_LOG_NONE:
 		size_label = sprintf(buffer, "[Realm Engine::LOG] ");
 		break;
-	case RE_LOW:
+	case RE_LOG_LOW:
 		size_label = sprintf(buffer, "[Realm Engine::LOW] ");
 		break;
-	case RE_WARNING:
+	case RE_LOG_WARNING:
 		size_label = sprintf(buffer, "[Realm Engine::WARNING] ");
 		break;
-	case RE_HIGH:
+	case RE_LOG_HIGH:
 		size_label = sprintf(buffer, "[Realm Engine::HIGH] ");
 		break;
 
 	default:
-
+		size_label = sprintf(buffer, "[Realm Engine::LOG] ");
 		break;
 	}
 	va_list argptr;
@@ -1309,11 +1326,11 @@ REALM_ENGINE_FUNC char* re_preprocess_shader(const char* src, size_t size, size_
 			{
 				if (strstr(line, "screen") != NULL)
 				{
-					target = SCREEN;
+					target = RE_TARGET_SCREEN;
 				}
 				else if (strstr(line, "scene") != NULL)
 				{
-					target = SCENE;
+					target = RE_TARGET_SCENE;
 				}
 			}
 			else if (strstr(line, "#glsl_start") != NULL)
@@ -1407,5 +1424,22 @@ void _re_print_mesh(const re_mesh_t* mesh)
 }
 
 #endif
+#ifndef RE_OVERRIDE_MAIN
+re_app_desc_t realm_main(int argc, char** argv);
+void main(int argc, char** argv)
+{
+	re_app_desc_t app = realm_main(argc, argv);
+	re_init(&app);
+	re_start();
+
+
+}
+
+
+#endif // !RE_OVERRIDE_MAIN
 #endif
+
+
+
+
 //#include "gfx_ogl.h"

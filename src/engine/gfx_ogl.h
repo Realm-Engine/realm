@@ -116,8 +116,8 @@ typedef enum re_renderpass_type
 }re_renderpass_type;
 typedef enum re_renderpass_target
 {
-	SCENE,
-	SCREEN
+	RE_TARGET_SCENE,
+	RE_TARGET_SCREEN
 }re_renderpass_target;
 
 typedef void(*on_renderpass)(struct re_renderpass_t* renderpass, void* userdata) ;
@@ -218,7 +218,6 @@ REALM_ENGINE_FUNC re_vertex_buffer_t* re_create_vertex_buffer();
 REALM_ENGINE_FUNC re_index_buffer_t* re_create_index_buffer();
 REALM_ENGINE_FUNC re_result_t re_gen_texture(re_texture_t* texture);
 REALM_ENGINE_FUNC re_framebuffer_t* re_create_framebuffer(re_framebuffer_desc_t* desc);
-REALM_ENGINE_FUNC re_result_t re_init_gfx();
 REALM_ENGINE_FUNC re_result_t re_upload_index_data(uint32_t* triangles, uint32_t num_triangles);
 REALM_ENGINE_FUNC re_result_t re_upload_mesh_data(re_mesh_t* mesh, re_transform_t* transform);
 REALM_ENGINE_FUNC re_result_t re_upload_vertex_data(vec3* positions, uint16_t num_vertices);
@@ -479,7 +478,7 @@ REALM_ENGINE_FUNC re_result_t re_compile_shader(re_shader_t* sh)
 		if (message != NULL)
 		{
 
-			re_log(RE_HIGH,"Error compiling shader %s \n %s\n",sh->name, message);
+			re_log(RE_LOG_HIGH,"Error compiling shader %s \n %s\n",sh->name, message);
 			return RE_ERROR;
 
 		}
@@ -494,7 +493,7 @@ REALM_ENGINE_FUNC re_result_t re_compile_shader(re_shader_t* sh)
 REALM_ENGINE_FUNC re_result_t re_init_program(re_shader_program_t* program_data)
 {
 	
-	re_log(RE_NONE, "Linking shader program %s\n", program_data->name);
+	re_log(RE_LOG_NONE, "Linking shader program %s\n", program_data->name);
 
 	int i;
 	program_data->_program_id = glCreateProgram();
@@ -514,7 +513,7 @@ REALM_ENGINE_FUNC re_result_t re_init_program(re_shader_program_t* program_data)
 	if (!success)
 	{
 		glGetProgramInfoLog(program_data->_program_id, 256, NULL, result);
-		re_log(RE_HIGH,"Could not link program %s\n%s\n",program_data->name, result);
+		re_log(RE_LOG_HIGH,"Could not link program %s\n%s\n",program_data->name, result);
 		return RE_ERROR;
 	}
 
@@ -630,26 +629,6 @@ REALM_ENGINE_FUNC re_framebuffer_t* re_create_framebuffer(re_framebuffer_desc_t*
 	return buffer;
 }
 
-REALM_ENGINE_FUNC re_result_t re_init_gfx()
-{
-	re_log(RE_NONE, "Initializing OpenGL\n");
-	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	const GLubyte* vendor = glGetString(GL_VENDOR);
-	const GLubyte* renderer = glGetString(GL_RENDERER);
-	const GLubyte* version = glGetString(GL_VERSION);
-	re_log(RE_NONE, "GPU Info\n");
-	re_log(RE_NONE, "Vendor:%s\n", vendor);
-	re_log(RE_NONE, "Device:%s\n", renderer);
-	re_log(RE_NONE, "API Info\n");
-	re_log(RE_NONE, "Version:%s\n", version);
-	return RE_OK;
-
-
-
-}
 
 REALM_ENGINE_FUNC re_result_t re_upload_index_data(uint32_t* triangles, uint32_t num_triangles)
 {
@@ -1104,21 +1083,21 @@ REALM_ENGINE_FUNC re_result_t _re_init_main_renderpath()
 		.type = COLOR_PASS,
 		.target_framebuffer = pipeline->_main_renderpath._scene_fb,
 		._renderpass_cb = &_on_default_scene_render ,
-		.target = SCENE
+		.target = RE_TARGET_SCENE
 	};
 	re_renderpass_desc_t depth_pass_desc = (re_renderpass_desc_t){
 		.shader_program = &depth_shader,
 		.type = DEPTH_PASS,
 		.target_framebuffer = pipeline->_main_renderpath._depth_stencil_fb,
 		._renderpass_cb = &_on_default_depth_render,
-		.target = SCENE
+		.target = RE_TARGET_SCENE
 
 	};
 	re_renderpass_desc_t screen_shader_desc = (re_renderpass_desc_t){
 		.shader_program = &screen_shader,.type = COLOR_PASS,
 		.target_framebuffer = pipeline->_main_renderpath._screen_fb,
 		._renderpass_cb = &_on_default_screen_render ,
-		.target = SCREEN
+		.target = RE_TARGET_SCREEN
 	};
 	re_renderpass_t* scene_pass = re_create_renderpass(&scene_shader_desc);
 	re_renderpass_t* screen_pass = re_create_renderpass(&screen_shader_desc);
@@ -1133,7 +1112,7 @@ REALM_ENGINE_FUNC re_result_t _re_init_main_renderpath()
 
 REALM_ENGINE_FUNC re_result_t re_init_gfx_pipeline()
 {
-	re_log(RE_NONE, "Creating graphics pipeline\n");
+	re_log(RE_LOG_NONE, "Creating graphics pipeline\n");
 	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
 	glGenVertexArrays(1, &pipeline->_vao);
 
