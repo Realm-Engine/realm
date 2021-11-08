@@ -1007,8 +1007,8 @@ REALM_ENGINE_FUNC re_result_t re_load_shaders(re_shader_program_t* program, cons
 	{
 		long fragment_size = re_get_file_size(frag_path);
 		long vertex_size = re_get_file_size(vert_path);
-		uint32_t new_vertex_size = 0;
-		uint32_t new_fragment_size = 0;
+		size_t new_vertex_size = 0;
+		size_t new_fragment_size = 0;
 		char* processed_fragment;
 		char* processed_vertex;
 		char fragment[fragment_size + 1];
@@ -1019,11 +1019,16 @@ REALM_ENGINE_FUNC re_result_t re_load_shaders(re_shader_program_t* program, cons
 		re_read_text(vert_path, vertex, vertex_size);
 		processed_vertex = re_preprocess_shader(vertex, vertex_size, &new_vertex_size);
 		processed_fragment = re_preprocess_shader(fragment, fragment_size, &new_fragment_size);
-		program->source[0] = (re_shader_t){ .name = "Vertex",.source = processed_vertex,.type = RE_VERTEX_SHADER };
-		program->source[1] = (re_shader_t){ .name = "Fragment",.source = processed_fragment,.type = RE_FRAGMENT_SHADER };
+
+		program->source[0] = (re_shader_t){.name = "Vertex",.type = RE_VERTEX_SHADER};
+		program->source[1] = (re_shader_t){ .name = "Fragment",.type = RE_FRAGMENT_SHADER };
+		program->source[0].source = (char*)malloc(new_vertex_size);
+		program->source[1].source = (char*)malloc(new_fragment_size);
+		memcpy(program->source[0].source, processed_vertex, new_vertex_size);
+		memcpy(program->source[1].source, processed_fragment, new_fragment_size);
 		re_compile_shader(&program->source[0]);
 		re_compile_shader(&program->source[1]);
-		re_init_program(program);
+		
 		free(processed_fragment);
 		free(processed_vertex);
 	}
@@ -1033,7 +1038,7 @@ REALM_ENGINE_FUNC re_result_t re_load_shaders(re_shader_program_t* program, cons
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_tex_units);
 	program->_sampler_cache._hashes = new_vector(uint32_t, max_tex_units);
 	program->_sampler_cache._locations = new_vector(GLint, max_tex_units);
-
+	re_init_program(program);
 	return RE_OK;
 
 }

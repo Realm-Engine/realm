@@ -2,7 +2,7 @@
 #shader_type fragment
 #target scene
 
-#glsl_start
+#glsl_begin
 out vec4 FragColor;
 layout(location = 0) uniform sampler2D diffuseMap;
 layout(location = 1) uniform sampler2D normalMap;

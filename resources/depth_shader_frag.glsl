@@ -1,4 +1,6 @@
 #version 430 core
+#shader_type fragment
+#target scene
 #glsl_begin
 
 in float SurfaceColor;

@@ -79,9 +79,9 @@ void realm_start(re_context_t ctx)
 	//tinyobj_parse_obj(&shape_attrib, &shapes, &num_shapes, &materials, &num_materials, "./resources/Plane.obj",read_obj_file, NULL, TINYOBJ_FLAG_TRIANGULATE);
 	//obj_to_mesh(&shape_attrib, shapes, &square_actor->mesh);
 
-	//re_set_mesh_triangles(&square_actor->mesh, square_triangles, 6);
-	//re_fill_mesh(&square_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);
-	generate_cube(2, &square_actor->mesh);
+	re_set_mesh_triangles(&square_actor->mesh, square_triangles, 6);
+	re_fill_mesh(&square_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);
+	//generate_cube(2, &square_actor->mesh);
 	//square_actor->transform.rotation = euler_to_quat(new_vec3(deg_to_rad(90), 0, 0));
 
 	square_actor->transform.position = new_vec3(0, -0.0f, -1.0f);
@@ -95,8 +95,8 @@ void realm_start(re_context_t ctx)
 	state.mainlight.transform = new_transform;
 
 	//state.mainlight.transform.rotation = euler_to_quat(new_vec3(deg_to_rad(90), 20, 0));
-	re_set_material_texture(&square_actor->material_textures, "diffuseMap", *wall_texture);
-	re_set_material_texture(&square_actor->material_textures, "normalMap", *wall_normal_texture);
+	re_set_material_texture(&square_actor->material_textures, "diffuseMap", wall_texture);
+	re_set_material_texture(&square_actor->material_textures, "normalMap", wall_normal_texture);
 	//re_query_userdata_layout(&state.pipeline, layout);
 
 

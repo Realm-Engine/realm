@@ -1,7 +1,7 @@
 #version 430 core
 #shader_type fragment
 #target screen
-#glsl_start
+#glsl_begin
 out vec4 FragColor;
   
 in vec2 TextureCoords;

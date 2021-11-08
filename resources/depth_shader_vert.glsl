@@ -1,7 +1,7 @@
 #version 430 core
 #shader_type vertex
 #target scene
-#glsl_start
+#glsl_begin
 out float SurfaceColor;
 void main() {
 		gl_Position =  re_world_to_clipspace(_position);

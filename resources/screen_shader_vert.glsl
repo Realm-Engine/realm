@@ -1,7 +1,7 @@
 #version 430 core
 #shader_type vertex
 #target screen
-#glsl_start
+#glsl_begin
 
 out vec2 TextureCoords;
 

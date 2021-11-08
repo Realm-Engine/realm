@@ -398,7 +398,7 @@ REALM_ENGINE_FUNC re_result_t re_render_scene(re_actor_t* root);
 REALM_ENGINE_FUNC void init_actor(re_actor_t* actor);
 REALM_ENGINE_FUNC re_scenegraph_t* re_create_scenegraph(re_actor_t* node);
 REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh, vec3* positions, vec3* normals, vec2* texcoords, uint32_t mesh_size);
-REALM_ENGINE_FUNC re_result_t re_set_material_texture(re_material_textures_t* texture_list, const char* name, re_texture_t texture);
+REALM_ENGINE_FUNC re_result_t re_set_material_texture(re_material_textures_t* texture_list, const char* name, re_texture_t* texture);
 REALM_ENGINE_FUNC re_texture_t re_get_material_texture(re_material_textures_t* texture_list, uint32_t id);
 REALM_ENGINE_FUNC void re_set_mesh_triangles(re_mesh_t* mesh, uint32_t* triangles, uint32_t num_triangles);
 REALM_ENGINE_FUNC void re_set_material_vector(re_material_properties_list* material_list, const char* name, vec4 value);
@@ -886,7 +886,7 @@ REALM_ENGINE_FUNC re_texture_t re_get_material_texture(re_material_textures_t* l
 
 }
 
-REALM_ENGINE_FUNC re_result_t re_set_material_texture(re_material_textures_t* list, const char* name, re_texture_t value)
+REALM_ENGINE_FUNC re_result_t re_set_material_texture(re_material_textures_t* list, const char* name, re_texture_t* value)
 {
 	uint32_t id = material_id(name);
 	int i;
@@ -901,7 +901,7 @@ REALM_ENGINE_FUNC re_result_t re_set_material_texture(re_material_textures_t* li
 	if (target_index == -1)
 	{
 
-		vector_append(re_texture_t, &list->textures, value);
+		vector_append(re_texture_t, &list->textures, *value);
 		vector_append(uint32_t, &list->texture_ids, id);
 		target_index = list->textures.count - 1;
 
@@ -1244,19 +1244,19 @@ REALM_ENGINE_FUNC char* _re_preprocess_vertex(const char* src, re_renderpass_tar
 #endif // _RE_SHADER_VER_STR
 
 
-	* new_size = size + struct_data_size + attribute_data_size + shader_ver_str_len ;
+	*new_size = size + struct_data_size + attribute_data_size + shader_ver_str_len ;
 
-	char* new_shader = malloc(*new_size + 1);
+	char* new_shader = malloc(*new_size);
 #ifdef _RE_SHADERLANG_VER_STR
 	memcpy(new_shader, _RE_SHADERLANG_VER_STR, shader_ver_str_len);
 #endif // _RE_SHADERLANG_VER_STR
 
 
-	memcpy(&new_shader[shader_ver_str_len], attribute_data, attribute_data_size);
+	memcpy(&new_shader[shader_ver_str_len], attribute_data, attribute_data_size - 1);
 
-	memcpy(&new_shader[attribute_data_size + shader_ver_str_len], struct_data, struct_data_size);
-	memcpy(&new_shader[attribute_data_size + struct_data_size + shader_ver_str_len], src, size);
-	new_shader[struct_data_size + shader_ver_str_len + size + struct_data_size] = '\0';
+	memcpy(&new_shader[attribute_data_size + shader_ver_str_len - 1], struct_data, struct_data_size);
+	memcpy(&new_shader[attribute_data_size + struct_data_size + shader_ver_str_len - 1], src, size);
+	
 	free(struct_data);
 	free(attribute_data);
 	
@@ -1289,7 +1289,7 @@ REALM_ENGINE_FUNC char* _re_preprocess_fragment(const char* src, re_renderpass_t
 
 	memcpy(&new_shader[shader_ver_str_len], struct_data, struct_data_size);
 	memcpy(&new_shader[struct_data_size + shader_ver_str_len], src, size);
-	new_shader[struct_data_size + shader_ver_str_len + size] = '\0';
+	
 	free(struct_data);
 	return new_shader;
 }
@@ -1333,7 +1333,7 @@ REALM_ENGINE_FUNC char* re_preprocess_shader(const char* src, size_t size, size_
 					target = RE_TARGET_SCENE;
 				}
 			}
-			else if (strstr(line, "#glsl_start") != NULL)
+			else if (strstr(line, "#glsl_begin") != NULL)
 			{
 				fmt_glsl_src = 1;
 			}
