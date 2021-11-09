@@ -226,7 +226,8 @@ typedef enum re_attribute_slot
 {
 	RE_POSITION_ATTRIBUTE,
 	RE_TEXCOORD_ATTRIBUTE,
-	RE_NORMAL_ATTRIBUTE
+	RE_NORMAL_ATTRIBUTE,
+	RE_TANGENT_ATTRIBUTE
 
 }re_attribute_slot;
 
@@ -318,6 +319,7 @@ typedef struct re_mesh_t
 {
 	vector(vec3) positions;
 	vector(vec3) normals;
+	vector(vec3) tangents;
 	vector(vec2) texcoords;
 	vector(uint32_t) triangles;
 	uint16_t mesh_size;
@@ -363,7 +365,11 @@ typedef enum re_log_severeity
 	RE_LOG_HIGH
 }re_log_severeity;
 
-
+typedef enum re_bool
+{
+	TRUE,
+	FALSE
+}re_bool;
 
 
 
@@ -378,7 +384,7 @@ REALM_ENGINE_FUNC void _re_poll_events();
 REALM_ENGINE_FUNC void _re_swap_buffers();
 REALM_ENGINE_FUNC void re_start();
 REALM_ENGINE_FUNC re_result_t re_context_size(int* width, int* height);
-REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t* mesh, vec3* positions, vec3* normals);
+REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t* mesh, vec3* positions, vec3* normals,vec3* tangents);
 REALM_ENGINE_FUNC re_result_t re_read_text(const char* filePath, char* buffer, size_t size);
 REALM_ENGINE_FUNC re_camera_t* re_create_camera(re_projection_type type, re_view_desc_t view_desc);
 REALM_ENGINE_FUNC vec3 re_compute_camera_front(re_camera_t* camera);
@@ -401,6 +407,7 @@ REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh, vec3* positions, vec3* norm
 REALM_ENGINE_FUNC re_result_t re_set_material_texture(re_material_textures_t* texture_list, const char* name, re_texture_t* texture);
 REALM_ENGINE_FUNC re_texture_t re_get_material_texture(re_material_textures_t* texture_list, uint32_t id);
 REALM_ENGINE_FUNC void re_set_mesh_triangles(re_mesh_t* mesh, uint32_t* triangles, uint32_t num_triangles);
+REALM_ENGINE_FUNC void re_calculate_mesh_tangents(re_mesh_t* mesh);
 REALM_ENGINE_FUNC void re_set_material_vector(re_material_properties_list* material_list, const char* name, vec4 value);
 REALM_ENGINE_FUNC vec4 re_get_material_vector(re_material_properties_list* material_list, const char* name);
 REALM_ENGINE_FUNC void re_set_userdata_properties_from_materials(re_user_data_layout_t* layout, re_material_properties_list* materials);
@@ -547,7 +554,7 @@ REALM_ENGINE_FUNC re_result_t re_init(re_app_desc_t* app) {
 	glfwGetCursorPos(_re_context._window, &_re_context._mouse_last_x, &_re_context._mouse_last_y);
 	glfwSetCursorPosCallback(_re_context._window, &_re_handle_mouse_pos);
 	glfwSetKeyCallback(_re_context._window, &_re_handle_key_action);
-	
+
 
 
 	re_log(RE_LOG_NONE, "Initializing OpenGL\n");
@@ -606,7 +613,7 @@ REALM_ENGINE_FUNC re_result_t re_context_size(int* width, int* height)
 	return RE_OK;
 }
 
-REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t* mesh, vec3* positions, vec3* normals)
+REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t* mesh, vec3* positions, vec3* normals,vec3* tangents)
 {
 
 	mat4x4 model = compute_transform(transform);
@@ -619,6 +626,11 @@ REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t*
 		vec4 wsNormal = mat4_mul_vec4(trans_inv, vec4_from_vec3(mesh->normals.elements[i], 1.0f));
 		positions[i] = vec3_from_vec4(wsPos);
 		normals[i] = vec3_from_vec4(wsNormal);
+		if (tangents != NULL)
+		{
+			vec4 wsTangent = mat4_mul_vec4(model, vec4_from_vec3(mesh->tangents.elements[i], 1.0f));
+			tangents[i] = vec3_from_vec4(wsTangent);
+		}
 
 	}
 
@@ -1025,10 +1037,11 @@ REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh, vec3* positions, vec3* norm
 	mesh->normals = new_vector(vec3, mesh_size);
 	mesh->positions = new_vector(vec3, mesh_size);
 	mesh->texcoords = new_vector(vec2, mesh_size);
+	mesh->tangents = new_vector(vec3, mesh_size);
 	memset(mesh->normals.elements, 0, size_normals);
 	memset(mesh->positions.elements, 0, size_positions);
 	memset(mesh->texcoords.elements, 0, size_uv);
-
+	memset(mesh->tangents.elements, 0, size_normals);
 	if (positions != NULL);
 	{
 		vector_append_range(vec3, &mesh->positions, positions, mesh_size);
@@ -1042,7 +1055,48 @@ REALM_ENGINE_FUNC void re_fill_mesh(re_mesh_t* mesh, vec3* positions, vec3* norm
 		vector_append_range(vec2, &mesh->texcoords, texcoords, mesh_size);
 	}
 
+
+
 	mesh->mesh_size = mesh_size;
+
+}
+
+REALM_ENGINE_FUNC void re_calculate_mesh_tangents(re_mesh_t* mesh)
+{
+	memset(mesh->tangents.elements, 0, mesh->tangents.capacity);
+	int i, j;
+	for (i = 0; i < mesh->triangles.count / 3; i += 3)
+	{
+		uint32_t triangle[3];
+		vec3 positions[3];
+		vec2 uvs[3];
+		vec3 normal = mesh->normals.elements[i];
+		for (j = 0; j < 3; j++)
+		{
+			triangle[j] = mesh->triangles.elements[i + j];
+			positions[j] = mesh->positions.elements[i + j];
+			uvs[j] = mesh->texcoords.elements[i + j];
+		}
+		vec3 edge1 = vec3_subtract(positions[1], positions[0]);
+		vec3 edge2 = vec3_subtract(positions[2], positions[1]);
+		vec2 dv1 = vec2_subtract(uvs[1], uvs[0]);
+		vec2 dv2 = vec2_subtract(uvs[2], uvs[1]);
+
+		vec3 tangent;
+		float f = 1.0f / (dv1.x * dv2.y - dv2.x * dv1.y);
+		tangent.x = f * (dv2.y * edge1.x - dv1.y * edge2.x);
+		tangent.y = f * (dv2.y * edge1.y - dv1.y * edge2.y);
+		tangent.z = f * (dv2.y * edge1.z - dv1.y * edge2.z);
+		re_print("\n");
+		re_print(tangent);
+		re_print("\n");
+		for (j = 0; j < 3; j++)
+		{
+			vector_insert(vec3, &mesh->tangents, i + j, tangent);
+			
+		}
+
+	}
 
 }
 
@@ -1177,10 +1231,10 @@ void re_log(re_log_severeity severity, const char* format, ...)
 
 REALM_ENGINE_FUNC char* _re_preprocess_vertex(const char* src, re_renderpass_target target, size_t size, size_t* new_size)
 {
-	char* attribute_data = (char*)malloc(128);
+	char* attribute_data = (char*)malloc(256);
 	char* struct_data = NULL;
 
-	memset(attribute_data, 0, 128);
+	memset(attribute_data, 0, 256);
 	re_gfx_pipeline_t* pipeline = RE_GRAPHICS_PIPELINE;
 
 	size_t attribute_data_size = 0;
@@ -1209,14 +1263,17 @@ REALM_ENGINE_FUNC char* _re_preprocess_vertex(const char* src, re_renderpass_tar
 				strcpy(attribute_name, "_texture_uv");
 				strcpy(attribute_type, "vec2");
 				break;
+			case RE_TANGENT_ATTRIBUTE:
+				strcpy(attribute_name, "_tangent");
+				strcpy(attribute_type, "vec3");
 			default:
 				break;
 			}
-			
+
 			size_t len = strlen(fmt) + strlen(attribute_name) + strlen(attribute_type) + 1;
 			char attr[len + 1];
 			memset(attr, 0, sizeof(attr));
-			uint32_t result = sprintf_s(attr,sizeof(attr), fmt, attribute.index, attribute_type, attribute_name);
+			uint32_t result = sprintf_s(attr, sizeof(attr), fmt, attribute.index, attribute_type, attribute_name);
 			if (result < 0)
 			{
 				re_log(RE_ERROR, "Error processing shader\n");
@@ -1244,7 +1301,7 @@ REALM_ENGINE_FUNC char* _re_preprocess_vertex(const char* src, re_renderpass_tar
 #endif // _RE_SHADER_VER_STR
 
 
-	*new_size = size + struct_data_size + attribute_data_size + shader_ver_str_len ;
+	* new_size = size + struct_data_size + attribute_data_size + shader_ver_str_len;
 
 	char* new_shader = malloc(*new_size);
 #ifdef _RE_SHADERLANG_VER_STR
@@ -1256,10 +1313,10 @@ REALM_ENGINE_FUNC char* _re_preprocess_vertex(const char* src, re_renderpass_tar
 
 	memcpy(&new_shader[attribute_data_size + shader_ver_str_len - 1], struct_data, struct_data_size);
 	memcpy(&new_shader[attribute_data_size + struct_data_size + shader_ver_str_len - 1], src, size);
-	
+
 	free(struct_data);
 	free(attribute_data);
-	
+
 	return new_shader;
 
 }
@@ -1289,7 +1346,7 @@ REALM_ENGINE_FUNC char* _re_preprocess_fragment(const char* src, re_renderpass_t
 
 	memcpy(&new_shader[shader_ver_str_len], struct_data, struct_data_size);
 	memcpy(&new_shader[struct_data_size + shader_ver_str_len], src, size);
-	
+
 	free(struct_data);
 	return new_shader;
 }
@@ -1431,7 +1488,7 @@ void main(int argc, char** argv)
 	re_app_desc_t app = realm_main(argc, argv);
 	re_init(&app);
 	re_start();
-
+	
 
 }
 

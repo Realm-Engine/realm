@@ -10,6 +10,7 @@ void main() {
 		RESurfaceDataOut.surfaceColor = color;
 		RESurfaceDataOut.uv = _texture_uv;
 		RESurfaceDataOut.normalWS = _normal;
+		RESurfaceDataOut.TBN =  calculate_TBN(_normal, _tangent);
 		gl_Position = RESurfaceDataOut.posCS;
 
 }

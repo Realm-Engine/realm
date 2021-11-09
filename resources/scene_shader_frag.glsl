@@ -12,7 +12,7 @@ void main()
 	FragmentInputData fragIn;
 	fragIn.surfaceColor = RESurfaceDataIn.surfaceColor;
 	fragIn.normalWS = RESurfaceDataIn.normalWS;
-	
+	fragIn.TBN = RESurfaceDataIn.TBN;
 	fragIn.posWS = RESurfaceDataIn.posWS;
 	fragIn.uv = RESurfaceDataIn.uv;
 	fragIn.normalSample = texture(normalMap, RESurfaceDataIn.uv).rgb;

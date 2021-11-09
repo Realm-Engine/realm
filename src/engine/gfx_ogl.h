@@ -642,14 +642,15 @@ REALM_ENGINE_FUNC re_result_t re_upload_mesh_data(re_mesh_t* mesh, re_transform_
 	uint16_t pos_size = sizeof(vec3) * mesh->mesh_size;
 	uint16_t uv_size = sizeof(vec2) * mesh->mesh_size;
 	uint16_t normal_size = sizeof(vec3) * mesh->mesh_size;
-	float mesh_data[pos_size + uv_size + normal_size];
+	uint16_t tangent_size = sizeof(vec3) * mesh->mesh_size;
+	float mesh_data[pos_size + uv_size + normal_size + tangent_size];
 	int i, j;
 	vec3 positions[mesh->mesh_size];
 	vec3 normals[mesh->mesh_size];
-
-	re_apply_transform(*transform, mesh, &positions, &normals);
+	vec3 tangents[mesh->mesh_size];
+	re_apply_transform(*transform, mesh, &positions, &normals,&tangents);
 	//re_print(mesh);
-	glBufferData(GL_ARRAY_BUFFER, pos_size + uv_size + normal_size, 0, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, pos_size + uv_size + normal_size + tangent_size, 0, GL_DYNAMIC_DRAW);
 	for (i = 0; i < mesh->mesh_size; i++)
 	{
 		for (j = 0; j < pipeline->num_attribs; j++)
@@ -668,6 +669,9 @@ REALM_ENGINE_FUNC re_result_t re_upload_mesh_data(re_mesh_t* mesh, re_transform_
 				break;
 			case RE_NORMAL_ATTRIBUTE:
 				glBufferSubData(GL_ARRAY_BUFFER, dst, attri_size, &normals[i]);
+				break;
+			case RE_TANGENT_ATTRIBUTE:
+				glBufferSubData(GL_ARRAY_BUFFER, dst, attri_size, &tangents[i]);
 			default:
 				break;
 			}
@@ -737,7 +741,7 @@ REALM_ENGINE_FUNC re_result_t re_bind_pipeline_attributes()
 		re_vertex_attr_desc_t attribute = pipeline->attributes[i];
 		GLenum type = _re_type_to_gltype(attribute.type);
 		glEnableVertexAttribArray(attribute.index);
-		glVertexAttribPointer(attribute.index, SHADER_VAR_ELEMENTS(attribute.type), type, GL_FALSE, 8 * sizeof(float), (void*)attribute.offset);
+		glVertexAttribPointer(attribute.index, SHADER_VAR_ELEMENTS(attribute.type), type, GL_FALSE, 11 * sizeof(float), (void*)attribute.offset);
 		pipeline->vertex_layout_size += SHADER_VAR_SIZE(attribute.type);
 	}
 	return RE_OK;
@@ -1001,9 +1005,6 @@ REALM_ENGINE_FUNC void _on_default_depth_render(re_renderpass_t* renderpass, voi
 
 REALM_ENGINE_FUNC re_result_t re_load_shaders(re_shader_program_t* program, const char* frag_path, const char* vert_path)
 {
-
-
-	
 	{
 		long fragment_size = re_get_file_size(frag_path);
 		long vertex_size = re_get_file_size(vert_path);
@@ -1020,12 +1021,8 @@ REALM_ENGINE_FUNC re_result_t re_load_shaders(re_shader_program_t* program, cons
 		processed_vertex = re_preprocess_shader(vertex, vertex_size, &new_vertex_size);
 		processed_fragment = re_preprocess_shader(fragment, fragment_size, &new_fragment_size);
 
-		program->source[0] = (re_shader_t){.name = "Vertex",.type = RE_VERTEX_SHADER};
-		program->source[1] = (re_shader_t){ .name = "Fragment",.type = RE_FRAGMENT_SHADER };
-		program->source[0].source = (char*)malloc(new_vertex_size);
-		program->source[1].source = (char*)malloc(new_fragment_size);
-		memcpy(program->source[0].source, processed_vertex, new_vertex_size);
-		memcpy(program->source[1].source, processed_fragment, new_fragment_size);
+		program->source[0] = (re_shader_t){.name = "Vertex",.source = processed_vertex,.type = RE_VERTEX_SHADER};
+		program->source[1] = (re_shader_t){ .name = "Fragment",.source = processed_fragment,.type = RE_FRAGMENT_SHADER };
 		re_compile_shader(&program->source[0]);
 		re_compile_shader(&program->source[1]);
 		

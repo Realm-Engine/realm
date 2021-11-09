@@ -42,11 +42,18 @@ vec4 re_world_to_clipspace(vec3 ws)
 	return  _vp * vec4(ws, 1.0);
 }
 
+mat3 calculate_TBN(vec3 normal, vec3 tangent)
+{
+	vec3 bitangent = cross(normal, tangent);
+	return mat3(tangent, bitangent, normal);
+}
+
 out RESurfaceData
 {
 	vec4 surfaceColor;
 	vec2 uv;
 	vec3 normalWS;
+	mat3 TBN;
 	vec2 viewPortSize;
 	vec3 posWS;
 	vec4 posCS;
