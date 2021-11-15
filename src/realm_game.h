@@ -21,6 +21,7 @@ re_renderpass_t* scene_pass;
 re_actor_t actors[64];
 re_actor_t* scene_root;
 re_actor_t* square_actor;
+re_actor_t* light_actor;
 re_actor_t* other_actor;
 re_texture_t* wall_texture;
 re_texture_t* wall_normal_texture;

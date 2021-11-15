@@ -62,16 +62,20 @@ void realm_start(re_context_t ctx)
 
 	re_set_bg_color(153.0f, 46.0f, 137.0f, 255.0f, 1);
 	vec3_to_string(re_compute_camera_front(state.camera));
-
+	
 	scene_root = &actors[0];
+	
 	scene_root->mesh.mesh_size = 0;
 	square_actor = &actors[1];
+	light_actor = &actors[2];
 	light.color = new_vec3(1.0, 0.0, 0.3);
 	light.instensity = 1.0f;
-	light.transform.position = new_vec3(0, -1.0f, -0.5f);
+	light.transform = new_transform;
+	light.transform.position = new_vec3(0, .2f, -0.2f);
 	re_add_pointlight(&light);
 	init_actor(scene_root);
 	init_actor(square_actor);
+	init_actor(light_actor);
 	//re_parse_obj_geo("./resources/Plane.obj",&square_actor->mesh);
 	tinyobj_attrib_t shape_attrib;
 	tinyobj_shape_t* shapes = NULL;
@@ -80,16 +84,23 @@ void realm_start(re_context_t ctx)
 	size_t num_materials;
 	//tinyobj_parse_obj(&shape_attrib, &shapes, &num_shapes, &materials, &num_materials, "./resources/Plane.obj",read_obj_file, NULL, TINYOBJ_FLAG_TRIANGULATE);
 	//obj_to_mesh(&shape_attrib, shapes, &square_actor->mesh);
-
+	
 	re_set_mesh_triangles(&square_actor->mesh, square_triangles, 6);
 	re_fill_mesh(&square_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);
 	re_calculate_mesh_tangents(&square_actor->mesh);
+	re_set_mesh_triangles(&light_actor->mesh, square_triangles, 6);
+	re_fill_mesh(&light_actor->mesh, (vec3*)square_model, (vec3*)square_normal, (vec2*)square_uv, 4);
+	re_calculate_mesh_tangents(&light_actor->mesh);
+	memcpy(&light_actor->transform, &light.transform, sizeof(re_transform_t));
+
 	//generate_cube(2, &square_actor->mesh);
 	//square_actor->transform.rotation = euler_to_quat(new_vec3(deg_to_rad(90), 0, 0));
 
 	square_actor->transform.position = new_vec3(0, -1.0f, -.5f);
 	square_actor->transform.rotation = euler_to_quat(new_vec3(90, 0, 0));
+	re_actor_add_child(scene_root, light_actor);
 	re_actor_add_child(scene_root, square_actor);
+	
 	re_set_material_vector(&square_actor->material_properties, "color", new_vec4(1, 1, 1, 1));
 	re_update_ambient_light(vec3_scalar_mul(new_vec3(43, 85, 112), (float)1 / 255), 0.0f);
 	

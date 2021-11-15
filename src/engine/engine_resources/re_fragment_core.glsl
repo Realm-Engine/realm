@@ -82,9 +82,9 @@ vec3 re_calc_pointlights_color(lightingData lighting, vec3 normal, vec3 fragPos)
 	{
 
 		 
-		vec4 pos =  vec4( lighting.pointLightData.positions[i].xyz,1.0);
+		
 		vec3 color = lighting.pointLightData.colors[i].xyz;
-		vec3 direction =  normalize(pos.xyz - fragPos);
+		vec3 direction =  normalize(lighting.pointLightData.positions[i].xyz - fragPos);
 		float diff = max(dot(normal, direction), 0.0);
 		vec3 diffuse = diff * color;
 		float specStrength = 0.5;

@@ -384,7 +384,7 @@ REALM_ENGINE_FUNC void _re_poll_events();
 REALM_ENGINE_FUNC void _re_swap_buffers();
 REALM_ENGINE_FUNC void re_start();
 REALM_ENGINE_FUNC re_result_t re_context_size(int* width, int* height);
-REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t* mesh, vec3* positions, vec3* normals,vec3* tangents);
+REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t* transform, re_mesh_t* mesh, vec3* positions, vec3* normals,vec3* tangents);
 REALM_ENGINE_FUNC re_result_t re_read_text(const char* filePath, char* buffer, size_t size);
 REALM_ENGINE_FUNC re_camera_t* re_create_camera(re_projection_type type, re_view_desc_t view_desc);
 REALM_ENGINE_FUNC vec3 re_compute_camera_front(re_camera_t* camera);
@@ -613,10 +613,10 @@ REALM_ENGINE_FUNC re_result_t re_context_size(int* width, int* height)
 	return RE_OK;
 }
 
-REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t transform, re_mesh_t* mesh, vec3* positions, vec3* normals,vec3* tangents)
+REALM_ENGINE_FUNC size_t re_apply_transform(re_transform_t* transform, re_mesh_t* mesh, vec3* positions, vec3* normals,vec3* tangents)
 {
 
-	mat4x4 model = compute_transform(transform);
+	mat4x4 model = compute_transform(*transform);
 	mat4x4 inv_model = mat4_inverse(model);
 	mat4x4 trans_inv = mat4_transpose(inv_model);
 	int i;
@@ -1165,14 +1165,15 @@ REALM_ENGINE_FUNC re_result_t re_render_scene(re_actor_t* root)
 			re_update_shader_block(pipeline->_re_user_data_block, RE_USER_DATA_REF, 0, pipeline->_re_user_data_block->size);
 		}
 
-		_re_refresh_framebuffer(pass._target_framebuffer);
+		//_re_refresh_framebuffer(pass._target_framebuffer);
 		//glBindTexture(GL_TEXTURE_2D, pass._target_framebuffer->_fb_texture._handle);
 		glBindFramebuffer(GL_FRAMEBUFFER, pass._target_framebuffer->_id);
+		//glEnable(GL_DEPTH_TEST);
+		re_set_bg_color(153.0f, 46.0f, 137.0f, 255.0f, 1);
 		re_clear_color();
-		glClear(GL_DEPTH_BUFFER_BIT);
-
+	
 		glUseProgram(pass.shader_program._program_id);
-		pass._rendpass_cb(&pass, NULL);
+		pass._rendpass_cb(&pass, pass._renderpass_cb_data);
 		switch (pass.target)
 		{
 		case RE_TARGET_SCENE:
@@ -1185,12 +1186,13 @@ REALM_ENGINE_FUNC re_result_t re_render_scene(re_actor_t* root)
 			re_draw_triangles(6);
 			break;
 		}
-
+		
+		//glDisable(GL_DEPTH_TEST);
 
 
 	}
 
-
+	
 }
 
 #define LOG_SIZE 256
