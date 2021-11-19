@@ -23,7 +23,7 @@
 #build
 obj/
 bin/
-
+.dub/
 #Visual studio
 /.vs
 

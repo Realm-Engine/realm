@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"Nathan"
+	],
+	"copyright": "Copyright © 2021, Nathan",
+	"description": "A minimal D application.",
+	"license": "proprietary",
+	"name": "realm"
+}
