@@ -46,7 +46,7 @@ class RealmApp
 
 	~this()
 	{
-		delete renderer;
+		renderer.destroy();
 		if(window)
 		{
 			glfwDestroyWindow(window);

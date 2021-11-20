@@ -5,6 +5,7 @@
 	"copyright": "Copyright © 2021, Nathan",
 	"dependencies": {
 		"derelict-gl3": "~>1.0.24",
+		"gl3n": "~>1.4.1",
 		"glfw-d": "~>1.1.0"
 	},
 	"description": "A minimal D application.",

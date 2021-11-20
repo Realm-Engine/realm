@@ -9,6 +9,9 @@ int main()
 	RealmGame game = new RealmGame(800,600,"Realm!");
 
 	game.run();
-	
+	scope(exit)
+	{
+		game.destroy();
+	}
 	return 1;
 }
