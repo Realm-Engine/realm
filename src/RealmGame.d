@@ -18,5 +18,6 @@ class RealmGame : RealmApp
 		renderer.drawMesh(triangle,faces);
 		renderer.endDraw();
 	}
+
 }
 

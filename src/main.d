@@ -9,5 +9,6 @@ int main()
 	RealmGame game = new RealmGame(800,600,"Realm!");
 
 	game.run();
+	
 	return 1;
 }

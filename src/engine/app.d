@@ -41,11 +41,12 @@ class RealmApp
 			
 			glfwPollEvents();
 		}
+		
 	}
 
 	~this()
 	{
-		renderer.stopRenderer();
+		delete renderer;
 		if(window)
 		{
 			glfwDestroyWindow(window);

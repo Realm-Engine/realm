@@ -218,10 +218,11 @@ class Renderer
 	{
 		StopRenderer sr;
 		send(renderThread,sr);
+		waitForSync();
 	}
 
 	~this()
 	{
-		
+		stopRenderer();
 	}
 }
