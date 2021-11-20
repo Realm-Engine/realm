@@ -9,8 +9,9 @@ import glfw3.api;
 import core.atomic : atomicOp, atomicLoad;
 import realm.engine.app;
 import realm.engine.internal.glutils;
-
-
+import realm.engine.core;
+import std.algorithm.iteration;
+import gl3n.linalg;
 class OpenGLObject
 {
 	private uint id;
@@ -30,7 +31,7 @@ struct Sync{}
 struct StartFrame{}
 struct RenderJob
 {
-	immutable float[] vertices;
+	immutable vec3[] vertices;
 	immutable uint[] faces;
 
 }
@@ -49,9 +50,17 @@ synchronized private class RendererWorker
 	
 	
 
-	void bufferVertexData(immutable float[] data)
+	void bufferVertexData(immutable vec3[] data)
 	{
-		bufferDataUtil!float(GL_ARRAY_BUFFER,data,GL_DYNAMIC_DRAW);
+		
+		float[] buffer;
+		buffer.length = data.length * 3;
+		for(int i = 0; i < data.length; i++)
+		{
+			float[3] vector = data[i].vector;
+			buffer[(i * 3)..((i*3)+3)] = vector;
+		}
+		bufferDataUtil!float(GL_ARRAY_BUFFER,buffer,GL_DYNAMIC_DRAW);
 	}
 	void bufferIndexData(immutable uint[] data)
 	{
@@ -206,10 +215,11 @@ class Renderer
 		waitForSync();
 	}
 
-	void drawMesh(immutable float[] mesh,immutable uint[] faces)
+	void drawMesh(Mesh mesh)
 	{
-		RenderJob job = {mesh,faces};
-		//job.vertices = mesh;
+		immutable uint[] faces = mesh.faces.idup;
+		immutable vec3[] positions= mesh.positions.idup;
+		RenderJob job = {positions,faces};
 		sendMessage(job);
 		waitForSync();
 	}

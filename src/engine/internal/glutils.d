@@ -4,7 +4,7 @@ import derelict.opengl3.gl3;
 
 
 
-void bufferDataUtil(T)(GLenum type ,immutable T[] data,GLenum usage)
+void bufferDataUtil(T)(GLenum type ,const T[] data,GLenum usage)
 {
 	glBufferData(type,data.length * T.sizeof,data.ptr,usage);
 }
