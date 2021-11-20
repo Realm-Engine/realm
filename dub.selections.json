@@ -1,0 +1,8 @@
+{
+	"fileVersion": 1,
+	"versions": {
+		"derelict-gl3": "1.0.24",
+		"derelict-util": "2.1.0",
+		"glfw-d": "1.1.0"
+	}
+}
