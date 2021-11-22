@@ -3,18 +3,29 @@ import realm.engine.app;
 import std.stdio;
 import realm.engine.core;
 import gl3n.linalg;
+import realm.entity;
+import realm.resource;
+import realm.engine.graphics;
+
+
+
 class RealmGame : RealmApp
 {
-	Mesh mesh;
+	Entity entity;
+	ShaderProgram shader;
+
 	this(int width, int height, const char* title)
 	{
-		mesh = new Mesh;
+		Mesh mesh = new Mesh;
 		super(width,height,title);
 		vec3[] triangle = [vec3(-0.5f,-0.5f,0),vec3(0.5,-0.5f,0),vec3(0.5,0.5f,0),vec3(-0.5,0.5f,0.0f)];
 		uint[] faces = [0,1,2,2,3,0];
 		mesh.positions = triangle;
 		mesh.faces = faces;
 		mesh.calculateNormals();
+		Transform transform = new Transform;
+		entity = new Entity(mesh,transform);
+		renderer.compileShaderProgram(vertexShader,fragmentShader);
 		
 	}
 
@@ -22,7 +33,7 @@ class RealmGame : RealmApp
 	{
 		renderer.beginDraw();
 		
-		renderer.drawMesh(mesh);
+		renderer.drawMesh(entity.mesh);
 		
 		renderer.endDraw();
 	}

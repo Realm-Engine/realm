@@ -1,4 +1,8 @@
 module realm.engine.graphics;
+import realm.engine.app;
+import realm.engine.internal.glutils;
+import realm.engine.core;
+import realm.engine.exceptions;
 import std.stdio;
 import std.concurrency : receive, receiveOnly,
     send, spawn, thisTid, Tid;
@@ -7,11 +11,12 @@ import realm.engine.memory;
 import derelict.opengl3.gl3;
 import glfw3.api;
 import core.atomic : atomicOp, atomicLoad;
-import realm.engine.app;
-import realm.engine.internal.glutils;
-import realm.engine.core;
+
 import std.algorithm.iteration;
 import gl3n.linalg;
+import std.format : format;
+import std.string : toStringz,fromStringz;
+
 class OpenGLObject
 {
 	private uint id;
@@ -23,6 +28,24 @@ class OpenGLObject
 		this.id = id;
 	}
 }
+
+class ShaderProgram : OpenGLObject
+{
+	private uint vertexID;
+	private uint fragmentID;
+
+	immutable this(uint vertexID, uint fragmentID)
+	{
+		this.vertexID = vertexID;
+		this.fragmentID = fragmentID;
+	}
+
+}
+
+
+
+
+
 
 struct RenderMessage{}
 struct InitialzeRenderer{}
@@ -37,7 +60,47 @@ struct RenderJob
 }
 struct EndFrame{}
 
+struct CreateShaderProgram
+{
+	immutable string fragmentSource;
+	immutable string vertexSource;
+}
 
+enum RendererResult
+{
+	SUCCESS,
+	FAILURE
+};
+
+template RResult()
+{
+	struct
+	{
+		RendererResult result;
+	}
+
+}
+
+struct CreateShaderProgramResult
+{
+	mixin RResult;
+	immutable ShaderProgram program;
+
+}
+
+
+
+struct Error
+{
+	immutable string message;
+}
+
+
+enum ShaderType : GLenum
+{
+	VERTEX = GL_VERTEX_SHADER,
+	FRAGMENT = GL_FRAGMENT_SHADER
+}
 
 
 
@@ -75,6 +138,89 @@ synchronized private class RendererWorker
 
 	void bind()
 	{
+
+	}
+
+	static private void safePrint(T...)(T args)
+	{
+		synchronized
+		{
+			writeln(args);
+		}
+	}
+	
+	inout(uint) compileShader(inout(string) source, ShaderType type)
+	{	
+		GLenum shaderType = type;
+		uint shId = glCreateShader(type);
+		auto cstr = toStringz(source);
+		const(char*)[] arr;
+		arr~= cstr;
+		glShaderSource(shId, 1, arr.ptr,null);
+		glCompileShader(shId);
+		int status;
+		glGetShaderiv(shId,GL_COMPILE_STATUS,&status);
+		scope(failure)
+		{
+			return uint.max;
+		}
+		if(status == GL_FALSE)
+		{
+			int length = -1;
+			glGetShaderiv(shId,GL_INFO_LOG_LENGTH,&length);
+			char[] message;
+			if(length > -1)
+			{
+				message.length = length;
+				glGetShaderInfoLog(shId,length,&length,message.ptr);
+				char[] dstr = fromStringz(message);
+
+				if(type == ShaderType.VERTEX)
+				{
+					throw new ShaderCompileError("Vertex shader",dstr);
+				}
+				else
+				{
+					throw new ShaderCompileError("Fragment shader",dstr);
+				}
+			}
+
+		}
+
+		return shId;
+	}
+
+	inout(uint) createShaderProgram(inout(uint) fragmentShaderID, inout(uint) vertexShaderID)
+	{
+		immutable uint programID = glCreateProgram();
+		
+
+		glAttachShader(programID,vertexShaderID);
+		glAttachShader(programID,fragmentShaderID);
+		return programID;
+
+
+	}
+
+	CreateShaderProgramResult createShaderProgram(immutable string fragmentSource, immutable string vertexSource)
+	{
+
+		try
+		{
+			immutable uint fragSh = compileShader(fragmentSource,ShaderType.FRAGMENT);
+			immutable uint vertSh = compileShader(vertexSource,ShaderType.VERTEX);
+			immutable ShaderProgram program =  new immutable ShaderProgram(fragSh, vertSh);
+			CreateShaderProgramResult result = {RendererResult.SUCCESS,program};
+			return result;
+		}
+		catch(ShaderCompileError e)
+		{
+			safePrint(e.msg);
+			immutable ShaderProgram program = new immutable ShaderProgram(uint.max, uint.max);
+			CreateShaderProgramResult result = {RendererResult.FAILURE,program};
+			return result;
+		}
+
 
 	}
 
@@ -119,8 +265,12 @@ synchronized private class RendererWorker
 	static private void handleInit(InitialzeRenderer ir,shared(RendererWorker)* worker)
 	{
 		DerelictGL3.load();
+		
 		glfwMakeContextCurrent(RealmApp.window);
 		auto loaded = DerelictGL3.reload(GLVersion.GL43,GLVersion.GL45);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 		uint vao;
 		writeln("Making vao");
 		glGenVertexArrays(1,&vao);
@@ -149,15 +299,21 @@ synchronized private class RendererWorker
 		bool cancelled = false;
 		while(!cancelled)
 		{
-			receive(
-					(InitialzeRenderer ir){handleInit(ir,worker);},
-					(StopRenderer sr){cancelled = true;writeln("Stopping renderer");},
-					(StartFrame sf){handleStartFrame(sf,worker);},
-					(RenderJob job){handleRenderJob(job,worker);},
-					(EndFrame ef){handleEndFrame(ef,worker);}
-			);
 			Sync sync;
-			send(parent,sync);
+			receive(
+					(InitialzeRenderer ir){handleInit(ir,worker);send(parent,sync);},
+					(StopRenderer sr){cancelled = true;writeln("Stopping renderer");send(parent,sync);},
+					(StartFrame sf){handleStartFrame(sf,worker);send(parent,sync);},
+					(RenderJob job){handleRenderJob(job,worker);send(parent,sync);},
+					(EndFrame ef){handleEndFrame(ef,worker);send(parent,sync);},
+					(CreateShaderProgram ev){
+						
+						CreateShaderProgramResult result = worker.createShaderProgram(ev.fragmentSource,ev.vertexSource);
+						send(parent,result);
+						
+					}
+			);
+			
 		}
 
 	}
@@ -178,7 +334,7 @@ class Renderer
 		sendMessage(init);
 		waitForSync();
 		writeln(worker.vao.ID);
-		
+
 	}
 
 	void sendMessage(T)(T message)
@@ -192,13 +348,24 @@ class Renderer
 		bool done = false;
 		while(!done)
 		{
-			receive((Sync sync)
-					{
-						done = true;
-						
-					});
+			receive(
+					(Sync sync){done = true;},
+					(Error e) {done = true; writeln(e.message);});
 			
 		}
+	}
+
+	void waitForResult(T)(void delegate(T) handler)
+	{
+		bool done = false;
+		while(!done)
+		{
+			receive((T ev){
+				handler(ev);
+				done = true;
+			});
+		}
+
 	}
 	
 	void beginDraw()
@@ -222,6 +389,40 @@ class Renderer
 		RenderJob job = {positions,faces};
 		sendMessage(job);
 		waitForSync();
+	}
+
+	void drawMesh(Mesh mesh, mat4 model)
+	{
+		mat4 inverse = model.inverse;
+		inverse.transpose();
+		
+	
+
+	}
+	private void compileShaderProgramResult(CreateShaderProgramResult result)
+	{
+
+	}
+	void compileShaderProgram(immutable string vertexSource, immutable string fragmentSource)
+	{
+		CreateShaderProgram ev = {fragmentSource,vertexSource};
+		sendMessage(ev);
+		void handleResult(CreateShaderProgramResult result)
+		{
+			if(result.result == RendererResult.SUCCESS)
+			{
+				writeln("Shader program compiled");
+			}
+			else
+			{
+				writeln("Could not compile shader program");
+			}
+
+		}
+
+
+		waitForResult!CreateShaderProgramResult(&handleResult);
+
 	}
 
 	void stopRenderer()

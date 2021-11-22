@@ -1,6 +1,35 @@
 module realm.engine.core;
 import gl3n.linalg;
 
+class Transform
+{
+	vec3 position;
+	quat rotation;
+	vec3 scale;
+	this(vec3 position, quat rotation, vec3 scale)
+	{
+		this.position = position;
+		this.rotation = rotation;
+		this.scale = scale;
+	}
+	this()
+	{
+		this.position = vec3(0,0,0);
+		this.rotation = quat(0,0,0,0);
+		this.scale = vec3(1,1,1);
+	}
+	@property model()
+	{
+		mat4 M = mat4.identity;
+		M = M.scale(scale.x,scale.y,scale.z);
+		quat normalizedRot = rotation.normalized();
+		mat4 rotationMatrix = normalizedRot.to_matrix!(4,4);
+		M = M.translate(position.x,position.y,position.z).matrix;
+		return M;
+		
+	}
+}
+
 class Mesh
 {
 	vec3[] positions;
@@ -8,10 +37,7 @@ class Mesh
 	vec3[] normals;
 	vec3[] tangents;
 	uint[] faces;
-
 	this(){}
-	
-
 	void calculateNormals()
 	{
 		normals.length = positions.length;
@@ -30,10 +56,8 @@ class Mesh
 			normals[triangleFace[0]] = normal;
 			normals[triangleFace[1]] = normal;
 			normals[triangleFace[2]] = normal;
-
 		}
-
 	}
-	
 
+	
 }
