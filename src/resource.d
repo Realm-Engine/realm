@@ -24,6 +24,6 @@ out vec4 outColor;\n
 \n
 void main()\n
 {\n
-outColor = vec4(1.0,1.0,1.0,1.0);\n
+outColor = vec4(1.0,0.0,0.0,1.0);\n
 }\n
 ";

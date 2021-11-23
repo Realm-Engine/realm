@@ -12,10 +12,11 @@ import realm.engine.graphics;
 class RealmGame : RealmApp
 {
 	Entity entity;
-	ShaderProgram shader;
+	shared(ShaderProgram) shader;
 
 	this(int width, int height, const char* title)
 	{
+		shader = new shared(ShaderProgram);
 		Mesh mesh = new Mesh;
 		super(width,height,title);
 		vec3[] triangle = [vec3(-0.5f,-0.5f,0),vec3(0.5,-0.5f,0),vec3(0.5,0.5f,0),vec3(-0.5,0.5f,0.0f)];
@@ -25,8 +26,8 @@ class RealmGame : RealmApp
 		mesh.calculateNormals();
 		Transform transform = new Transform;
 		entity = new Entity(mesh,transform);
-		renderer.compileShaderProgram(vertexShader,fragmentShader);
-		
+		renderer.compileShaderProgram(vertexShader,fragmentShader,&shader);
+		renderer.useShaderProgram(&shader);
 	}
 
 	override void update()

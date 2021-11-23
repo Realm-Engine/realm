@@ -17,28 +17,43 @@ import gl3n.linalg;
 import std.format : format;
 import std.string : toStringz,fromStringz;
 
-class OpenGLObject
+synchronized class OpenGLObject
 {
 	private uint id;
 	shared @property ID(){return id;}
-	
+	shared @property ID(int value){id = value;}
 	alias id this;
-	shared void setId(uint id)
+	shared this()
 	{
-		this.id = id;
+		id = uint.max;
 	}
+	
 }
 
 class ShaderProgram : OpenGLObject
 {
 	private uint vertexID;
 	private uint fragmentID;
+	shared @property uint vertex() {return vertexID;}
+	shared @property void vertex(uint value) {vertexID = value;}
 
-	immutable this(uint vertexID, uint fragmentID)
+	shared @property uint fragment() {return fragmentID;}
+	shared @property void fragment(uint value) {fragmentID = value;}
+
+	
+
+	shared this()
+	{
+		this.vertexID = uint.max;
+		this.fragmentID = uint.max;
+	}
+	shared this(uint vertexID, uint fragmentID)
 	{
 		this.vertexID = vertexID;
 		this.fragmentID = fragmentID;
 	}
+	
+	
 
 }
 
@@ -52,18 +67,21 @@ struct InitialzeRenderer{}
 struct StopRenderer{}
 struct Sync{}
 struct StartFrame{}
+struct UseShaderProgram{immutable uint program;}
 struct RenderJob
 {
 	immutable vec3[] vertices;
 	immutable uint[] faces;
-
+	
 }
+
 struct EndFrame{}
 
 struct CreateShaderProgram
 {
 	immutable string fragmentSource;
 	immutable string vertexSource;
+	shared(ShaderProgram)* program;
 }
 
 enum RendererResult
@@ -84,7 +102,6 @@ template RResult()
 struct CreateShaderProgramResult
 {
 	mixin RResult;
-	immutable ShaderProgram program;
 
 }
 
@@ -190,34 +207,38 @@ synchronized private class RendererWorker
 		return shId;
 	}
 
-	inout(uint) createShaderProgram(inout(uint) fragmentShaderID, inout(uint) vertexShaderID)
+	void linkProgram(shared(ShaderProgram)* program)
 	{
 		immutable uint programID = glCreateProgram();
+		program.ID = programID;
+
+		glAttachShader(programID,program.vertex);
+		glAttachShader(programID,program.fragment);
+		glLinkProgram(programID);
+		glDeleteShader(program.vertex);
+		glDeleteShader(program.fragment);
+
 		
-
-		glAttachShader(programID,vertexShaderID);
-		glAttachShader(programID,fragmentShaderID);
-		return programID;
-
-
 	}
 
-	CreateShaderProgramResult createShaderProgram(immutable string fragmentSource, immutable string vertexSource)
+	CreateShaderProgramResult compileProgram(immutable string fragmentSource, immutable string vertexSource,shared(ShaderProgram)* program)
 	{
 
 		try
 		{
 			immutable uint fragSh = compileShader(fragmentSource,ShaderType.FRAGMENT);
 			immutable uint vertSh = compileShader(vertexSource,ShaderType.VERTEX);
-			immutable ShaderProgram program =  new immutable ShaderProgram(fragSh, vertSh);
-			CreateShaderProgramResult result = {RendererResult.SUCCESS,program};
+			CreateShaderProgramResult result = {RendererResult.SUCCESS};
+			program.vertex = vertSh;
+			program.fragment = fragSh;
 			return result;
 		}
 		catch(ShaderCompileError e)
 		{
 			safePrint(e.msg);
-			immutable ShaderProgram program = new immutable ShaderProgram(uint.max, uint.max);
-			CreateShaderProgramResult result = {RendererResult.FAILURE,program};
+			program.vertex = uint.max;
+			program.fragment = uint.max;
+			CreateShaderProgramResult result = {RendererResult.FAILURE};
 			return result;
 		}
 
@@ -307,10 +328,14 @@ synchronized private class RendererWorker
 					(RenderJob job){handleRenderJob(job,worker);send(parent,sync);},
 					(EndFrame ef){handleEndFrame(ef,worker);send(parent,sync);},
 					(CreateShaderProgram ev){
-						
-						CreateShaderProgramResult result = worker.createShaderProgram(ev.fragmentSource,ev.vertexSource);
+						CreateShaderProgramResult result = worker.compileProgram(ev.fragmentSource,ev.vertexSource,ev.program);
+						worker.linkProgram(ev.program);
 						send(parent,result);
 						
+					},
+					(UseShaderProgram ev)
+					{
+						glUseProgram(ev.program);
 					}
 			);
 			
@@ -324,6 +349,8 @@ class Renderer
 {
 	private Tid renderThread;
 	shared(RendererWorker) worker;
+	
+	
 
 	this()
 	{
@@ -381,6 +408,8 @@ class Renderer
 		sendMessage(ef);
 		waitForSync();
 	}
+	
+	
 
 	void drawMesh(Mesh mesh)
 	{
@@ -391,21 +420,29 @@ class Renderer
 		waitForSync();
 	}
 
+	void useShaderProgram(shared(ShaderProgram)* program)
+	{
+		UseShaderProgram ev = {program.ID};
+		sendMessage(ev);
+		
+
+	}
+	
+
 	void drawMesh(Mesh mesh, mat4 model)
 	{
 		mat4 inverse = model.inverse;
 		inverse.transpose();
-		
-	
-
 	}
+
+
 	private void compileShaderProgramResult(CreateShaderProgramResult result)
 	{
 
 	}
-	void compileShaderProgram(immutable string vertexSource, immutable string fragmentSource)
+	void compileShaderProgram(immutable string vertexSource, immutable string fragmentSource,shared(ShaderProgram)* program)
 	{
-		CreateShaderProgram ev = {fragmentSource,vertexSource};
+		CreateShaderProgram ev = {fragmentSource,vertexSource,program};
 		sendMessage(ev);
 		void handleResult(CreateShaderProgramResult result)
 		{
