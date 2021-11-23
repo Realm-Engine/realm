@@ -18,16 +18,27 @@ class Transform
 		this.rotation = quat(0,0,0,0);
 		this.scale = vec3(1,1,1);
 	}
-	@property model()
+	@property mat4 model()
 	{
 		mat4 M = mat4.identity;
 		M = M.scale(scale.x,scale.y,scale.z);
 		quat normalizedRot = rotation.normalized();
 		mat4 rotationMatrix = normalizedRot.to_matrix!(4,4);
+		M = M * rotationMatrix;
 		M = M.translate(position.x,position.y,position.z).matrix;
 		return M;
 		
 	}
+
+	@property eulerRotation(vec3 euler) 
+	{
+		rotation = quat.euler_rotation(euler.x,euler.y,euler.z);
+	}
+	void rotateEuler(vec3 axis)
+	{
+		rotation = rotation.rotate_euler(axis.x,axis.y,axis.z);
+	}
+	
 }
 
 class Mesh

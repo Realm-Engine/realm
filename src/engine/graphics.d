@@ -418,6 +418,7 @@ class Renderer
 		RenderJob job = {positions,faces};
 		sendMessage(job);
 		waitForSync();
+		
 	}
 
 	void useShaderProgram(shared(ShaderProgram)* program)
@@ -431,8 +432,16 @@ class Renderer
 
 	void drawMesh(Mesh mesh, mat4 model)
 	{
-		mat4 inverse = model.inverse;
-		inverse.transpose();
+		vec3[] positions;
+		foreach(vec; mesh.positions)
+		{
+			positions ~= vec3(model * vec4(vec,1.0));
+		}
+		immutable uint[] faces = mesh.faces.idup;
+		RenderJob job = {positions.idup,faces};
+		sendMessage(job);
+		waitForSync();
+
 	}
 
 

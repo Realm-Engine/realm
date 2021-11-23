@@ -24,8 +24,10 @@ class RealmGame : RealmApp
 		mesh.positions = triangle;
 		mesh.faces = faces;
 		mesh.calculateNormals();
-		Transform transform = new Transform;
+		Transform transform = new Transform;	
+		
 		entity = new Entity(mesh,transform);
+
 		renderer.compileShaderProgram(vertexShader,fragmentShader,&shader);
 		renderer.useShaderProgram(&shader);
 	}
@@ -33,8 +35,8 @@ class RealmGame : RealmApp
 	override void update()
 	{
 		renderer.beginDraw();
-		
-		renderer.drawMesh(entity.mesh);
+		mat4 model = entity.transform.model;
+		renderer.drawMesh(entity.mesh,model);
 		
 		renderer.endDraw();
 	}
