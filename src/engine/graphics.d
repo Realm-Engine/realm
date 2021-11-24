@@ -247,6 +247,7 @@ synchronized private class RendererWorker
 
 	static private void handleStartFrame(StartFrame ev,const shared(RendererWorker)* worker)
 	{
+		
 		glBindVertexArray(worker.vao);
 		
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -321,9 +322,15 @@ synchronized private class RendererWorker
 		while(!cancelled)
 		{
 			Sync sync;
+			
 			receive(
 					(InitialzeRenderer ir){handleInit(ir,worker);send(parent,sync);},
-					(StopRenderer sr){cancelled = true;writeln("Stopping renderer");send(parent,sync);},
+					(StopRenderer sr)
+					{
+						cancelled = true;
+						safePrint("Stopping renderer");
+						send(parent,sync);
+					},
 					(StartFrame sf){handleStartFrame(sf,worker);send(parent,sync);},
 					(RenderJob job){handleRenderJob(job,worker);send(parent,sync);},
 					(EndFrame ef){handleEndFrame(ef,worker);send(parent,sync);},
@@ -462,6 +469,7 @@ class Renderer
 			else
 			{
 				writeln("Could not compile shader program");
+				
 			}
 
 		}
@@ -473,6 +481,7 @@ class Renderer
 
 	void stopRenderer()
 	{
+		
 		StopRenderer sr;
 		send(renderThread,sr);
 		waitForSync();

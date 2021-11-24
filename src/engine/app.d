@@ -10,11 +10,11 @@ import std.conv;
 class RealmApp
 {
 	public static __gshared GLFWwindow* window;
-
+	private bool shutdown;
 	Renderer renderer;
 	this(int width, int height,const char* title)
 	{
-		
+		shutdown = false;
 		auto result = glfwInit();
 		assert(result);
 		if(!result)
@@ -34,12 +34,14 @@ class RealmApp
 
 	void run()
 	{
-		while(!glfwWindowShouldClose(window))
+		while(!shutdown)
 		{
-
 			update();
-			
 			glfwPollEvents();
+			if(glfwWindowShouldClose(window))
+			{
+				shutdown = true;
+			}
 		}
 		
 	}
