@@ -4,42 +4,51 @@ import std.stdio;
 import realm.engine.core;
 import gl3n.linalg;
 import realm.entity;
-import realm.resource;
-import realm.engine.graphics;
-import realm.engine.containers;
-
-
+import realm.engine.containers.queue;
+import realm.engine.graphics.core;
+import realm.engine.graphics.graphicssubsystem;
+import std.file : read;
 class RealmGame : RealmApp
 {
 	Entity entity;
-	shared(ShaderProgram) shader;
 	Queue!int queue;
+	ShaderProgram program;
+	GraphicsSubsystem gss;
 	this(int width, int height, const char* title)
 	{
-		shader = new shared(ShaderProgram);
-		Mesh mesh = new Mesh;
+		
+
 		super(width,height,title);
-		vec3[] triangle = [vec3(-0.5f,-0.5f,0),vec3(0.5,-0.5f,0),vec3(0.5,0.5f,0),vec3(-0.5,0.5f,0.0f)];
+		gss = new GraphicsSubsystem();
+		auto vertexShader = read("./src/engine/res/vertexShader.glsl");
+		auto fragmentShader = read("./src/engine/res/fragShader.glsl");
+		Shader vertex = new Shader(ShaderType.VERTEX,cast(string) vertexShader,"Vetex Shader");
+		Shader fragment = new Shader(ShaderType.FRAGMENT,cast(string)fragmentShader,"Fragment Shader");
+		program = new ShaderProgram(vertex,fragment,"MyProgram");
+		
+		Mesh mesh = new Mesh;
+		
+		vec3[] square = [vec3(-0.5f,-0.5f,0),vec3(0.5,-0.5f,0),vec3(0.5,0.5f,0),vec3(-0.5,0.5f,0.0f)];
 		uint[] faces = [0,1,2,2,3,0];
-		mesh.positions = triangle;
+		mesh.positions = square;
 		mesh.faces = faces;
 		mesh.calculateNormals();
+		
 		Transform transform = new Transform;	
 		
 		entity = new Entity(mesh,transform);
+		program.use();
 
-		renderer.compileShaderProgram(vertexShader,fragmentShader,&shader);
-		renderer.useShaderProgram(&shader);
 
+		
 	}
 
 	override void update()
 	{
-		renderer.beginDraw();
-		mat4 model = entity.transform.model;
-		renderer.drawMesh(entity.mesh,model);
-		
-		renderer.endDraw();
+		Mesh[] meshes;
+		meshes~= entity.mesh;
+		gss.drawMultiMeshIndirect(meshes);
+
 	}
 
 }

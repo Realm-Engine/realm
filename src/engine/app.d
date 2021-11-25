@@ -1,5 +1,4 @@
 module realm.engine.app;
-import realm.engine.graphics;
 import glfw3.api;
 import std.stdio;
 public import derelict.opengl3.gl3;
@@ -11,7 +10,6 @@ class RealmApp
 {
 	public static __gshared GLFWwindow* window;
 	private bool shutdown;
-	Renderer renderer;
 	this(int width, int height,const char* title)
 	{
 		shutdown = false;
@@ -23,11 +21,9 @@ class RealmApp
 		}
 		
 		window = glfwCreateWindow(width,height,title,null,null);
-
-		
-		renderer = new Renderer();
-		
-
+		DerelictGL3.load();
+		glfwMakeContextCurrent(window);
+		DerelictGL3.reload(GLVersion.GL43,GLVersion.GL45);
 	}
 
 	abstract void update();
@@ -42,13 +38,13 @@ class RealmApp
 			{
 				shutdown = true;
 			}
+			glfwSwapBuffers(window);
 		}
 		
 	}
 
 	~this()
 	{
-		renderer.destroy();
 		if(window)
 		{
 			glfwDestroyWindow(window);
