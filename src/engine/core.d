@@ -3,6 +3,7 @@ import gl3n.linalg;
 
 class Transform
 {
+	import std.meta;
 	vec3 position;
 	quat rotation;
 	vec3 scale;
@@ -29,6 +30,33 @@ class Transform
 		return M;
 		
 	}
+	
+	vec3 computeDirection(vec3 direction)
+	{
+		vec4 dir = rotation.to_matrix!(4,4) * vec4(direction,1.0);
+		return vec3(dir).normalized();
+
+	}
+	
+	@property front()
+	{
+		return computeDirection(vec3(0,0,1));
+	}
+	@property up()
+	{
+		return computeDirection(vec3(0,1,0));
+	}
+	@property right()
+	{
+		return computeDirection(vec3(1,0,0));
+	}
+
+	@property lookAt()
+	{
+		return mat4.look_at(front,position + up,up);
+	}
+
+	
 
 	@property eulerRotation(vec3 euler) 
 	{
@@ -71,4 +99,39 @@ class Mesh
 	}
 
 	
+}
+
+enum CameraProjection
+{
+	PERSPECTIVE,
+	ORTHOGRAPHIC
+}
+
+class Camera
+{
+	private Transform transform;
+	private float fieldOfView;
+	private vec2 size;
+	private float farPlane;
+	private float nearPlane;
+	private CameraProjection projection;
+	//Front
+	//Maybe goes in transform?
+	
+	
+	alias transform this;
+
+	this(CameraProjection projectionType, vec2 size,float farPlane,float nearPlane,float fieldOfView)
+	{
+		this.projection = projectionType;
+		this.size = size;
+		this.farPlane = farPlane;
+		this.nearPlane = nearPlane;
+		this.fieldOfView = fieldOfView;
+	}
+
+
+	
+
+
 }

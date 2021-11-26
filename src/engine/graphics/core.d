@@ -69,6 +69,7 @@ struct RealmGlobalData
 
 }
 
+
 pragma(inline)
 static int shaderVarBytes(VertexType var)
 {
