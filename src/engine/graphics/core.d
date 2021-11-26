@@ -3,14 +3,12 @@ import gl3n.linalg;
 import std.format;
 import realm.engine.graphics.opengl;
 
-
 alias ShaderType = GShaderType;
 alias FrameBufferAttachment = GFrameBufferAttachment;
 alias TextureFilterfunc = GTextureFilterFunc;
 alias TextureWrapFunc = GTextureWrapFunc;
 alias ImageType = GImageType;
 alias ImageFormat = GImageFormat;
-
 alias Shader = GShader;
 alias ShaderProgram = GShaderProgram;
 
@@ -63,6 +61,12 @@ struct VertexAttribute
 	uint index;
 	AttributeSlot slot;
 	
+}
+
+struct RealmGlobalData
+{
+	mat4 viewProjection;
+
 }
 
 pragma(inline)

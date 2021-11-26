@@ -30,6 +30,9 @@ mixin template OpenGLObject()
 mixin template OpenGLBuffer(GLenum bufferType,T)
 {
 	mixin OpenGLObject;
+	
+	private uint ringPtr;
+	private size_t ringSize;
 	void bind()
 	{
 		glBindBuffer(bufferType,id);
@@ -43,21 +46,31 @@ mixin template OpenGLBuffer(GLenum bufferType,T)
 	void create()
 	{
 		glGenBuffers(1,&id);
+		
 	}
 	
 	void store(size_t size)
 	{
 		
 		glBufferStorage(bufferType,size * T.sizeof,null,GL_DYNAMIC_STORAGE_BIT);
+		ringPtr = 0;
+		ringSize = size * T.sizeof;
 		
 	}
 
-	void bufferData(T* data,uint offset,size_t length)
+	void bufferData(T* data,size_t length)
 	{
 		
-		glBufferSubData(bufferType,offset * T.sizeof,length * T.sizeof,data);
+		glBufferSubData(bufferType,ringPtr,length * T.sizeof,data);
+		ringPtr += length * T.sizeof % ringSize;
 		
 
+	}
+
+	void invalidate()
+	{
+		glInvalidateBufferData(id);
+		ringPtr = 0;
 	}
 
 }
@@ -190,10 +203,13 @@ struct ElementBuffer
 
 struct ShaderBlock
 {
-	mixin OpenGLObject;
-	private uint size;
-	private uint refIndex;
-	private string name;
+
+	mixin OpenGLBuffer!(GL_UNIFORM_BUFFER,RealmGlobalData);
+	void bindBase(uint bindPoint)
+	{
+		glBindBufferBase(GL_UNIFORM_BUFFER,bindPoint,id);
+	}
+	
 }
 
 struct DrawIndirectCommandBuffer

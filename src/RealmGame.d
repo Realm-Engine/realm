@@ -14,6 +14,7 @@ class RealmGame : RealmApp
 	Queue!int queue;
 	ShaderProgram program;
 	GraphicsSubsystem gss;
+	Mesh triangle;
 	this(int width, int height, const char* title)
 	{
 		
@@ -27,8 +28,10 @@ class RealmGame : RealmApp
 		program = new ShaderProgram(vertex,fragment,"MyProgram");
 		
 		Mesh mesh = new Mesh;
-		
+		triangle = new Mesh;
 		vec3[] square = [vec3(-0.5f,-0.5f,0),vec3(0.5,-0.5f,0),vec3(0.5,0.5f,0),vec3(-0.5,0.5f,0.0f)];
+		triangle.positions = [vec3(-1,-1,0),vec3(-0.5,-0.5,0),vec3(0,-1,0)];
+		triangle.faces = [0,1,2];
 		uint[] faces = [0,1,2,2,3,0];
 		mesh.positions = square;
 		mesh.faces = faces;
@@ -45,9 +48,12 @@ class RealmGame : RealmApp
 
 	override void update()
 	{
+		gss.beginDraw();
 		Mesh[] meshes;
 		meshes~= entity.mesh;
+		meshes~=triangle;
 		gss.drawMultiMeshIndirect(meshes);
+		gss.endDraw();
 
 	}
 

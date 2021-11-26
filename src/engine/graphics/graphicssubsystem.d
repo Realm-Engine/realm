@@ -11,12 +11,12 @@ class GraphicsSubsystem
 	private ElementBuffer elementBuffer;
 	private VertexArrayObject vao;
 	private DrawIndirectCommandBuffer cmdBuffer;
-
-	private Array!DrawIndirectCommandBuffer cmdStore;
+	private ShaderBlock globalDataBuffer;
+	private RealmGlobalData globalData;
 	this()
 	{
 		cmdBuffer.create();
-		
+
 		vao.create();
 		vao.bind();
 		vertexBuffer.create();
@@ -33,6 +33,15 @@ class GraphicsSubsystem
 		vertexBuffer.unbind();
 		elementBuffer.unbind();
 		cmdBuffer.unbind();
+		
+		globalData.viewProjection = mat4.identity;
+		globalDataBuffer.create();
+		globalDataBuffer.bind();
+		globalDataBuffer.bindBase(0);
+		globalDataBuffer.store(1);
+		globalDataBuffer.bufferData(&globalData,1);
+		globalDataBuffer.unbind();
+
 	}
 
 	void drawMeshIndirect(Mesh mesh,MeshTopology topology = MeshTopology.TRIANGLE)
@@ -56,18 +65,17 @@ class GraphicsSubsystem
 		indirect.instanceCount = 2;
 		indirect.baseVertex = 0;
 		indirect.baseInstance = 0;
-		vertexBuffer.bufferData(positions.ptr,0,positions.length);
-		elementBuffer.bufferData(mesh.faces.ptr,0,mesh.faces.length);
-		cmdBuffer.bufferData(&indirect,0,1);
+		vertexBuffer.bufferData(positions.ptr,positions.length);
+		elementBuffer.bufferData(mesh.faces.ptr,mesh.faces.length);
+		cmdBuffer.bufferData(&indirect,1);
 		drawIndirect();
 		vao.unbind();
 	}
 
+
 	void drawMultiMeshIndirect(Mesh[] meshes,MeshTopology topology = MeshTopology.TRIANGLE)
 	{
-		vao.bind();
-		vertexBuffer.bind();
-		cmdBuffer.bind();
+		
 		uint vtxOffset = 0;
 		uint idxOffset = 0;
 		uint currentVertex = 0;
@@ -89,9 +97,9 @@ class GraphicsSubsystem
 			indirect.baseVertex = currentVertex;
 			indirect.baseInstance = 0;
 			indirect.instanceCount = (cast(uint)mesh.faces.length / topology);
-			vertexBuffer.bufferData(positions.ptr,vtxOffset,positions.length);
-			elementBuffer.bufferData(mesh.faces.ptr,idxOffset,mesh.faces.length);
-			cmdBuffer.bufferData(&indirect,i,1);
+			vertexBuffer.bufferData(positions.ptr,positions.length);
+			elementBuffer.bufferData(mesh.faces.ptr,mesh.faces.length);
+			cmdBuffer.bufferData(&indirect,1);
 			vtxOffset += positions.length;
 			idxOffset += mesh.faces.length;
 			currentVertex += (positions.length / topology);
@@ -103,7 +111,20 @@ class GraphicsSubsystem
 	}
 	
 	
+	void beginDraw()
+	{
+		vao.bind();
+		vertexBuffer.bind();
+		cmdBuffer.bind();
+	}
 
+	void endDraw()
+	{
+		vao.unbind();
+		vertexBuffer.invalidate();
+		elementBuffer.invalidate();
+		cmdBuffer.invalidate();
+	}
 
 
 
