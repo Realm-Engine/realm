@@ -45,14 +45,18 @@ enum MeshTopology : int
 	TRIANGLE = 3
 }
 
+
 struct RealmVertex
 {	
+
 	vec3 position;
-	vec2 uv;
+	/*
 	vec3 normal;
-
-
+	vec2 uv;
+*/
 }
+
+
 
 struct VertexAttribute
 {
@@ -60,6 +64,8 @@ struct VertexAttribute
 	uint offset;
 	uint index;
 	AttributeSlot slot;
+
+
 	
 }
 

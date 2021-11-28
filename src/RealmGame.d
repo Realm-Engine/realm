@@ -7,6 +7,7 @@ import realm.entity;
 import realm.engine.containers.queue;
 import realm.engine.graphics.core;
 import realm.engine.graphics.graphicssubsystem;
+import realm.engine.graphics.renderer;
 import std.file : read;
 class RealmGame : RealmApp
 {
@@ -15,11 +16,15 @@ class RealmGame : RealmApp
 	ShaderProgram program;
 	GraphicsSubsystem gss;
 	Mesh triangle;
+	Camera cam;
+	Renderer renderer;
 	this(int width, int height, const char* title)
 	{
 		
 
 		super(width,height,title);
+		renderer = new Renderer;
+		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),100,0.1,45);
 		gss = new GraphicsSubsystem();
 		auto vertexShader = read("./src/engine/res/vertexShader.glsl");
 		auto fragmentShader = read("./src/engine/res/fragShader.glsl");
@@ -32,6 +37,8 @@ class RealmGame : RealmApp
 		vec3[] square = [vec3(-0.5f,-0.5f,0),vec3(0.5,-0.5f,0),vec3(0.5,0.5f,0),vec3(-0.5,0.5f,0.0f)];
 		triangle.positions = [vec3(-1,-1,0),vec3(-0.5,-0.5,0),vec3(0,-1,0)];
 		triangle.faces = [0,1,2];
+		mesh.textureCoordinates = [vec2(0,0),vec2(0,0),vec2(0,0),vec2(0,0)];
+		mesh.calculateNormals();
 		uint[] faces = [0,1,2,2,3,0];
 		mesh.positions = square;
 		mesh.faces = faces;
@@ -41,19 +48,16 @@ class RealmGame : RealmApp
 		
 		entity = new Entity(mesh,transform);
 		program.use();
-
+		
+		
 
 		
 	}
 
 	override void update()
 	{
-		gss.beginDraw();
-		Mesh[] meshes;
-		meshes~= entity.mesh;
-		meshes~=triangle;
-		gss.drawMultiMeshIndirect(meshes);
-		gss.endDraw();
+		renderer.submitMesh(entity.mesh);
+		renderer.flush();
 
 	}
 

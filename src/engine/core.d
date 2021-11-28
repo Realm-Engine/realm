@@ -51,11 +51,11 @@ class Transform
 		return computeDirection(vec3(1,0,0));
 	}
 
-	@property lookAt()
-	{
-		return mat4.look_at(front,position + up,up);
-	}
 
+	mat4 lookAt(vec3 eye, vec3 target, vec3 up)
+	{
+		return mat4.look_at(eye,target,up);
+	}
 	
 
 	@property eulerRotation(vec3 euler) 
@@ -74,7 +74,6 @@ class Mesh
 	vec3[] positions;
 	vec2[] textureCoordinates;
 	vec3[] normals;
-	vec3[] tangents;
 	uint[] faces;
 	this(){}
 	void calculateNormals()
@@ -115,10 +114,14 @@ class Camera
 	private float farPlane;
 	private float nearPlane;
 	private CameraProjection projection;
+	private mat4 vp;
 	//Front
 	//Maybe goes in transform?
 	
-	
+	@property viewProjection()
+	{
+		return vp;
+	}
 	alias transform this;
 
 	this(CameraProjection projectionType, vec2 size,float farPlane,float nearPlane,float fieldOfView)
@@ -128,9 +131,33 @@ class Camera
 		this.farPlane = farPlane;
 		this.nearPlane = nearPlane;
 		this.fieldOfView = fieldOfView;
+		transform = new Transform;
+		updateViewProjection();
 	}
 
+	private mat4 calculateProjection()
+	{
+		mat4 proj;
+		switch(projection)
+		{
+			case CameraProjection.PERSPECTIVE:
+				proj = mat4.perspective(size.x,size.y,fieldOfView,nearPlane,farPlane);
+				break;
+			default:
+				proj = mat4.perspective(size.x,size.y,fieldOfView,nearPlane,farPlane);
+				break;
+		}
+		return proj;
 
+
+	}
+
+	void updateViewProjection()
+	{
+		mat4 proj = calculateProjection();
+		mat4 view = transform.lookAt(transform.position,transform.position + transform.front,transform.up);
+		vp = proj * view;
+	}
 	
 
 

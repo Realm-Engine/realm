@@ -11,6 +11,7 @@ class Entity
 	{
 		this.mesh = mesh;
 		this.transform = transform;
+		
 	}
 
 

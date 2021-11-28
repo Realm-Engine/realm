@@ -27,7 +27,14 @@ mixin template OpenGLObject()
 	alias ID this;
 }
 
-mixin template OpenGLBuffer(GLenum bufferType,T)
+
+enum GBufferUsage : GLenum
+{
+	MappedWrite = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT| GL_MAP_COHERENT_BIT,
+	Buffered = GL_DYNAMIC_STORAGE_BIT
+}
+
+mixin template OpenGLBuffer(GLenum bufferType,T,GBufferUsage usage)
 {
 	mixin OpenGLObject;
 	
@@ -52,17 +59,18 @@ mixin template OpenGLBuffer(GLenum bufferType,T)
 	void store(size_t size)
 	{
 		
-		glBufferStorage(bufferType,size * T.sizeof,null,GL_DYNAMIC_STORAGE_BIT);
+		glBufferStorage(bufferType,size * T.sizeof,null,usage);
 		ringPtr = 0;
 		ringSize = size * T.sizeof;
 		
 	}
 
-	void bufferData(T* data,size_t length)
+	uint bufferData(T* data,size_t length)
 	{
-		
+		uint dataStart = ringPtr;
 		glBufferSubData(bufferType,ringPtr,length * T.sizeof,data);
-		ringPtr += length * T.sizeof % ringSize;
+		//ringPtr += length * T.sizeof % ringSize;
+		return dataStart;
 		
 
 	}
@@ -73,7 +81,31 @@ mixin template OpenGLBuffer(GLenum bufferType,T)
 		ringPtr = 0;
 	}
 
+	@property elementSize()
+	{
+		return T.sizeof;
+	}
+
+	static if(usage == GBufferUsage.MappedWrite)
+	{
+		@property ptr()
+		{
+			return cast(T*)glMapBufferRange(bufferType,0,ringSize,usage);
+
+		}
+
+		@property length()
+		{
+			return (ringSize/T.sizeof);
+
+		}
+
+		
+	}
+
+
 }
+
 
 mixin template EnumGL(string name)
 {
@@ -189,14 +221,14 @@ class GShaderProgram
 
 }
 
-struct VertexBuffer(T)
+struct VertexBuffer(T,GBufferUsage usage)
 {
-	mixin OpenGLBuffer!(GL_ARRAY_BUFFER,T);
+	mixin OpenGLBuffer!(GL_ARRAY_BUFFER,T,usage);
 	private uint size;
 }
-struct ElementBuffer
+struct ElementBuffer(GBufferUsage usage)
 {
-	mixin OpenGLBuffer!(GL_ELEMENT_ARRAY_BUFFER,uint);
+	mixin OpenGLBuffer!(GL_ELEMENT_ARRAY_BUFFER,uint,usage);
 	private uint size;
 	
 }
@@ -204,17 +236,19 @@ struct ElementBuffer
 struct ShaderBlock
 {
 
-	mixin OpenGLBuffer!(GL_UNIFORM_BUFFER,RealmGlobalData);
+	mixin OpenGLBuffer!(GL_UNIFORM_BUFFER,RealmGlobalData,GBufferUsage.Buffered);
 	void bindBase(uint bindPoint)
 	{
 		glBindBufferBase(GL_UNIFORM_BUFFER,bindPoint,id);
 	}
+
+
 	
 }
 
-struct DrawIndirectCommandBuffer
+struct DrawIndirectCommandBuffer(GBufferUsage usage)
 {
-	mixin OpenGLBuffer!(GL_DRAW_INDIRECT_BUFFER,DrawElementsIndirectCommand);
+	mixin OpenGLBuffer!(GL_DRAW_INDIRECT_BUFFER,DrawElementsIndirectCommand,usage);
 }
 
 struct VertexArrayObject
@@ -305,13 +339,32 @@ GLenum imageFormatToGLDataType(GImageFormat fmt)
 	}
 }
 
-void bindAttribute(VertexAttribute attr)
+
+
+void bindAttribute(VertexAttribute attr,uint stride = 0)
 {
+
+	GLenum vertexTypeToGLenum(VertexType type)
+	{
+		switch(type)
+		{
+			case VertexType.FLOAT:
+				return GL_FLOAT;
+			case VertexType.FLOAT2:
+				return GL_FLOAT;
+			case VertexType.FLOAT3:
+				return GL_FLOAT;
+			case VertexType.FLOAT4:
+				return GL_FLOAT;
+			default:
+				return GL_FLOAT;
+
+		}
+	}
+
 	glEnableVertexAttribArray(attr.index);
-	GLenum type = attr.type;
-	glVertexAttribPointer(attr.index,shaderVarElements(attr.type),GL_FLOAT,GL_FALSE,0,cast(void*)0);
-
-
+	GLenum type = vertexTypeToGLenum(attr.type);
+	glVertexAttribPointer(attr.index,shaderVarElements(attr.type),type,GL_FALSE,0,cast(void*)attr.offset);
 }
 
 void drawIndirect()
