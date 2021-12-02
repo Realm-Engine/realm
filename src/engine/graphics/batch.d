@@ -10,17 +10,15 @@ class Batch(T)
 	private VertexArrayObject vao;
 	private VertexBuffer!(T,BufferUsage.Buffered) vertexBuffer;
 	private ElementBuffer!(BufferUsage.Buffered) elementBuffer;
+	private DrawIndirectCommandBuffer!(BufferUsage.MappedWrite) cmdBuffer;
+
 	
 
-
-	private DrawIndirectCommandBuffer!(BufferUsage.MappedWrite) cmdBuffer;
 	private uint numElementsInFrame;
 	private uint capacity;
 	private MeshTopology topology;
 	private uint cmdBufferBase;
 	private uint bufferAmount;
-	private DrawElementsIndirectCommand* cmdBufferMap;
-	private DrawElementsIndirectCommand* cmdBufferMapOffset;
 	private uint maxElementsInFrame;
 	this(MeshTopology topology)
 	{
@@ -42,7 +40,7 @@ class Batch(T)
 		this.maxElementsInFrame = cast(uint)amount;
 		cmdBuffer.bind();
 		cmdBuffer.store(amount * bufferAmount);
-		cmdBufferMap = cmdBuffer.ptr; 
+		//cmdBufferMap = cmdBuffer.ptr; 
 		cmdBuffer.unbind();
 	}
 
@@ -99,7 +97,7 @@ class Batch(T)
 		cmd.baseInstance = 0;
 		//cmdBufferMapOffset = cmdBufferMap + cmdBufferBase + numElementsInFrame;
 		//cmdBufferMapOffset = cmd;
-		cmdBufferMap[cmdBufferBase * maxElementsInFrame  + numElementsInFrame] = cmd;
+		cmdBuffer.ptr[cmdBufferBase * maxElementsInFrame  + numElementsInFrame] = cmd;
 		numElementsInFrame++;
 		//cmdBufferMapOffset = cmdBufferMap + cmdBufferBase + numElementsInFrame;
 	}

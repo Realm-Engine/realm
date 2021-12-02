@@ -40,6 +40,26 @@ mixin template OpenGLBuffer(GLenum bufferType,T,GBufferUsage usage)
 	
 	private uint ringPtr;
 	private size_t ringSize;
+
+	static if(usage == GBufferUsage.MappedWrite)
+	{
+		private T* glPtr;
+
+		@property ptr()
+		{
+			return glPtr;
+
+		}
+
+		@property length()
+		{
+			return (ringSize/T.sizeof);
+
+		}
+
+
+	}
+
 	void bind()
 	{
 		glBindBuffer(bufferType,id);
@@ -62,6 +82,10 @@ mixin template OpenGLBuffer(GLenum bufferType,T,GBufferUsage usage)
 		glBufferStorage(bufferType,size * T.sizeof,null,usage);
 		ringPtr = 0;
 		ringSize = size * T.sizeof;
+		static if(usage == GBufferUsage.MappedWrite)
+		{
+			glPtr = cast(T*)glMapBufferRange(bufferType,0,ringSize,usage);
+		}
 		
 	}
 
@@ -86,22 +110,7 @@ mixin template OpenGLBuffer(GLenum bufferType,T,GBufferUsage usage)
 		return T.sizeof;
 	}
 
-	static if(usage == GBufferUsage.MappedWrite)
-	{
-		@property ptr()
-		{
-			return cast(T*)glMapBufferRange(bufferType,0,ringSize,usage);
-
-		}
-
-		@property length()
-		{
-			return (ringSize/T.sizeof);
-
-		}
-
-		
-	}
+	
 
 
 }
