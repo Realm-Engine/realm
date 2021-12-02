@@ -24,7 +24,8 @@ class RealmGame : RealmApp
 
 		super(width,height,title);
 		renderer = new Renderer;
-		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),100,0.1,45);
+		
+		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),100,-0.1,45);
 		gss = new GraphicsSubsystem();
 		auto vertexShader = read("./src/engine/res/vertexShader.glsl");
 		auto fragmentShader = read("./src/engine/res/fragShader.glsl");
@@ -48,16 +49,19 @@ class RealmGame : RealmApp
 		
 		entity = new Entity(mesh,transform);
 		program.use();
-		
-		
+		cam.position.z = -1.0f;
+		renderer.activeCamera = &cam;
+		entity.position.z = 2.0f;
 
 		
 	}
 
 	override void update()
 	{
-		renderer.submitMesh(entity.mesh);
-		renderer.flush();
+		
+		//writeln(entity.transform.position);
+		renderer.submitMesh(entity.mesh,entity.transform);
+		renderer.update();
 
 	}
 

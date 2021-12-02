@@ -6,7 +6,7 @@ class Entity
 {
 	Mesh mesh;
 	Transform transform;
-	
+	alias transform this;
 	this(Mesh mesh, Transform transform)
 	{
 		this.mesh = mesh;

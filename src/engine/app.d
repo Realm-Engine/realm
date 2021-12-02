@@ -39,6 +39,7 @@ class RealmApp
 				shutdown = true;
 			}
 			glfwSwapBuffers(window);
+			
 		}
 		
 	}

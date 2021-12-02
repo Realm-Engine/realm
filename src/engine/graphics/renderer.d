@@ -7,38 +7,47 @@ import gl3n.linalg;
 class Renderer
 {
 	import std.container.array;
+	import std.stdio;
 	private Batch!RealmVertex batch;
 	VertexAttribute[] vertex3DAttributes;
 	private RealmGlobalData globalData;
+	private Camera* camera;
+
+	@property activeCamera(Camera* cam)
+	{
+		camera = cam;
+	}
+
 
 	this()
 	{
 		
 		GraphicsSubsystem.initialze();
-		
+		GraphicsSubsystem.setClearColor(126,32,32,true);
 		globalData.viewProjection = mat4.identity;
 		GraphicsSubsystem.updateGlobalData(&globalData);
 		VertexAttribute position = {VertexType.FLOAT3,0,0,AttributeSlot.POSITION};
-		/*VertexAttribute normal = {VertexType.FLOAT3,1,12,AttributeSlot.POSITION};
-		VertexAttribute texcoord = {VertexType.FLOAT3,2,24,AttributeSlot.POSITION};*/
 		vertex3DAttributes ~= position;
-		/*vertex3DAttributes ~= normal;
-		vertex3DAttributes ~= texcoord;*/
 		batch = new Batch!RealmVertex(MeshTopology.TRIANGLE);
-		batch.initialize(vertex3DAttributes,32);
-		batch.reserve(1);
+		batch.initialize(vertex3DAttributes,64);
+		batch.reserve(3);
 
 	}
 
-	void submitMesh(Mesh mesh)
+	void submitMesh(Mesh mesh,Transform transform)
 	{
 		batch.bindBuffers();
 		
 		RealmVertex[uint] vertexData;
+		//writeln(transform.model);
+		mat4 modelMatrix = transform.model;
+		//writeln(modelMatrix);
 		foreach(index; mesh.faces)
 		{
 			RealmVertex vertex;
-			vertex.position = mesh.positions[index];
+			
+			vertex.position = vec3(modelMatrix * vec4(mesh.positions[index],1.0));
+			
 			/*vertex.normal = mesh.normals[index];
 			vertex.uv = mesh.textureCoordinates[index];*/
 			vertexData[index] = vertex;
@@ -54,9 +63,22 @@ class Renderer
 		
 	}
 
+	void update()
+	{
+		GraphicsSubsystem.clearScreen();
+		if(camera !is null)
+		{
+			camera.updateViewProjection();
+			globalData.viewProjection = camera.viewProjection;
+		}
+		GraphicsSubsystem.updateGlobalData(&globalData);
+		batch.drawBatch();
+		
+	}
+
 	void flush()
 	{
-		batch.drawBatch();
+		
 	}
 
 	

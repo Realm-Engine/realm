@@ -32,7 +32,7 @@ class Batch(T)
 		this.numElementsInFrame= 0;
 		this.capacity = 0;
 		cmdBufferBase = 0;
-		bufferAmount =3;
+		bufferAmount =2;
 		maxElementsInFrame = 0;
 		
 	}
@@ -97,9 +97,11 @@ class Batch(T)
 		cmd.firstIndex = idxPos;
 		cmd.baseVertex = vtxPos / topology;
 		cmd.baseInstance = 0;
-		
-		cmdBufferMap[cmdBufferBase + numElementsInFrame++] = cmd;
-
+		//cmdBufferMapOffset = cmdBufferMap + cmdBufferBase + numElementsInFrame;
+		//cmdBufferMapOffset = cmd;
+		cmdBufferMap[cmdBufferBase * maxElementsInFrame  + numElementsInFrame] = cmd;
+		numElementsInFrame++;
+		//cmdBufferMapOffset = cmdBufferMap + cmdBufferBase + numElementsInFrame;
 	}
 
 	void drawBatch()
@@ -107,7 +109,7 @@ class Batch(T)
 		int cmdTypeSize = cast(int)DrawElementsIndirectCommand.sizeof;
 		bindBuffers();
 		uint offset = cmdBufferBase * (maxElementsInFrame * cmdTypeSize);
-		writeln(offset);
+		//writeln(offset);
 		GraphicsSubsystem.drawMultiElementsIndirect(offset, numElementsInFrame);
 		unbindBuffers();
 		cmdBufferBase = (cmdBufferBase + 1) % bufferAmount;

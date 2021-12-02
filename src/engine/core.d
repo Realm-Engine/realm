@@ -34,6 +34,7 @@ class Transform
 	vec3 computeDirection(vec3 direction)
 	{
 		vec4 dir = rotation.to_matrix!(4,4) * vec4(direction,1.0);
+		
 		return vec3(dir).normalized();
 
 	}
@@ -108,7 +109,7 @@ enum CameraProjection
 
 class Camera
 {
-	private Transform transform;
+	Transform transform;
 	private float fieldOfView;
 	private vec2 size;
 	private float farPlane;
@@ -156,6 +157,7 @@ class Camera
 	{
 		mat4 proj = calculateProjection();
 		mat4 view = transform.lookAt(transform.position,transform.position + transform.front,transform.up);
+		
 		vp = proj * view;
 	}
 	
