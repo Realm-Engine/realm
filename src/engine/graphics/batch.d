@@ -8,13 +8,15 @@ class Batch(T)
 	import std.container.array;
 	import std.stdio;
 	private VertexArrayObject vao;
-	private VertexBuffer!(T,BufferUsage.Buffered) vertexBuffer;
-	private ElementBuffer!(BufferUsage.Buffered) elementBuffer;
+	private VertexBuffer!(T,BufferUsage.MappedWrite) vertexBuffer;
+	private ElementBuffer!(BufferUsage.MappedWrite) elementBuffer;
 	private DrawIndirectCommandBuffer!(BufferUsage.MappedWrite) cmdBuffer;
-
+	//private ShaderStorage!(MaterialLayout,BufferUsage.MappedWrite) perObjectData;
 	
 
 	private uint numElementsInFrame;
+	private uint numVerticesInFrame;
+	private uint numIndicesInFrame;
 	private uint capacity;
 	private MeshTopology topology;
 	private uint cmdBufferBase;
@@ -32,6 +34,7 @@ class Batch(T)
 		cmdBufferBase = 0;
 		bufferAmount =2;
 		maxElementsInFrame = 0;
+		numVerticesInFrame = 0;
 		
 	}
 
@@ -42,6 +45,9 @@ class Batch(T)
 		cmdBuffer.store(amount * bufferAmount);
 		//cmdBufferMap = cmdBuffer.ptr; 
 		cmdBuffer.unbind();
+		/*perObjectData.bind();
+		perObjectData.store(amount * bufferAmount);
+		perObjectData.unbind();*/
 	}
 
 
@@ -66,15 +72,15 @@ class Batch(T)
 	void bindBuffers()
 	{
 		vao.bind();
-		vertexBuffer.bind();
+		/*vertexBuffer.bind();
 		elementBuffer.bind();
-		cmdBuffer.bind();
+		cmdBuffer.bind();*/
 	}
 	void unbindBuffers()
 	{
 		vao.unbind();
-		elementBuffer.bind();
-		cmdBuffer.unbind();
+		/*elementBuffer.bind();
+		cmdBuffer.unbind();*/
 	}
 		
 	void allocateBuffers(uint numElements)
@@ -87,19 +93,20 @@ class Batch(T)
 	}
 	void submitVertices(T[] vertices, uint[] faces)
 	{
-		uint vtxPos = vertexBuffer.bufferData(vertices.ptr,vertices.length);
-		uint idxPos = elementBuffer.bufferData(faces.ptr,faces.length);
+		uint elementOffset = cmdBufferBase * (capacity * topology) + numIndicesInFrame;
+		uint offset = cmdBufferBase * capacity + numVerticesInFrame;
+		vertexBuffer.ptr[offset.. offset + vertices.length] = vertices;
+		elementBuffer.ptr[elementOffset .. elementOffset + faces.length] = faces;
 		DrawElementsIndirectCommand cmd;
 		cmd.count = cast(uint)faces.length;
 		cmd.instanceCount =cast(uint) faces.length / topology;
-		cmd.firstIndex = idxPos;
-		cmd.baseVertex = vtxPos / topology;
+		cmd.firstIndex = numIndicesInFrame;
+		cmd.baseVertex = numVerticesInFrame;
 		cmd.baseInstance = 0;
-		//cmdBufferMapOffset = cmdBufferMap + cmdBufferBase + numElementsInFrame;
-		//cmdBufferMapOffset = cmd;
 		cmdBuffer.ptr[cmdBufferBase * maxElementsInFrame  + numElementsInFrame] = cmd;
 		numElementsInFrame++;
-		//cmdBufferMapOffset = cmdBufferMap + cmdBufferBase + numElementsInFrame;
+		numVerticesInFrame+=vertices.length;
+		numIndicesInFrame+=faces.length;
 	}
 
 	void drawBatch()
@@ -112,7 +119,8 @@ class Batch(T)
 		unbindBuffers();
 		cmdBufferBase = (cmdBufferBase + 1) % bufferAmount;
 		numElementsInFrame = 0;
-
+		numVerticesInFrame = 0;
+		numIndicesInFrame = 0;
 		
 		
 	}

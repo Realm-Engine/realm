@@ -9,24 +9,32 @@ import realm.engine.graphics.core;
 import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.renderer;
 import std.file : read;
+import realm.engine.graphics.material;
 class RealmGame : RealmApp
 {
+
+
+	
 	Entity entity;
+	Entity floor;
 	Queue!int queue;
 	ShaderProgram program;
-	GraphicsSubsystem gss;
 	Mesh triangle;
 	Camera cam;
 	Renderer renderer;
+	Material!(["test":UserDataVarTypes.VECTOR]) material;
+
 	this(int width, int height, const char* title)
 	{
 		
+		
 
 		super(width,height,title);
-		renderer = new Renderer;
+		material = new Material!(["test":UserDataVarTypes.VECTOR]);
 		
+		writeln(material.layout.test);
+		renderer = new Renderer;
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),100,-0.1,45);
-		gss = new GraphicsSubsystem();
 		auto vertexShader = read("./src/engine/res/vertexShader.glsl");
 		auto fragmentShader = read("./src/engine/res/fragShader.glsl");
 		Shader vertex = new Shader(ShaderType.VERTEX,cast(string) vertexShader,"Vetex Shader");
@@ -48,6 +56,9 @@ class RealmGame : RealmApp
 		Transform transform = new Transform;	
 		
 		entity = new Entity(mesh,transform);
+		floor = new Entity(mesh);
+		floor.eulerRotation(vec3(90,0,0));
+		floor.position = vec3(0,-0.2f,0);
 		program.use();
 		cam.position.z = -1.0f;
 		renderer.activeCamera = &cam;
@@ -61,6 +72,7 @@ class RealmGame : RealmApp
 		
 		//writeln(entity.transform.position);
 		renderer.submitMesh(entity.mesh,entity.transform);
+		renderer.submitMesh(floor.mesh,floor.transform);
 		renderer.update();
 
 	}

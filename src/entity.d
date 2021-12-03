@@ -14,5 +14,11 @@ class Entity
 		
 	}
 
+	this(Mesh mesh)
+	{
+		this.mesh = mesh;
+		this.transform = new Transform;
+	}
+
 
 }

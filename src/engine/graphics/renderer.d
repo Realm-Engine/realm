@@ -30,13 +30,12 @@ class Renderer
 		vertex3DAttributes ~= position;
 		batch = new Batch!RealmVertex(MeshTopology.TRIANGLE);
 		batch.initialize(vertex3DAttributes,64);
-		batch.reserve(3);
+		batch.reserve(2);
 
 	}
 
 	void submitMesh(Mesh mesh,Transform transform)
 	{
-		batch.bindBuffers();
 		
 		RealmVertex[uint] vertexData;
 		//writeln(transform.model);
@@ -48,8 +47,6 @@ class Renderer
 			
 			vertex.position = vec3(modelMatrix * vec4(mesh.positions[index],1.0));
 			
-			/*vertex.normal = mesh.normals[index];
-			vertex.uv = mesh.textureCoordinates[index];*/
 			vertexData[index] = vertex;
 			
 
@@ -59,7 +56,7 @@ class Renderer
 		//batch.allocateBuffers(cast(uint)vertexData.length);
 		batch.submitVertices(vertexData.values,mesh.faces);
 
-		batch.unbindBuffers();
+		
 		
 	}
 
@@ -73,6 +70,7 @@ class Renderer
 		}
 		GraphicsSubsystem.updateGlobalData(&globalData);
 		batch.drawBatch();
+
 		
 	}
 
@@ -80,6 +78,7 @@ class Renderer
 	{
 		
 	}
+
 
 	
 

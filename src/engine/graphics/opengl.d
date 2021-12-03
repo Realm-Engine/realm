@@ -93,7 +93,7 @@ mixin template OpenGLBuffer(GLenum bufferType,T,GBufferUsage usage)
 	{
 		uint dataStart = ringPtr;
 		glBufferSubData(bufferType,ringPtr,length * T.sizeof,data);
-		//ringPtr += length * T.sizeof % ringSize;
+		ringPtr += length * T.sizeof % ringSize;
 		return dataStart;
 		
 
@@ -253,6 +253,16 @@ struct ShaderBlock
 
 
 	
+}
+
+struct ShaderStorage(T,GBufferUsage usage)
+{
+	mixin OpenGLBuffer!(GL_SHADER_STORAGE_BUFFER,T,usage);
+	void bindBase(uint bindPoint)
+	{
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER,bindPoint,id);
+
+	}
 }
 
 struct DrawIndirectCommandBuffer(GBufferUsage usage)
