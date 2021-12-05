@@ -1,9 +1,11 @@
 module realm.entity;
 import realm.engine.core;
+import realm.engine.graphics.material;
 
-
-class Entity
+class Entity(Mat)
 {
+	static assert(isMaterial!(Mat));
+	Mat material;
 	Mesh mesh;
 	Transform transform;
 	alias transform this;

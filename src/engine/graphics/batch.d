@@ -2,6 +2,7 @@ module realm.engine.graphics.batch;
 import realm.engine.graphics.opengl;
 import realm.engine.graphics.core;
 import realm.engine.graphics.graphicssubsystem;
+import realm.engine.graphics.material;
 class Batch(T)
 {
 	import std.algorithm.iteration : fold,map;
@@ -11,7 +12,7 @@ class Batch(T)
 	private VertexBuffer!(T,BufferUsage.MappedWrite) vertexBuffer;
 	private ElementBuffer!(BufferUsage.MappedWrite) elementBuffer;
 	private DrawIndirectCommandBuffer!(BufferUsage.MappedWrite) cmdBuffer;
-	//private ShaderStorage!(MaterialLayout,BufferUsage.MappedWrite) perObjectData;
+	//private ShaderStorage!(BufferUsage.MappedWrite) perObjectData;
 	
 
 	private uint numElementsInFrame;
@@ -72,15 +73,15 @@ class Batch(T)
 	void bindBuffers()
 	{
 		vao.bind();
-		/*vertexBuffer.bind();
+		vertexBuffer.bind();
 		elementBuffer.bind();
-		cmdBuffer.bind();*/
+		cmdBuffer.bind();
 	}
 	void unbindBuffers()
 	{
 		vao.unbind();
-		/*elementBuffer.bind();
-		cmdBuffer.unbind();*/
+		elementBuffer.bind();
+		cmdBuffer.unbind();
 	}
 		
 	void allocateBuffers(uint numElements)
@@ -91,8 +92,9 @@ class Batch(T)
 
 		
 	}
-	void submitVertices(T[] vertices, uint[] faces)
+	void submitVertices(Mat)(T[] vertices, uint[] faces, Mat material)
 	{
+		static assert(isMaterial!(Mat));
 		uint elementOffset = cmdBufferBase * (capacity * topology) + numIndicesInFrame;
 		uint offset = cmdBufferBase * capacity + numVerticesInFrame;
 		vertexBuffer.ptr[offset.. offset + vertices.length] = vertices;
@@ -107,6 +109,9 @@ class Batch(T)
 		numElementsInFrame++;
 		numVerticesInFrame+=vertices.length;
 		numIndicesInFrame+=faces.length;
+		material.writeUniformData();
+
+
 	}
 
 	void drawBatch()

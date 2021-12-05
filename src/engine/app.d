@@ -24,12 +24,15 @@ class RealmApp
 		DerelictGL3.load();
 		glfwMakeContextCurrent(window);
 		DerelictGL3.reload(GLVersion.GL43,GLVersion.GL45);
+		glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
+		writeln("OpenGL init");
 	}
 
 	abstract void update();
-
+	abstract void start();
 	void run()
 	{
+		start();
 		while(!shutdown)
 		{
 			update();

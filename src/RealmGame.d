@@ -10,19 +10,43 @@ import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.renderer;
 import std.file : read;
 import realm.engine.graphics.material;
+import std.meta;
+//import realm.engine.graphics.core;
 class RealmGame : RealmApp
 {
 
-
-	
-	Entity entity;
-	Entity floor;
-	Queue!int queue;
 	ShaderProgram program;
 	Mesh triangle;
 	Camera cam;
 	Renderer renderer;
-	Material!(["test":UserDataVarTypes.VECTOR]) material;
+
+	static Mesh squareMesh;
+	Entity!(EntityMaterial) entity;
+	alias EntityMaterialLayout =  Alias!(["color":UserDataVarTypes.VECTOR]);
+	alias EntityMaterial = Material!(EntityMaterialLayout);
+	Entity!(EntityMaterial) floor;
+	
+
+
+	static this()
+	{
+
+		
+
+
+		uint[] faces = [0,1,2,2,3,0];
+		vec3[] square = [vec3(-0.5f,-0.5f,0),vec3(0.5,-0.5f,0),vec3(0.5,0.5f,0),vec3(-0.5,0.5f,0.0f)];	
+		
+		squareMesh.positions = square;
+		squareMesh.faces = faces;
+		squareMesh.calculateNormals();
+		squareMesh.textureCoordinates = [vec2(0,0),vec2(0,0),vec2(0,0),vec2(0,0)];
+		squareMesh.calculateNormals();
+	
+	}
+
+
+
 
 	this(int width, int height, const char* title)
 	{
@@ -30,9 +54,7 @@ class RealmGame : RealmApp
 		
 
 		super(width,height,title);
-		material = new Material!(["test":UserDataVarTypes.VECTOR]);
 		
-		writeln(material.layout.test);
 		renderer = new Renderer;
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),100,-0.1,45);
 		auto vertexShader = read("./src/engine/res/vertexShader.glsl");
@@ -40,30 +62,33 @@ class RealmGame : RealmApp
 		Shader vertex = new Shader(ShaderType.VERTEX,cast(string) vertexShader,"Vetex Shader");
 		Shader fragment = new Shader(ShaderType.FRAGMENT,cast(string)fragmentShader,"Fragment Shader");
 		program = new ShaderProgram(vertex,fragment,"MyProgram");
+		EntityMaterial.initialze();
+		EntityMaterial.reserve(2);
+
+	}
+
+	override void start()
+	{
 		
-		Mesh mesh = new Mesh;
-		triangle = new Mesh;
-		vec3[] square = [vec3(-0.5f,-0.5f,0),vec3(0.5,-0.5f,0),vec3(0.5,0.5f,0),vec3(-0.5,0.5f,0.0f)];
-		triangle.positions = [vec3(-1,-1,0),vec3(-0.5,-0.5,0),vec3(0,-1,0)];
-		triangle.faces = [0,1,2];
-		mesh.textureCoordinates = [vec2(0,0),vec2(0,0),vec2(0,0),vec2(0,0)];
-		mesh.calculateNormals();
-		uint[] faces = [0,1,2,2,3,0];
-		mesh.positions = square;
-		mesh.faces = faces;
-		mesh.calculateNormals();
 		
+		
+
 		Transform transform = new Transform;	
-		
-		entity = new Entity(mesh,transform);
-		floor = new Entity(mesh);
+		entity = new Entity!(EntityMaterial)(squareMesh,transform);
+		floor = new Entity!(EntityMaterial)(squareMesh);
 		floor.eulerRotation(vec3(90,0,0));
 		floor.position = vec3(0,-0.2f,0);
+		entity.material = new EntityMaterial();
+		floor.material = new EntityMaterial();
+		entity.material.color = vec4(0.7,0.1,0.5,1.0);
+		floor.material.color = vec4(0.8,0.8,0.8,1.0);
 		program.use();
 		cam.position.z = -1.0f;
 		renderer.activeCamera = &cam;
 		entity.position.z = 2.0f;
 
+
+		
 		
 	}
 
@@ -71,8 +96,8 @@ class RealmGame : RealmApp
 	{
 		
 		//writeln(entity.transform.position);
-		renderer.submitMesh(entity.mesh,entity.transform);
-		renderer.submitMesh(floor.mesh,floor.transform);
+		renderer.submitMesh!(EntityMaterial)(entity.mesh,entity.transform,entity.material);
+		renderer.submitMesh!(EntityMaterial)(floor.mesh,floor.transform,floor.material);
 		renderer.update();
 
 	}

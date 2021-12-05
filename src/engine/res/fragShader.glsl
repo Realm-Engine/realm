@@ -1,13 +1,16 @@
 
-#version 430 core
+#version 460 core
 
 layout(std140, binding = 0) uniform _reGloblaData
 {
 	mat4 _vp;
 
 };
-out vec4 outColor; 
 
+
+
+out vec4 outColor; 
+in vec4 Color;
 in RESurfaceData
 {
 	vec3 posWS;
@@ -17,5 +20,5 @@ in RESurfaceData
 
 void main()
 { 
-	outColor = vec4(1.0,0,0,1.0);
+	outColor = Color;
 }

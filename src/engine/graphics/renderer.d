@@ -3,12 +3,18 @@ import realm.engine.graphics.batch;
 import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.core;
 import realm.engine.core;
+import realm.engine.graphics.material;
 import gl3n.linalg;
+import std.container.array;
+import std.variant;
 class Renderer
 {
 	import std.container.array;
 	import std.stdio;
-	private Batch!RealmVertex batch;
+	//private Batch!RealmVertex batch;
+	
+	private Batch!(RealmVertex)[ulong] batches;
+
 	VertexAttribute[] vertex3DAttributes;
 	private RealmGlobalData globalData;
 	private Camera* camera;
@@ -28,14 +34,15 @@ class Renderer
 		GraphicsSubsystem.updateGlobalData(&globalData);
 		VertexAttribute position = {VertexType.FLOAT3,0,0,AttributeSlot.POSITION};
 		vertex3DAttributes ~= position;
-		batch = new Batch!RealmVertex(MeshTopology.TRIANGLE);
+		/*batch = new Batch!RealmVertex(MeshTopology.TRIANGLE);
 		batch.initialize(vertex3DAttributes,64);
-		batch.reserve(2);
+		batch.reserve(2);*/
 
 	}
 
-	void submitMesh(Mesh mesh,Transform transform)
+	void submitMesh(Mat)(Mesh mesh,Transform transform,Mat mat)
 	{
+		static assert(isMaterial!(Mat));
 		
 		RealmVertex[uint] vertexData;
 		//writeln(transform.model);
@@ -53,8 +60,20 @@ class Renderer
 
 
 		}
-		//batch.allocateBuffers(cast(uint)vertexData.length);
-		batch.submitVertices(vertexData.values,mesh.faces);
+		ulong materialId = Mat.materialId();
+		if(auto batch = materialId in batches)
+		{
+			batch.submitVertices!(Mat)(vertexData.values,mesh.faces,mat);
+		}
+		else
+		{
+
+			batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE);
+			batches[materialId].initialize(vertex3DAttributes,64);
+			batches[materialId].reserve(2);
+			batches[materialId].submitVertices!(Mat)(vertexData.values,mesh.faces,mat);
+		}
+		
 
 		
 		
@@ -69,7 +88,11 @@ class Renderer
 			globalData.viewProjection = camera.viewProjection;
 		}
 		GraphicsSubsystem.updateGlobalData(&globalData);
-		batch.drawBatch();
+		foreach(batch; batches)
+		{
+			batch.drawBatch();
+		}
+		//batch.drawBatch();
 
 		
 	}

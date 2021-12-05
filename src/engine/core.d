@@ -70,13 +70,12 @@ class Transform
 	
 }
 
-class Mesh
+struct Mesh
 {
 	vec3[] positions;
 	vec2[] textureCoordinates;
 	vec3[] normals;
 	uint[] faces;
-	this(){}
 	void calculateNormals()
 	{
 		normals.length = positions.length;
