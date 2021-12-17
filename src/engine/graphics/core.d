@@ -3,6 +3,7 @@ import gl3n.linalg;
 import std.format;
 import realm.engine.graphics.opengl;
 import realm.engine.asset;
+
 alias ShaderType = GShaderType;
 alias FrameBufferAttachment = GFrameBufferAttachment;
 alias TextureFilterfunc = GTextureFilterFunc;
@@ -87,13 +88,13 @@ struct TextureDesc
 class Texture2D
 {
 	//private SamplerObject!(TextureType.TEXTURE2D) handle;
-	Image image;
+	IFImage image;
 	alias image this;
 	int channels;
 	ImageFormat format;
 	TextureFilterfunc filter;
 	TextureWrapFunc wrap;
-	this(Image image, TextureDesc desc)
+	this(IFImage image, TextureDesc desc)
 	{
 		this.image = image;
 		format = desc.fmt;

@@ -8,14 +8,16 @@ layout(std140, binding = 0) uniform _reGloblaData
 
 };
 
-struct objectData
+struct ObjectData
 {
 	vec4 color;
+	vec4 albedo;
+	vec4 emissive;
 };
 
 layout (std430,binding = 1) buffer _perObjectData
 {
-	objectData data[];
+	ObjectData data[];
 };
 
 out RESurfaceData
@@ -24,6 +26,7 @@ out RESurfaceData
 	vec4 posCS;
 	vec2 texCoord;
 	flat int drawId;
+	ObjectData objectData;
 
 } RESurfaceDataOut;
 
@@ -31,6 +34,7 @@ out vec4 Color;
 
 void main()
 {
+	RESurfaceDataOut.objectData = data[gl_DrawID];
 	Color = data[gl_DrawID].color;
 	RESurfaceDataOut.drawId = gl_DrawID;
 	RESurfaceDataOut.posCS = _vp * vec4(v_Position, 1.0);

@@ -3,7 +3,9 @@ import realm.engine.graphics.core;
 import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.opengl;
 import std.stdio;
-
+import std.algorithm.sorting;
+import std.range;
+import gl3n.linalg;
 mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
 {
     import std.format;
@@ -23,7 +25,7 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
                     mixin("%s %s;".format("float", uniform));
                 }
 
-                static if (uniforms[uniform] == UserDataVarTypes.VECTOR )
+                static if (uniforms[uniform] == UserDataVarTypes.VECTOR || uniforms[uniform] == UserDataVarTypes.TEXTURE2D )
                 {
                     mixin("%s %s;".format("vec4", uniform));
                 }
@@ -73,7 +75,7 @@ class Material(UserDataVarTypes[string] uniforms)
     private uint materialIndex = 0;
     private UniformLayout.UserData* storageBufferPtr;
 
-    private SamplerObject!(TextureType.TEXTURE2D) textureArray;
+    private SamplerObject!(TextureType.TEXTURE2D) textureAtlas;
     private static ShaderProgram program;
     this()
     {
@@ -82,7 +84,8 @@ class Material(UserDataVarTypes[string] uniforms)
         materialIndex = numMaterials;
         numMaterials++;
         
-        textureArray.create();
+        textureAtlas.create();
+        textureAtlas.slot = materialIndex;
 
 		
     }
@@ -91,8 +94,8 @@ class Material(UserDataVarTypes[string] uniforms)
 	{
         program = sp;
 	}
-
-    void updateTextureArray()
+/*
+    void updateTextureAtlas()
 	{
 		int maxWidth = int.min;
         int maxHeight = int.min;
@@ -103,22 +106,22 @@ class Material(UserDataVarTypes[string] uniforms)
                 static if (isSampler!(attribute))
                 {
                     Texture2D texture = __traits(getMember, textures, member);
-                    if(cast(int)texture.width >maxWidth)
+                    if(cast(int)texture.w >maxWidth)
 					{
                         maxWidth = texture.width;
 					}
-                    if(cast(int)texture.height > maxHeight)
+                    if(cast(int)texture.h > maxHeight)
 					{
                         maxHeight = texture.height;
 					}
                 }
             }
         }
-        textureArray.textureDesc = textures.settings;
-        textureArray.width = maxWidth;
-        textureArray.height = maxHeight;
-        //textureArray.store(maxWidth,maxHeight);
-	}
+        textureAtlas.textureDesc = textures.settings;
+        textureAtlas.width = maxWidth;
+        textureAtlas.height = maxHeight;
+        textureAtlas.store(maxWidth,maxHeight);
+	}*/
 
     static void reserve(size_t numItems)
     {
@@ -145,12 +148,78 @@ class Material(UserDataVarTypes[string] uniforms)
     void activateTextures()
 	{
         
-        textureArray.setActive(materialIndex);
+        textureAtlas.setActive();
         program.setUniformInt(program.uniformLocation("atlasTextures[%d]".format(materialIndex)),materialIndex);
 	}
     
-    
+    void packTextureAtlas()
+	{
+        textureAtlas.textureDesc = textures.settings;
+        int width = 1024;
+        int height = 1024;
+        Texture2D[] textures;
+        vec4*[] tilingOffsets;
+        static foreach (member; texturesMembers!(UniformLayout))
+        {
+            static foreach (attribute; texturesAttributes!(UniformLayout, member))
+            {
+                static if (isSampler!(attribute))
+                {
+                    
+                    if(__traits(getMember, this.textures, member) !is null)
+					{
+                        writeln(member);
+                        textures~= __traits(getMember, this.textures, member);
+                        tilingOffsets ~= &__traits(getMember,this.layout,member);
+					}
+                    
 
+				}
+			}
+		}
+
+        auto sorted = textures.sort!((t1, t2) => (t1.w * t1.h) > (t2.w * t2.h));
+        int totalWidth = 0;
+        int totalHeight = 0;
+        int rowWidth = 0;
+        int rowHeight = int.min;
+        textureAtlas.store(1024,1024);
+        
+        foreach(index,texture; textures.enumerate(0))
+		{
+WriteImage:
+            if(texture.w + rowWidth < cast(int)textureAtlas.width)
+			{
+                
+
+                textureAtlas.uploadSubImage(0,rowWidth,totalHeight,texture.w,texture.h,texture.buf8.ptr);
+                
+
+                vec4 tilingOffset;
+                tilingOffsets[index].x = cast(float)texture.w / textureAtlas.width;
+                tilingOffsets[index].y = cast(float)texture.h/ textureAtlas.height;
+                tilingOffsets[index].z = cast(float)rowWidth / textureAtlas.width;
+                tilingOffsets[index].w = cast(float)totalHeight/textureAtlas.height;
+				if(cast(int)texture.h > rowHeight)
+				{
+                    rowHeight = texture.h;
+				}
+                rowWidth += texture.w;
+
+
+			}
+            else
+            {
+                totalHeight += rowHeight;
+                rowWidth = 0;
+                goto WriteImage;
+			}
+
+
+		}
+	}
+    
+/*
     void writeTextureData()
     {
         int textureDepth = 0;
@@ -163,19 +232,19 @@ class Material(UserDataVarTypes[string] uniforms)
                     Texture2D texture = __traits(getMember, textures, member);
                     if(texture !is null)
 					{
-                        //textureArray.uploadSubImage(0,0,0,texture.width,texture.height,texture.getImageData().ptr);
-                        textureArray.uploadImage(0,0,texture.getImageData().ptr);
+                        textureAtlas.uploadSubImage(0,0,0,texture.width,texture.height,texture.getImageData().ptr);
+                        //textureAtlas.uploadImage(0,0,texture.getImageData().ptr);
 					}
                     else
 					{
-                        textureArray.uploadImage(0,0,null);
+                        textureAtlas.uploadImage(0,0,null);
 					}
                     
                     textureDepth++;
 				}
 			}
 		}
-    }
+    }*/
 
     static ulong materialId()
     {

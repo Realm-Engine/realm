@@ -7,14 +7,16 @@ layout(std140, binding = 0) uniform _reGloblaData
 
 };
 
-struct objectData
+struct ObjectData
 {
 	vec4 color;
+	vec4 albedo;
+	vec4 emissive;
 };
 
 layout (std430,binding = 1) buffer _perObjectData
 {
-	objectData data[];
+	ObjectData data[];
 };
 
 uniform sampler2D atlasTextures[16];
@@ -27,10 +29,21 @@ in RESurfaceData
 	vec4 posCS;
 	vec2 texCoord;
 	flat int drawId;
+	ObjectData objectData;
 
 } RESurfaceDataOut;
 
+vec2 samplerUV(vec4 to)
+{
+	return (RESurfaceDataOut.texCoord * vec2(to.x,to.y)) + vec2(to.z,to.w);
+}
+
 void main()
 { 
-	outColor = Color * texture(atlasTextures[RESurfaceDataOut.drawId],RESurfaceDataOut.texCoord);
+	vec4 albedo = RESurfaceDataOut.objectData.albedo;
+	vec2 albedoUv = (RESurfaceDataOut.texCoord * vec2(albedo.x,albedo.y)) + vec2(albedo.z,albedo.w);
+	
+	vec2 emissiveUV = samplerUV(RESurfaceDataOut.objectData.emissive);
+	vec4 emissiuveSample = texture(atlasTextures[RESurfaceDataOut.drawId],emissiveUV);
+	outColor = Color * texture(atlasTextures[RESurfaceDataOut.drawId],albedoUv) * emissiuveSample;
 }

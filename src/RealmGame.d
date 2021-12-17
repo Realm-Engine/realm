@@ -12,6 +12,7 @@ import realm.engine.graphics.material;
 import std.meta;
 import realm.engine.ecs;
 import realm.engine.asset;
+import imagefmt;
 //import realm.engine.graphics.core;
 class RealmGame : RealmApp
 {
@@ -23,12 +24,12 @@ class RealmGame : RealmApp
 
 	static Mesh squareMesh;
 	Entity!(EntityMaterial) entity;
-	alias EntityMaterialLayout =  Alias!(["color":UserDataVarTypes.VECTOR,"albedo" : UserDataVarTypes.TEXTURE2D]);
+	alias EntityMaterialLayout =  Alias!(["color":UserDataVarTypes.VECTOR,"albedo" : UserDataVarTypes.TEXTURE2D,"emissive":UserDataVarTypes.TEXTURE2D]);
 	alias EntityMaterial = Material!(EntityMaterialLayout);
 	Entity!(EntityMaterial) floor;
-	static Image wallImg;
-
-
+	static IFImage wallImg;
+	static IFImage grassImg;
+	static IFImage emissive;
 	static this()
 	{
 		uint[] faces = [0,1,2,2,3,0];
@@ -38,7 +39,9 @@ class RealmGame : RealmApp
 		squareMesh.faces = faces;
 		squareMesh.calculateNormals();
 		squareMesh.textureCoordinates = squareUV;
-		wallImg = readImage("./Assets/Images/wall.png");
+		wallImg = readImageBytes("./Assets/Images/wall.png");
+		grassImg = readImageBytes("./Assets/Images/grass.png");
+		emissive = readImageBytes("./Assets/Images/emissive.png");
 		
 	}
 
@@ -75,17 +78,23 @@ class RealmGame : RealmApp
 		floor = new Entity!(EntityMaterial)(squareMesh);
 		floor.eulerRotation(vec3(90,0,0));
 		floor.position = vec3(0,-0.2f,0);
-		entity.material.color = vec4(0.7,0.1,0.5,1.0);
-		floor.material.color = vec4(0.8,0.8,0.8,1.0);
+		entity.material.color = vec4(1.0,1.0,1.0,1.0);
+		floor.material.color = vec4(1.0,1.0,1.0,1.0);
 		program.use();
 		cam.position.z = -1.0f;
 		renderer.activeCamera = &cam;
 		entity.position.z = 2.0f;
-		entity.material.textures.albedo = new Texture2D(wallImg,TextureDesc(ImageFormat.RGB,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER));
-		entity.material.textures.settings = TextureDesc(ImageFormat.RGB,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
-		
-		entity.material.updateTextureArray();
-		entity.material.writeTextureData();
+		TextureDesc textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+		entity.material.textures.albedo = new Texture2D(wallImg,textureDesc);
+		entity.material.textures.emissive = new Texture2D(emissive,textureDesc);
+		entity.material.textures.settings = textureDesc;
+		entity.material.packTextureAtlas();
+
+
+		floor.material.textures.albedo = new Texture2D(grassImg,textureDesc);
+		floor.material.textures.emissive = new Texture2D(emissive,textureDesc);
+		floor.material.textures.settings = textureDesc;
+		floor.material.packTextureAtlas();
 		
 		
 	}
