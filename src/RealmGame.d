@@ -4,7 +4,6 @@ import std.stdio;
 import realm.engine.core;
 import gl3n.linalg;
 import realm.entity;
-import realm.engine.containers.queue;
 import realm.engine.graphics.core;
 import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.renderer;
