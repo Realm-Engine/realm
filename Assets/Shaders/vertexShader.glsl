@@ -23,6 +23,7 @@ out RESurfaceData
 	vec3 posWS;
 	vec4 posCS;
 	vec2 texCoord;
+	flat int drawId;
 
 } RESurfaceDataOut;
 
@@ -31,6 +32,7 @@ out vec4 Color;
 void main()
 {
 	Color = data[gl_DrawID].color;
+	RESurfaceDataOut.drawId = gl_DrawID;
 	RESurfaceDataOut.posCS = _vp * vec4(v_Position, 1.0);
 	RESurfaceDataOut.posWS = v_Position;
 	RESurfaceDataOut.texCoord = v_TexCoord;

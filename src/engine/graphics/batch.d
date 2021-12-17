@@ -112,6 +112,7 @@ class Batch(T)
 		numVerticesInFrame+=vertices.length;
 		numIndicesInFrame+=faces.length;
 		material.writeUniformData();
+		material.activateTextures();
 
 
 	}

@@ -86,7 +86,7 @@ struct TextureDesc
 
 class Texture2D
 {
-	private SamplerObject!(TextureType.TEXTURE2D) handle;
+	//private SamplerObject!(TextureType.TEXTURE2D) handle;
 	Image image;
 	alias image this;
 	int channels;
@@ -95,6 +95,7 @@ class Texture2D
 	TextureWrapFunc wrap;
 	this(Image image, TextureDesc desc)
 	{
+		this.image = image;
 		format = desc.fmt;
 		filter = desc.filter;
 		wrap = desc.wrap;

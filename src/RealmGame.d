@@ -60,6 +60,7 @@ class RealmGame : RealmApp
 		program = new ShaderProgram(vertex,fragment,"MyProgram");
 		EntityMaterial.initialze();
 		EntityMaterial.reserve(2);
+		EntityMaterial.setShaderProgram(program);
 
 	}
 
@@ -80,8 +81,11 @@ class RealmGame : RealmApp
 		cam.position.z = -1.0f;
 		renderer.activeCamera = &cam;
 		entity.position.z = 2.0f;
-		entity.material.textures.albedo = new Texture2D(wallImg,TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER));
-		entity.material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+		entity.material.textures.albedo = new Texture2D(wallImg,TextureDesc(ImageFormat.RGB,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER));
+		entity.material.textures.settings = TextureDesc(ImageFormat.RGB,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+		
+		entity.material.updateTextureArray();
+		entity.material.writeTextureData();
 		
 		
 	}

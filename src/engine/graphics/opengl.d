@@ -226,6 +226,18 @@ class GShaderProgram
 			
 		}
 
+		
+
+
+	}
+	int uniformLocation(string uniform)
+	{
+		return glGetUniformLocation(this,toStringz(uniform));
+	}
+
+	void setUniformInt(int loc,int value)
+	{
+		glUniform1i(loc,value);
 	}
 
 }
@@ -322,6 +334,7 @@ struct GTextureObject(GTextureType target)
 
 struct GSamplerObject(GTextureType target)
 {
+	enum is3dTexture = (target == GTextureType.TEXTURE2DARRAY || target== GTextureType.TEXTURE3D);
 	mixin OpenGLObject;
 	private GLenum wrapFunc;
 	private GLenum filterFunc;
@@ -329,6 +342,13 @@ struct GSamplerObject(GTextureType target)
 	private GLenum format;
 	private GLenum dataType;
 	private int mipLevels;
+	int width;
+	int height;
+	
+	static if(is3dTexture)
+	{
+		int depth;
+	}
 	@property textureDesc(TextureDesc desc)
 	{
 		glBindTexture(target,id);
@@ -337,11 +357,12 @@ struct GSamplerObject(GTextureType target)
 		internalFormat = imageFormatToInternalFormat(desc.fmt);
 		dataType = imageFormatToGLDataType(desc.fmt);
 		format = desc.fmt;
-		mipLevels = desc.mipLevels;
+		mipLevels = 1;
 		glTexParameteri(target,GL_TEXTURE_WRAP_S,wrapFunc);
 		glTexParameteri(target,GL_TEXTURE_WRAP_T,wrapFunc);
 		glTexParameteri(target,GL_TEXTURE_MIN_FILTER,filterFunc);
 		glTexParameteri(target,GL_TEXTURE_MAG_FILTER,filterFunc);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		glBindTexture(target,0);
 
 	}
@@ -351,6 +372,15 @@ struct GSamplerObject(GTextureType target)
 		
 	}
 
+	void setActive(int slot)
+	{
+		glActiveTexture(GL_TEXTURE0 + slot);
+		glBindTexture(target,id);
+		
+		
+	}
+	
+
 	static if(target == GTextureType.TEXTURE2D)
 	{
 		void store(int width, int height)
@@ -358,12 +388,19 @@ struct GSamplerObject(GTextureType target)
 			glBindTexture(target,id);
 			glTexStorage2D(target,mipLevels,internalFormat,width,height);
 			glBindTexture(target,0);
+			glGenerateMipmap(target);
 		}
 
-		void uploadSubImage(int level,int xoffset,int yoffset,int width, int height,ubyte[] data)
+		void uploadSubImage(int level,int xoffset,int yoffset,int width, int height,ubyte* data)
 		{
 			glBindTexture(target,id);
-			glTexSubImage2D(target,level,xoffset,yoffset,width,height,format,dataType,data.ptr);
+			glTexSubImage2D(target,level,xoffset,yoffset,width,height,format,dataType,data);
+			glBindTexture(target,0);
+		}
+		void uploadImage(int level,int border,ubyte* data)
+		{
+			glBindTexture(target,id);
+			glTexImage2D(target,level,internalFormat,width,height,border,format,dataType,data);
 			glBindTexture(target,0);
 		}
 	}
@@ -374,14 +411,18 @@ struct GSamplerObject(GTextureType target)
 			glBindTexture(target,id);
 			glTexStorage3D(target,mipLevels,internalFormat,width,height,depth);
 			glBindTexture(target,0);
+			target.glGenerateMipmap();
 		}
 
-		void uploadSubImage(int level, int xoffset, int yoffset,int zoffset,int width, int height,int depth,ubyte[] data)
+		void uploadSubImage(int level, int xoffset, int yoffset,int zoffset,int width, int height,int depth,ubyte* data)
 		{
 			glBindTexture(target,id);
-			glTexSubImage3D(target,level,xoffset,yoffset,zoffset,width,height,depth,format,dataType,data.ptr);
+			glTexSubImage3D(target,level,xoffset,yoffset,zoffset,width,height,depth,format,dataType,data);
 			glBindTexture(target,0);
 		}
+		
+
+
 
 	}
 
@@ -476,7 +517,7 @@ GLenum imageFormatToInternalFormat(ImageFormat format)
 			result = GL_RGB;
 			break;
 		case GImageFormat.RGBA8:
-			result = GL_RGBA;
+			result = GL_RGBA8;
 			break;
 
 		case GImageFormat.DEPTH_STENCIL:
@@ -556,3 +597,4 @@ void drawElements(uint count)
 {
 	glDrawElements(GL_TRIANGLES,count,GL_UNSIGNED_INT,null);
 }
+
