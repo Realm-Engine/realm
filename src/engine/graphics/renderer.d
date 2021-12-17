@@ -32,11 +32,10 @@ class Renderer
 		GraphicsSubsystem.setClearColor(126,32,32,true);
 		globalData.viewProjection = mat4.identity;
 		GraphicsSubsystem.updateGlobalData(&globalData);
-		VertexAttribute position = {VertexType.FLOAT3,0,0,AttributeSlot.POSITION};
+		VertexAttribute position = {VertexType.FLOAT3,0,0};
+		VertexAttribute texCoord = {VertexType.FLOAT2,12,1};
 		vertex3DAttributes ~= position;
-		/*batch = new Batch!RealmVertex(MeshTopology.TRIANGLE);
-		batch.initialize(vertex3DAttributes,64);
-		batch.reserve(2);*/
+		vertex3DAttributes ~= texCoord;
 
 	}
 
@@ -45,20 +44,14 @@ class Renderer
 		static assert(isMaterial!(Mat));
 		
 		RealmVertex[uint] vertexData;
-		//writeln(transform.model);
 		mat4 modelMatrix = transform.model;
-		//writeln(modelMatrix);
 		foreach(index; mesh.faces)
 		{
 			RealmVertex vertex;
 			
 			vertex.position = vec3(modelMatrix * vec4(mesh.positions[index],1.0));
-			
+			vertex.texCoord = mesh.textureCoordinates[index];
 			vertexData[index] = vertex;
-			
-
-
-
 		}
 		ulong materialId = Mat.materialId();
 		if(auto batch = materialId in batches)
@@ -92,7 +85,7 @@ class Renderer
 		{
 			batch.drawBatch();
 		}
-		//batch.drawBatch();
+
 
 		
 	}

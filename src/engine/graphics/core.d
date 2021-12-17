@@ -2,16 +2,17 @@ module realm.engine.graphics.core;
 import gl3n.linalg;
 import std.format;
 import realm.engine.graphics.opengl;
-
+import realm.engine.asset;
 alias ShaderType = GShaderType;
 alias FrameBufferAttachment = GFrameBufferAttachment;
 alias TextureFilterfunc = GTextureFilterFunc;
 alias TextureWrapFunc = GTextureWrapFunc;
-alias ImageType = GImageType;
+alias TextureType = GTextureType;
 alias ImageFormat = GImageFormat;
 alias Shader = GShader;
 alias ShaderProgram = GShaderProgram;
-
+alias TextureObject = GTextureObject;
+alias SamplerObject = GSamplerObject;
 enum VertexType : int
 {
 	FLOAT = 0x4011,
@@ -46,10 +47,17 @@ enum MeshTopology : int
 }
 
 
+enum GFrameBufferStorage
+{
+	FB_TEXTURE,
+	FB_RENDERBUFFER
+};
+
 struct RealmVertex
 {	
 
 	vec3 position;
+	vec2 texCoord;
 	/*
 	vec3 normal;
 	vec2 uv;
@@ -63,10 +71,35 @@ struct VertexAttribute
 	VertexType type;
 	uint offset;
 	uint index;
-	AttributeSlot slot;
 
 
 	
+}
+
+struct TextureDesc
+{
+	ImageFormat fmt;
+	TextureFilterfunc filter;
+	TextureWrapFunc wrap;
+	int mipLevels;
+}
+
+class Texture2D
+{
+	private SamplerObject!(TextureType.TEXTURE2D) handle;
+	Image image;
+	alias image this;
+	int channels;
+	ImageFormat format;
+	TextureFilterfunc filter;
+	TextureWrapFunc wrap;
+	this(Image image, TextureDesc desc)
+	{
+		format = desc.fmt;
+		filter = desc.filter;
+		wrap = desc.wrap;
+	}
+
 }
 
 struct RealmGlobalData

@@ -230,6 +230,33 @@ class GShaderProgram
 
 }
 
+
+
+struct FrameBuffer(GFrameBufferStorage storage,GFrameBufferAttachment attachment)
+{
+	mixin OpenGLObject;
+	
+	void create(size_t width, size_t height )
+	{
+		glGenFramebuffers(1,&this);
+	}
+	void bind()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER,this);
+	}
+	void unbind()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER,0);
+	}
+	~this()
+	{
+		glDeleteFramebuffers(1,&this);
+	}
+
+
+
+}
+
 struct VertexBuffer(T,GBufferUsage usage)
 {
 	mixin OpenGLBuffer!(GL_ARRAY_BUFFER,T,usage);
@@ -268,6 +295,102 @@ struct ShaderStorage(T,GBufferUsage usage)
 struct DrawIndirectCommandBuffer(GBufferUsage usage)
 {
 	mixin OpenGLBuffer!(GL_DRAW_INDIRECT_BUFFER,DrawElementsIndirectCommand,usage);
+}
+
+struct GTextureObject(GTextureType target)
+{
+	mixin OpenGLObject;
+
+	
+
+
+	void create(TextureDesc desc,int width, int height,ubyte[] data)
+	{
+		glGenTextures(1,&id);
+		glBindTexture(target,id);
+		glTexParameteri(target,GL_TEXTURE_WRAP_S,desc.wrap);
+		glTexParameteri(target,GL_TEXTURE_WRAP_T,desc.wrap);
+		glTexParameteri(target,GL_TEXTURE_MIN_FILTER,desc.filter);
+		glTexParameteri(target,GL_TEXTURE_MAG_FILTER,desc.filter);
+		glTexImage2D(target,0,imageFormatToInternalFormat(desc.fmt),width,height,0,desc.fmt,imageFormatToGLDataType(desc.fmt),data.ptr);
+		glBindTexture(target,0);
+		
+
+
+	}
+}
+
+struct GSamplerObject(GTextureType target)
+{
+	mixin OpenGLObject;
+	private GLenum wrapFunc;
+	private GLenum filterFunc;
+	private GLenum internalFormat;
+	private GLenum format;
+	private GLenum dataType;
+	private int mipLevels;
+	@property textureDesc(TextureDesc desc)
+	{
+		glBindTexture(target,id);
+		wrapFunc = desc.wrap;
+		filterFunc = desc.filter;
+		internalFormat = imageFormatToInternalFormat(desc.fmt);
+		dataType = imageFormatToGLDataType(desc.fmt);
+		format = desc.fmt;
+		mipLevels = desc.mipLevels;
+		glTexParameteri(target,GL_TEXTURE_WRAP_S,wrapFunc);
+		glTexParameteri(target,GL_TEXTURE_WRAP_T,wrapFunc);
+		glTexParameteri(target,GL_TEXTURE_MIN_FILTER,filterFunc);
+		glTexParameteri(target,GL_TEXTURE_MAG_FILTER,filterFunc);
+		glBindTexture(target,0);
+
+	}
+	void create()
+	{
+		glGenTextures(1,&id);
+		
+	}
+
+	static if(target == GTextureType.TEXTURE2D)
+	{
+		void store(int width, int height)
+		{
+			glBindTexture(target,id);
+			glTexStorage2D(target,mipLevels,internalFormat,width,height);
+			glBindTexture(target,0);
+		}
+
+		void uploadSubImage(int level,int xoffset,int yoffset,int width, int height,ubyte[] data)
+		{
+			glBindTexture(target,id);
+			glTexSubImage2D(target,level,xoffset,yoffset,width,height,format,dataType,data.ptr);
+			glBindTexture(target,0);
+		}
+	}
+	static if(target == GTextureType.TEXTURE2DARRAY || target== GTextureType.TEXTURE3D)
+	{
+		void store(int width, int height, int depth)
+		{
+			glBindTexture(target,id);
+			glTexStorage3D(target,mipLevels,internalFormat,width,height,depth);
+			glBindTexture(target,0);
+		}
+
+		void uploadSubImage(int level, int xoffset, int yoffset,int zoffset,int width, int height,int depth,ubyte[] data)
+		{
+			glBindTexture(target,id);
+			glTexSubImage3D(target,level,xoffset,yoffset,zoffset,width,height,depth,format,dataType,data.ptr);
+			glBindTexture(target,0);
+		}
+
+	}
+
+	
+
+	
+	 
+	
+
 }
 
 struct VertexArrayObject
@@ -321,7 +444,7 @@ enum GTextureWrapFunc : GLenum
 
 }
 
-enum GImageType : GLenum
+enum GTextureType : GLenum
 {
 	CUBEMAP = GL_TEXTURE_CUBE_MAP,
 	TEXTURE2D = GL_TEXTURE_2D,
@@ -330,24 +453,57 @@ enum GImageType : GLenum
 
 }
 
+
+
+
 enum GImageFormat : GLenum
 {
+	SRGB = GL_RGB,
 	RGB = GL_RGB,
 	RGBA8 = GL_RGBA,
-	SRGB = GL_SRGB,
 	DEPTH_STENCIL = GL_DEPTH_STENCIL,
 	DEPTH = GL_DEPTH_COMPONENT
+
 }
+ 
+GLenum imageFormatToInternalFormat(ImageFormat format)
+{
+	GLenum result;
+	switch(format)
+	{
+
+		case GImageFormat.RGB:
+			result = GL_RGB;
+			break;
+		case GImageFormat.RGBA8:
+			result = GL_RGBA;
+			break;
+
+		case GImageFormat.DEPTH_STENCIL:
+			result = GL_DEPTH_STENCIL;
+			break;
+		case GImageFormat.DEPTH:
+			result = GL_DEPTH_COMPONENT;
+			break;
+		default:
+			writeln("Unknown format");
+			result = GL_RGB;
+			break;
+
+	}
+	return result;
+
+}
+
 
 GLenum imageFormatToGLDataType(GImageFormat fmt)
 {
+	
 	switch(fmt)
 	{
 		case GImageFormat.RGB:
 			return GL_UNSIGNED_BYTE;
 		case GImageFormat.RGBA8:
-			return GL_UNSIGNED_BYTE;
-		case GImageFormat.SRGB:
 			return GL_UNSIGNED_BYTE;
 		case GImageFormat.DEPTH_STENCIL:
 			return GL_DEPTH24_STENCIL8;
@@ -383,7 +539,7 @@ void bindAttribute(VertexAttribute attr,uint stride = 0)
 
 	glEnableVertexAttribArray(attr.index);
 	GLenum type = vertexTypeToGLenum(attr.type);
-	glVertexAttribPointer(attr.index,shaderVarElements(attr.type),type,GL_FALSE,0,cast(void*)attr.offset);
+	glVertexAttribPointer(attr.index,shaderVarElements(attr.type),type,GL_FALSE,stride,cast(void*)attr.offset);
 }
 
 void drawIndirect()

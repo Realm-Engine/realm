@@ -16,3 +16,11 @@ class ShaderCompileError : RendererWorkerException
 		super("%s failed to compile\nError:%s".format(name,err));
 	}
 }
+
+class RealmEngineException : Exception
+{
+	this(string msg)
+	{
+		super("RealmEngine Exception:\n %s".format(msg));
+	}
+}

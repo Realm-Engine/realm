@@ -59,9 +59,11 @@ class Batch(T)
 		vertexBuffer.bind();
 		elementBuffer.bind();
 
-		uint stride = attributes.map!((a) => shaderVarBytes( a.type)).fold!((a,b) => a+b);
+		uint stride = attributes.map!((a) => shaderVarElements( a.type) * shaderVarBytes(a.type)).fold!((a,b) => a+b);
+		writeln(stride);
 		foreach(attribute; attributes)
 		{
+			
 			bindAttribute(attribute,stride);
 		}
 		allocateBuffers(initialElements);

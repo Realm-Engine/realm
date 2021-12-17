@@ -3,7 +3,9 @@
 	"versions": {
 		"derelict-gl3": "1.0.24",
 		"derelict-util": "2.1.0",
+		"dimage": "0.2.2",
 		"gl3n": "1.4.1",
-		"glfw-d": "1.1.0"
+		"glfw-d": "1.1.0",
+		"vfile": "0.1.2"
 	}
 }
