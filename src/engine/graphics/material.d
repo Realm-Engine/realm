@@ -52,6 +52,7 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
 
 }
 
+
 enum bool isMaterial(T) = (__traits(hasMember, T, "shaderStorageBuffer") == true
             && __traits(hasMember, T, "textures") == true && __traits(hasMember, T, "layout") == true);
 enum texturesMembers(T) = (__traits(allMembers, T.Textures));
@@ -94,34 +95,6 @@ class Material(UserDataVarTypes[string] uniforms)
 	{
         program = sp;
 	}
-/*
-    void updateTextureAtlas()
-	{
-		int maxWidth = int.min;
-        int maxHeight = int.min;
-        static foreach (member; texturesMembers!(UniformLayout))
-        {
-            static foreach (attribute; texturesAttributes!(UniformLayout, member))
-            {
-                static if (isSampler!(attribute))
-                {
-                    Texture2D texture = __traits(getMember, textures, member);
-                    if(cast(int)texture.w >maxWidth)
-					{
-                        maxWidth = texture.width;
-					}
-                    if(cast(int)texture.h > maxHeight)
-					{
-                        maxHeight = texture.height;
-					}
-                }
-            }
-        }
-        textureAtlas.textureDesc = textures.settings;
-        textureAtlas.width = maxWidth;
-        textureAtlas.height = maxHeight;
-        textureAtlas.store(maxWidth,maxHeight);
-	}*/
 
     static void reserve(size_t numItems)
     {
@@ -158,6 +131,7 @@ class Material(UserDataVarTypes[string] uniforms)
         int width = 1024;
         int height = 1024;
         Texture2D[] textures;
+       
         vec4*[] tilingOffsets;
         static foreach (member; texturesMembers!(UniformLayout))
         {
@@ -185,7 +159,7 @@ class Material(UserDataVarTypes[string] uniforms)
         int rowHeight = int.min;
         textureAtlas.store(1024,1024);
         
-        foreach(index,texture; textures.enumerate(0))
+        foreach(index,texture; sorted.enumerate(0))
 		{
 WriteImage:
             if(texture.w + rowWidth < cast(int)textureAtlas.width)
@@ -217,34 +191,9 @@ WriteImage:
 
 
 		}
+       
 	}
-    
-/*
-    void writeTextureData()
-    {
-        int textureDepth = 0;
-        static foreach (member; texturesMembers!(UniformLayout))
-        {
-            static foreach (attribute; texturesAttributes!(UniformLayout, member))
-            {
-                static if (isSampler!(attribute))
-                {
-                    Texture2D texture = __traits(getMember, textures, member);
-                    if(texture !is null)
-					{
-                        textureAtlas.uploadSubImage(0,0,0,texture.width,texture.height,texture.getImageData().ptr);
-                        //textureAtlas.uploadImage(0,0,texture.getImageData().ptr);
-					}
-                    else
-					{
-                        textureAtlas.uploadImage(0,0,null);
-					}
-                    
-                    textureDepth++;
-				}
-			}
-		}
-    }*/
+   
 
     static ulong materialId()
     {

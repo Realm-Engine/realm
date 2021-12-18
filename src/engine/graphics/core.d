@@ -12,7 +12,6 @@ alias TextureType = GTextureType;
 alias ImageFormat = GImageFormat;
 alias Shader = GShader;
 alias ShaderProgram = GShaderProgram;
-alias TextureObject = GTextureObject;
 alias SamplerObject = GSamplerObject;
 enum VertexType : int
 {
@@ -88,18 +87,23 @@ struct TextureDesc
 class Texture2D
 {
 	//private SamplerObject!(TextureType.TEXTURE2D) handle;
-	IFImage image;
+	IFImage* image;
 	alias image this;
 	int channels;
 	ImageFormat format;
 	TextureFilterfunc filter;
 	TextureWrapFunc wrap;
-	this(IFImage image, TextureDesc desc)
+	this(IFImage* image, TextureDesc desc)
 	{
 		this.image = image;
 		format = desc.fmt;
 		filter = desc.filter;
 		wrap = desc.wrap;
+	}
+
+	void freeImage()
+	{
+		image.free();
 	}
 
 }

@@ -76,32 +76,39 @@ class RealmGame : RealmApp
 		Transform transform = new Transform;	
 		entity = new Entity!(EntityMaterial)(squareMesh,transform);
 		floor = new Entity!(EntityMaterial)(squareMesh);
-		floor.eulerRotation(vec3(90,0,0));
-		floor.position = vec3(0,-0.2f,0);
+		floor.transform.eulerRotation(vec3(90,0,0));
+		floor.transform.position = vec3(0,-0.2f,0);
 		entity.material.color = vec4(1.0,1.0,1.0,1.0);
 		floor.material.color = vec4(1.0,1.0,1.0,1.0);
 		program.use();
 		cam.position.z = -1.0f;
 		renderer.activeCamera = &cam;
-		entity.position.z = 2.0f;
+		entity.transform.position.z = 2.0f;
 		TextureDesc textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
-		entity.material.textures.albedo = new Texture2D(wallImg,textureDesc);
-		entity.material.textures.emissive = new Texture2D(emissive,textureDesc);
+		entity.material.textures.albedo = new Texture2D(&wallImg,textureDesc);
+		entity.material.textures.emissive = new Texture2D(&emissive,textureDesc);
 		entity.material.textures.settings = textureDesc;
 		entity.material.packTextureAtlas();
 
 
-		floor.material.textures.albedo = new Texture2D(grassImg,textureDesc);
-		floor.material.textures.emissive = new Texture2D(emissive,textureDesc);
+		floor.material.textures.albedo = new Texture2D(&grassImg,textureDesc);
+		floor.material.textures.emissive = new Texture2D(&emissive,textureDesc);
 		floor.material.textures.settings = textureDesc;
 		floor.material.packTextureAtlas();
+		scope(exit)
+		{
+			wallImg.free();
+			grassImg.free();
+			emissive.free();
+
+		}
 		
 		
 	}
 
 	override void update()
 	{
-		entity.rotation += quat(0,2,0,0);
+		entity.transform.rotation += quat(0,2,0,0);
 		//writeln(entity.transform.position);
 		renderer.submitMesh!(EntityMaterial)(entity.mesh,entity.transform,entity.material);
 		renderer.submitMesh!(EntityMaterial)(floor.mesh,floor.transform,floor.material);

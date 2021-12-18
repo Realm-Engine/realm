@@ -24,6 +24,12 @@ static this()
 mixin template OpenGLObject()
 {
     private uint id;
+
+    invariant
+	{
+        assert(id >= 0,"OpenGL object name error");
+	}
+
     @property uint ID()
     {
         return id;
@@ -44,6 +50,8 @@ mixin template OpenGLBuffer(GLenum bufferType, T, GBufferUsage usage)
 
     private uint ringPtr;
     private size_t ringSize;
+    
+
 
     static if (usage == GBufferUsage.MappedWrite)
     {
@@ -115,10 +123,6 @@ mixin template OpenGLBuffer(GLenum bufferType, T, GBufferUsage usage)
 
 }
 
-mixin template EnumGL(string name)
-{
-    mixin("enum %s : GLenum".format(name));
-}
 
 class GShader
 {
@@ -308,24 +312,6 @@ struct DrawIndirectCommandBuffer(GBufferUsage usage)
     mixin OpenGLBuffer!(GL_DRAW_INDIRECT_BUFFER, DrawElementsIndirectCommand, usage);
 }
 
-struct GTextureObject(GTextureType target)
-{
-    mixin OpenGLObject;
-
-    void create(TextureDesc desc, int width, int height, ubyte[] data)
-    {
-        glGenTextures(1, &id);
-        glBindTexture(target, id);
-        glTexParameteri(target, GL_TEXTURE_WRAP_S, desc.wrap);
-        glTexParameteri(target, GL_TEXTURE_WRAP_T, desc.wrap);
-        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, desc.filter);
-        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, desc.filter);
-        glTexImage2D(target, 0, imageFormatToInternalFormat(desc.fmt), width,
-                height, 0, desc.fmt, imageFormatToGLDataType(desc.fmt), data.ptr);
-        glBindTexture(target, 0);
-
-    }
-}
 
 struct GSamplerObject(GTextureType target)
 {
@@ -340,6 +326,13 @@ struct GSamplerObject(GTextureType target)
     private int texSlot;
     int width;
     int height;
+    
+    invariant()
+	{
+        assert(texSlot >= 0,"Texture slot must be positive");
+        assert(mipLevels >= 0, "Mipmap count must be positive");
+	}
+
 
     static if (is3dTexture)
     {
@@ -399,9 +392,9 @@ struct GSamplerObject(GTextureType target)
 
         void uploadSubImage(int level, int xoffset, int yoffset, int width, int height, ubyte* data)
         {
+            assert(data != null);
             glBindTexture(target, id);
-            glTexSubImage2D(target, level, xoffset, yoffset, width, height,
-                    format, dataType, data);
+            glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, dataType, data);
             glBindTexture(target, 0);
         }
 
@@ -423,9 +416,9 @@ struct GSamplerObject(GTextureType target)
             target.glGenerateMipmap();
         }
 
-        void uploadSubImage(int level, int xoffset, int yoffset, int zoffset,
-                int width, int height, int depth, ubyte* data)
+        void uploadSubImage(int level, int xoffset, int yoffset, int zoffset,int width, int height, int depth, ubyte* data)
         {
+            assert(data != null);
             glBindTexture(target, id);
             glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width,
                     height, depth, format, dataType, data);

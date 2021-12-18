@@ -5,11 +5,12 @@ import realm.engine.ecs;
 import std.format;
 class Entity(Mat)
 {
+
+	mixin RealmEntity!(Transform, Mesh);
+
 	static assert(isMaterial!(Mat));
 	Mat material;
-	Mesh mesh;
-	Transform transform;
-	alias transform this;
+
 	
 	this(Mesh mesh, Transform transform)
 	{

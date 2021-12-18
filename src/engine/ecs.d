@@ -1,17 +1,24 @@
 module realm.engine.ecs;
-
+import std.format;
 const MAX_COMPONENTS = 126;
+import std.meta;
+import std.ascii;
 
-alias ComponentRegistry = TypeInfo[ulong];
 
-
-class ComponentManager
+mixin template RealmEntity(T...)
 {
-	static ComponentRegistry registry;
-	static void RegisterComponent(T)()
+	import std.uni;
+	struct Components
 	{
-		registry[typeid(T).getHash()] = typeid(T);
+		static foreach(Type; T)
+		{
+			
+			mixin("%s %s;".format(Type.stringof, toLower(Type.stringof) ));
+		}
 	}
+
+	Components components;
+	alias components this;
 
 
 }
