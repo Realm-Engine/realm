@@ -6,7 +6,7 @@ import std.format;
 import std.string;
 import std.stdio;
 import realm.engine.graphics.core;
-
+import realm.engine.logging;
 struct DrawElementsIndirectCommand
 {
     uint count;
@@ -44,7 +44,16 @@ enum GBufferUsage : GLenum
     Buffered = GL_DYNAMIC_STORAGE_BIT
 }
 
-mixin template OpenGLBuffer(GLenum bufferType, T, GBufferUsage usage)
+enum GBufferType : GLenum
+{
+    Vertex = GL_ARRAY_BUFFER,
+    Element =  GL_ELEMENT_ARRAY_BUFFER,
+    ShaderStorage = GL_SHADER_STORAGE_BUFFER,
+    Uniform = GL_UNIFORM_BUFFER,
+    DrawIndirect = GL_DRAW_INDIRECT_BUFFER
+}
+
+mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 {
     mixin OpenGLObject;
 
@@ -97,6 +106,8 @@ mixin template OpenGLBuffer(GLenum bufferType, T, GBufferUsage usage)
         static if (usage == GBufferUsage.MappedWrite)
         {
             glPtr = cast(T*) glMapBufferRange(bufferType, 0, ringSize, usage);
+            
+            Logger.Assert(glPtr !is null,"Could not map buffer: %s", bufferType.stringof);
         }
 
     }
@@ -133,12 +144,16 @@ class GShader
     this(GShaderType type, string shaderSource, string name)
     {
         this.type = type;
-        compile(shaderSource);
         this.name = name;
+        compile(shaderSource);
+        
     }
 
     void compile(string source)
     {
+        
+        Logger.LogInfo("Compiling shader %s",name);
+
         id = glCreateShader(type);
         const(char*)[] strings;
         strings ~= source.toStringz();
@@ -146,8 +161,10 @@ class GShader
         glCompileShader(id);
         int status;
         glGetShaderiv(id, GL_COMPILE_STATUS, &status);
+        
         if (status == GL_FALSE)
         {
+            Logger.LogError("Error compiling shader");
             int length = -1;
             glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
             char[] message;
@@ -156,7 +173,7 @@ class GShader
                 message.length = length;
                 glGetShaderInfoLog(id, length, &length, message.ptr);
                 char[] dstr = fromStringz(message);
-                writeln("Name: %s error:\n%s".format(name, dstr));
+                Logger.LogError("Name: %s error:\n%s",name, dstr);
             }
 
         }
@@ -200,8 +217,7 @@ class GShaderProgram
         if (!success)
         {
             glGetProgramInfoLog(this, 256, null, result.ptr);
-            writeln("Could not link program: %s\nError:%s".format(name, result));
-
+            Logger.Assert(true,"Could not link program: %s\nError:%s",name, result);
         }
 
         int numUniforms = 0;
@@ -219,7 +235,6 @@ class GShaderProgram
                 name.length = nameLen + 1;
                 glGetActiveUniformName(this, i, nameLen, &nameLen, uniformName.ptr);
                 GLint location = glGetUniformLocation(this, uniformName.ptr);
-                writeln("Uniform: %s".format(uniformName));
                 samplerUniformCache[fromStringz(uniformName).idup] = location;
             }
 
@@ -275,13 +290,13 @@ struct FrameBuffer(GFrameBufferStorage storage, GFrameBufferAttachment attachmen
 
 struct VertexBuffer(T, GBufferUsage usage)
 {
-    mixin OpenGLBuffer!(GL_ARRAY_BUFFER, T, usage);
+    mixin OpenGLBuffer!(GBufferType.Vertex, T, usage);
     private uint size;
 }
 
 struct ElementBuffer(GBufferUsage usage)
 {
-    mixin OpenGLBuffer!(GL_ELEMENT_ARRAY_BUFFER, uint, usage);
+    mixin OpenGLBuffer!(GBufferType.Element, uint, usage);
     private uint size;
 
 }
@@ -289,7 +304,7 @@ struct ElementBuffer(GBufferUsage usage)
 struct ShaderBlock
 {
 
-    mixin OpenGLBuffer!(GL_UNIFORM_BUFFER, RealmGlobalData, GBufferUsage.Buffered);
+    mixin OpenGLBuffer!(GBufferType.Uniform, RealmGlobalData, GBufferUsage.Buffered);
     void bindBase(uint bindPoint)
     {
         glBindBufferBase(GL_UNIFORM_BUFFER, bindPoint, id);
@@ -299,7 +314,7 @@ struct ShaderBlock
 
 struct ShaderStorage(T, GBufferUsage usage)
 {
-    mixin OpenGLBuffer!(GL_SHADER_STORAGE_BUFFER, T, usage);
+    mixin OpenGLBuffer!(GBufferType.ShaderStorage, T, usage);
     void bindBase(uint bindPoint)
     {
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindPoint, id);
@@ -309,7 +324,7 @@ struct ShaderStorage(T, GBufferUsage usage)
 
 struct DrawIndirectCommandBuffer(GBufferUsage usage)
 {
-    mixin OpenGLBuffer!(GL_DRAW_INDIRECT_BUFFER, DrawElementsIndirectCommand, usage);
+    mixin OpenGLBuffer!(GBufferType.DrawIndirect, DrawElementsIndirectCommand, usage);
 }
 
 

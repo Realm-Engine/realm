@@ -13,6 +13,7 @@ import std.meta;
 import realm.engine.ecs;
 import realm.engine.asset;
 import imagefmt;
+import realm.engine.logging;
 //import realm.engine.graphics.core;
 class RealmGame : RealmApp
 {
@@ -52,7 +53,7 @@ class RealmGame : RealmApp
 	{
 		
 		
-
+		
 		super(width,height,title);
 		renderer = new Renderer;
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),100,-0.1,45);
@@ -77,13 +78,15 @@ class RealmGame : RealmApp
 		entity = new Entity!(EntityMaterial)(squareMesh,transform);
 		floor = new Entity!(EntityMaterial)(squareMesh);
 		floor.transform.eulerRotation(vec3(90,0,0));
-		floor.transform.position = vec3(0,-0.2f,0);
+		entity.transform.eulerRotation(vec3(0,45,0));
+		floor.transform.position = vec3(0,-.5f,1.0);
 		entity.material.color = vec4(1.0,1.0,1.0,1.0);
 		floor.material.color = vec4(1.0,1.0,1.0,1.0);
 		program.use();
 		cam.position.z = -1.0f;
+		cam.transform.eulerRotation(vec3(0,0,0.1));
 		renderer.activeCamera = &cam;
-		entity.transform.position.z = 2.0f;
+		entity.transform.position = vec3(0,0,2.0);
 		TextureDesc textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		entity.material.textures.albedo = new Texture2D(&wallImg,textureDesc);
 		entity.material.textures.emissive = new Texture2D(&emissive,textureDesc);
@@ -108,7 +111,8 @@ class RealmGame : RealmApp
 
 	override void update()
 	{
-		entity.transform.rotation += quat(0,2,0,0);
+		
+		entity.transform.rotateEuler(vec3(0,0.1,0));
 		//writeln(entity.transform.position);
 		renderer.submitMesh!(EntityMaterial)(entity.mesh,entity.transform,entity.material);
 		renderer.submitMesh!(EntityMaterial)(floor.mesh,floor.transform,floor.material);

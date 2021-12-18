@@ -3,59 +3,64 @@ import glfw3.api;
 import std.stdio;
 public import derelict.opengl3.gl3;
 import std.conv;
-
-
-
+import std.meta;
+import realm.engine.core;
+import realm.engine.logging;
 class RealmApp
 {
-	public static __gshared GLFWwindow* window;
-	private bool shutdown;
-	this(int width, int height,const char* title)
-	{
-		shutdown = false;
-		auto result = glfwInit();
-		assert(result);
-		if(!result)
-		{
-			writeln("Failed to initialze glfw!");
-		}
-		
-		window = glfwCreateWindow(width,height,title,null,null);
-		DerelictGL3.load();
-		glfwMakeContextCurrent(window);
-		DerelictGL3.reload(GLVersion.GL43,GLVersion.GL45);
-		glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
-		writeln("OpenGL init");
-	}
 
-	abstract void update();
-	abstract void start();
-	void run()
-	{
-		start();
-		while(!shutdown)
-		{
-			update();
-			glfwPollEvents();
-			if(glfwWindowShouldClose(window))
-			{
-				shutdown = true;
-			}
-			glfwSwapBuffers(window);
-			
-		}
-		
-	}
+    alias RealmKeyPressDelegate = void delegate(int, int);
+    
 
-	~this()
-	{
-		if(window)
-		{
-			glfwDestroyWindow(window);
-		}
-		glfwTerminate();
+    public static __gshared GLFWwindow* window;
+    private bool shutdown;
+    private const GLMAX_VER = GLVersion.GL45;
+    private const GLMIN_VER = GLVersion.GL43;
+    this(int width, int height, const char* title)
+    {
+        Logger.Assert(width >= 0 && height >=0,"Width and height of app are negative");
+        shutdown = false;
+        Logger.LogInfo("Starting GLFW");
+        auto result = glfwInit();
+        Logger.Assert(result == 1,"Failed to initialze GLFW");
+        window = glfwCreateWindow(width, height, title, null, null);
+        Logger.Assert(window !is null,"Could not create GLFW window");
+        DerelictGL3.load();
+        glfwMakeContextCurrent(window);
+        
+        GLVersion glVer = DerelictGL3.reload(GLVersion.GL43, GLVersion.GL45);
+        Logger.LogInfo("Loaded OpenGL Version %d",glVer);
 
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    }
 
-	}
+    abstract void update();
+    abstract void start();
+    void run()
+    {
+        start();
+        while (!shutdown)
+        {
+            update();
+            glfwPollEvents();
+            if (glfwWindowShouldClose(window))
+            {
+                shutdown = true;
+            }
+            glfwSwapBuffers(window);
+
+        }
+
+    }
+
+    ~this()
+    {
+        if (window)
+        {
+            glfwDestroyWindow(window);
+        }
+        glfwTerminate();
+
+    }
 
 }
