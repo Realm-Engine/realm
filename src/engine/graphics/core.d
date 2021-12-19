@@ -13,6 +13,7 @@ alias ImageFormat = GImageFormat;
 alias Shader = GShader;
 alias ShaderProgram = GShaderProgram;
 alias SamplerObject = GSamplerObject;
+alias State = GState;
 enum VertexType : int
 {
 	FLOAT = 0x4011,

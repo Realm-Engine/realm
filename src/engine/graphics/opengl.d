@@ -53,6 +53,13 @@ enum GBufferType : GLenum
     DrawIndirect = GL_DRAW_INDIRECT_BUFFER
 }
 
+enum GState : GLenum
+{
+    DepthTest = GL_DEPTH_TEST,
+    Blend = GL_BLEND,
+    None
+}
+
 mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 {
     mixin OpenGLObject;
@@ -600,4 +607,14 @@ void drawMultiIndirect(int count)
 void drawElements(uint count)
 {
     glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, null);
+}
+
+
+void enable(GState state)
+{
+    glEnable(state);
+}
+void disable(GState state)
+{
+    glDisable(state);
 }

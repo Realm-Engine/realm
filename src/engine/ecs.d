@@ -1,24 +1,52 @@
 module realm.engine.ecs;
 import std.format;
+
 const MAX_COMPONENTS = 126;
 import std.meta;
 import std.ascii;
 
+template ComponentType(T)
+{
+    alias ComponentType = T;
+}
 
 mixin template RealmEntity(T...)
 {
-	import std.uni;
-	struct Components
+    private
 	{
-		static foreach(Type; T)
-		{
-			
-			mixin("%s %s;".format(Type.stringof, toLower(Type.stringof) ));
-		}
+		import realm.engine.logging;
+		import std.uni;
+		import std.format;
 	}
 
-	Components components;
+    struct Components
+    {
+        static foreach (Type; T)
+        {
+
+            mixin("%s %s;".format(Type.stringof, toLower(Type.stringof)));
+        }
+
+
+        void updateComponents()
+        {
+
+            static foreach (componentMember; __traits(allMembers, Components))
+            {
+                
+                static if(__traits(compiles,__traits(getMember,this,componentMember).componentUpdate()))
+				{
+                    
+                    __traits(getMember,this,componentMember).componentUpdate();
+				}
+            }
+        }
+
+    }
+    Components components;
 	alias components this;
-
-
 }
+
+
+
+

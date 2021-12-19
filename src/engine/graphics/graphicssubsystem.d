@@ -16,8 +16,8 @@ class GraphicsSubsystem
 	
 
 	private static ShaderBlock globalDataBuffer;
-
-
+	static State depthTest = State.None;
+	
 	static void setClearColor(float r, float g, float b, bool normalize)
 	{
 		vec3 color = vec3(r,g,b);
@@ -63,11 +63,29 @@ class GraphicsSubsystem
 	
 	static void clearScreen()
 	{
-		glClear(GL_COLOR_BUFFER_BIT);
+		if(depthTest  == State.DepthTest)
+		{
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		}
+		else
+		{
+			glClear(GL_COLOR_BUFFER_BIT);
+		}
+
 		
 
 	}
-
+	
+	static void enableDepthTest()
+	{
+		depthTest = State.DepthTest;
+		enable(State.DepthTest);
+	}
+	static void disableDepthTest()
+	{
+		depthTest = State.None;
+		disable(State.DepthTest);
+	}
 	
 
 }

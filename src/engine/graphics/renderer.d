@@ -30,6 +30,7 @@ class Renderer
 		
 		GraphicsSubsystem.initialze();
 		GraphicsSubsystem.setClearColor(126,32,32,true);
+		GraphicsSubsystem.enableDepthTest();
 		globalData.viewProjection = mat4.identity;
 		GraphicsSubsystem.updateGlobalData(&globalData);
 		VertexAttribute position = {VertexType.FLOAT3,0,0};

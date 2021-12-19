@@ -26,5 +26,10 @@ class Entity(Mat)
 		this(mesh, new Transform);
 	}
 
+	void update()
+	{
+		
+	}
+
 
 }

@@ -1,6 +1,6 @@
 module realm.engine.core;
-import gl3n.linalg;
-
+public import gl3n.linalg;
+import realm.engine.logging;
 class Transform
 {
 	import std.meta;
@@ -55,7 +55,10 @@ class Transform
 
 	mat4 lookAt(vec3 eye, vec3 target, vec3 up)
 	{
-		return mat4.look_at(eye,target,up);
+		mat4 lookMat = mat4.look_at(eye,target,up);
+		mat4 translation = mat4.identity;
+		translation[3]= vec4(-eye.x,-eye.y,-eye.z,1.0f).vector;
+		return lookMat;
 	}
 	
 
@@ -66,8 +69,7 @@ class Transform
 	void rotateEuler(vec3 axis)
 	{
 		rotation = rotation.rotate_euler(axis.x,axis.y,axis.z);
-	}
-	
+	}	
 }
 
 struct Mesh

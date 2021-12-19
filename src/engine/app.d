@@ -6,6 +6,7 @@ import std.conv;
 import std.meta;
 import realm.engine.core;
 import realm.engine.logging;
+import realm.engine.input;
 class RealmApp
 {
 
@@ -32,6 +33,7 @@ class RealmApp
         Logger.LogInfo("Loaded OpenGL Version %d",glVer);
 
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        InputManager.initialze(window);
     }
 
     abstract void update();
