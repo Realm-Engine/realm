@@ -96,6 +96,11 @@ class Material(UserDataVarTypes[string] uniforms)
         program = sp;
 	}
 
+    static ShaderProgram getShaderProgram()
+	{
+        return program;
+	}
+
     static void reserve(size_t numItems)
     {
         shaderStorageBuffer.store(numItems);

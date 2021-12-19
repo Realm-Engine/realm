@@ -7,6 +7,9 @@ import realm.engine.graphics.material;
 import gl3n.linalg;
 import std.container.array;
 import std.variant;
+
+
+
 class Renderer
 {
 	import std.container.array;
@@ -62,7 +65,7 @@ class Renderer
 		else
 		{
 
-			batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE);
+			batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram());
 			batches[materialId].initialize(vertex3DAttributes,64);
 			batches[materialId].reserve(2);
 			batches[materialId].submitVertices!(Mat)(vertexData.values,mesh.faces,mat);

@@ -8,6 +8,7 @@ class Batch(T)
 	import std.algorithm.iteration : fold,map;
 	import std.container.array;
 	import std.stdio;
+	private ShaderProgram program;
 	private VertexArrayObject vao;
 	private VertexBuffer!(T,BufferUsage.MappedWrite) vertexBuffer;
 	private ElementBuffer!(BufferUsage.MappedWrite) elementBuffer;
@@ -23,7 +24,7 @@ class Batch(T)
 	private uint cmdBufferBase;
 	private uint bufferAmount;
 	private uint maxElementsInFrame;
-	this(MeshTopology topology)
+	this(MeshTopology topology,ShaderProgram program)
 	{
 		this.topology = topology;
 		vao.create();
@@ -36,6 +37,7 @@ class Batch(T)
 		bufferAmount =2;
 		maxElementsInFrame = 0;
 		numVerticesInFrame = 0;
+		this.program = program;
 		
 	}
 
@@ -119,6 +121,7 @@ class Batch(T)
 
 	void drawBatch()
 	{
+		program.use();
 		int cmdTypeSize = cast(int)DrawElementsIndirectCommand.sizeof;
 		bindBuffers();
 		uint offset = cmdBufferBase * (maxElementsInFrame * cmdTypeSize);

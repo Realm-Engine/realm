@@ -57,9 +57,6 @@ class RealmGame : RealmApp
 
 	override void update()
 	{
-
-
-		
 		player.update();
 		world.update();
 		world.draw(renderer);

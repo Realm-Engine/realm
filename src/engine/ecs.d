@@ -5,48 +5,50 @@ const MAX_COMPONENTS = 126;
 import std.meta;
 import std.ascii;
 
-template ComponentType(T)
-{
-    alias ComponentType = T;
-}
+
 
 mixin template RealmEntity(T...)
 {
     private
-	{
-		import realm.engine.logging;
-		import std.uni;
-		import std.format;
-	}
+    {
+        import realm.engine.logging;
+        import std.uni;
+        import std.format;
+    }
 
     struct Components
     {
+        enum getComponents = (__traits(allMembers, Components));
         static foreach (Type; T)
         {
 
-            mixin("%s %s;".format(Type.stringof, toLower(Type.stringof)));
+            mixin("private %s %s;".format(Type.stringof, toLower(Type.stringof)));
         }
-
 
         void updateComponents()
         {
 
-            static foreach (componentMember; __traits(allMembers, Components))
+            static foreach (componentMember; getComponents)
             {
-                
-                static if(__traits(compiles,__traits(getMember,this,componentMember).componentUpdate()))
-				{
-                    
-                    __traits(getMember,this,componentMember).componentUpdate();
-				}
+
+                static if (__traits(compiles, __traits(getMember, this,
+                        componentMember).componentUpdate()))
+                {
+
+                    __traits(getMember, this, componentMember).componentUpdate();
+                }
             }
-        }
+        }   
+
+       
 
     }
+
     Components components;
-	alias components this;
+    alias components this;
+	C getComponent(C)()
+	{
+		return __traits(getMember,components,toLower(C.stringof));
+
+	}
 }
-
-
-
-

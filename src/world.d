@@ -40,7 +40,8 @@ class World
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		material.color = vec4(1.0,1.0,1.0,1.0);
-		WorldMaterial.useShaderProgram();
+		
+
 		scope(exit)
 		{
 			grassImg.free();

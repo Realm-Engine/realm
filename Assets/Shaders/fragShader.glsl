@@ -32,6 +32,11 @@ in RESurfaceData
 
 } RESurfaceDataOut;
 
+sampler2D textureAtlas()
+{
+	return atlasTextures[RESurfaceDataOut.drawId];
+}
+
 vec2 samplerUV(vec4 to)
 {
 	return (RESurfaceDataOut.texCoord * vec2(to.x,to.y)) + vec2(to.z,to.w);
@@ -42,5 +47,5 @@ void main()
 	vec4 albedo = RESurfaceDataOut.objectData.albedo;
 	vec2 albedoUv = (RESurfaceDataOut.texCoord * vec2(albedo.x,albedo.y)) + vec2(albedo.z,albedo.w);
 	
-	outColor = Color * texture(atlasTextures[RESurfaceDataOut.drawId],albedoUv);
+	outColor = Color * texture(textureAtlas(),albedoUv);
 }
