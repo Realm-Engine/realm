@@ -12,7 +12,6 @@ struct ObjectData
 {
 	vec4 color;
 	vec4 albedo;
-	vec4 emissive;
 };
 
 layout (std430,binding = 1) buffer _perObjectData

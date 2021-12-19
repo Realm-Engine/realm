@@ -18,59 +18,30 @@ import realm.engine.input;
 import realm.player;
 import std.math.trigonometry;
 import std.math.constants : PI;
+import realm.world;
 //import realm.engine.graphics.core;
 class RealmGame : RealmApp
 {
 
 	ShaderProgram program;
-	Mesh triangle;
+
 	Camera cam;
 	Renderer renderer;
 	Player player;
-	static Mesh squareMesh;
-	Entity!(EntityMaterial) entity;
-	alias EntityMaterialLayout =  Alias!(["color":UserDataVarTypes.VECTOR,"albedo" : UserDataVarTypes.TEXTURE2D,"emissive":UserDataVarTypes.TEXTURE2D]);
-	alias EntityMaterial = Material!(EntityMaterialLayout);
-	Entity!(EntityMaterial) floor;
-	static IFImage wallImg;
-	static IFImage grassImg;
-	static IFImage emissive;
-	static this()
-	{
-		uint[] faces = [0,1,2,2,3,0];
-		vec3[] square = [vec3(-0.5f,-0.5f,0),vec3(0.5,-0.5f,0),vec3(0.5,0.5f,0),vec3(-0.5,0.5f,0.0f)];	
-		vec2[] squareUV = [vec2(0,0),vec2(1,0),vec2(1,1),vec2(0,1)];
-		squareMesh.positions = square;
-		squareMesh.faces = faces;
-		squareMesh.calculateNormals();
-		squareMesh.textureCoordinates = squareUV;
-		wallImg = readImageBytes("./Assets/Images/wall.png");
-		grassImg = readImageBytes("./Assets/Images/grass.png");
-		emissive = readImageBytes("./Assets/Images/emissive.png");
-		
-	}
-
+	World world;	
 
 
 
 	this(int width, int height, const char* title)
 	{
 		
-		
-		
+
 		super(width,height,title);
 		renderer = new Renderer;
+		renderer.activeCamera = &cam;
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),100,-1.,45);
-		auto vertexShader = read("./Assets/Shaders/vertexShader.glsl");
-		auto fragmentShader = read("./Assets/Shaders/fragShader.glsl");
-		Shader vertex = new Shader(ShaderType.VERTEX,cast(string) vertexShader,"Vetex Shader");
-		Shader fragment = new Shader(ShaderType.FRAGMENT,cast(string)fragmentShader,"Fragment Shader");
-		program = new ShaderProgram(vertex,fragment,"MyProgram");
-		EntityMaterial.initialze();
-		EntityMaterial.reserve(2);
-		EntityMaterial.setShaderProgram(program);
 		player = new Player(&cam);
-		
+		world = new World;
 
 	}
 	
@@ -81,38 +52,6 @@ class RealmGame : RealmApp
 		
 		
 		
-
-		Transform transform = new Transform;	
-		entity = new Entity!(EntityMaterial)(squareMesh,transform);
-		floor = new Entity!(EntityMaterial)(squareMesh);
-		
-		entity.transform.eulerRotation(vec3(0,45,0));
-		floor.transform.position = vec3(0,-.5f,2.0);
-		entity.material.color = vec4(1.0,1.0,1.0,1.0);
-		floor.material.color = vec4(1.0,1.0,1.0,1.0);
-		program.use();
-
-		renderer.activeCamera = &cam;
-		entity.transform.position = vec3(0,1.,2.0);
-		TextureDesc textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
-		entity.material.textures.albedo = new Texture2D(&wallImg,textureDesc);
-		entity.material.textures.emissive = new Texture2D(&emissive,textureDesc);
-		entity.material.textures.settings = textureDesc;
-		entity.material.packTextureAtlas();
-
-
-		floor.material.textures.albedo = new Texture2D(&grassImg,textureDesc);
-		floor.material.textures.emissive = new Texture2D(&emissive,textureDesc);
-		floor.material.textures.settings = textureDesc;
-		floor.material.packTextureAtlas();
-		scope(exit)
-		{
-			wallImg.free();
-			grassImg.free();
-			emissive.free();
-
-		}
-		
 		
 	}
 
@@ -122,10 +61,8 @@ class RealmGame : RealmApp
 
 		
 		player.update();
-		entity.transform.rotateEuler(vec3(0,0.1,0));
-		//writeln(entity.transform.position);
-		renderer.submitMesh!(EntityMaterial)(entity.mesh,entity.transform,entity.material);
-		renderer.submitMesh!(EntityMaterial)(floor.mesh,floor.transform,floor.material);
+		world.update();
+		world.draw(renderer);
 		renderer.update();
 
 	}

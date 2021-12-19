@@ -13,12 +13,12 @@ class Logger
 	
 	static void LogWarning(T...)(string fmt, T t)
 	{
-		writeln("[Warning] %s".format(fmt.format(t)));
+		writeln("[Warning] " ~ fmt.format(t));
 	}
 
 	static void LogInfo(T...)(string fmt, T t)
 	{
-		writeln("[Log] %s".format(fmt.format(t)));
+		writeln("[Log] " ~ fmt.format(t));
 	}
 
 	static void LogError(int line = __LINE__,string file = __FILE__,T...)( string fmt,T t )
@@ -30,7 +30,7 @@ class Logger
 	{
 		if(!cond)
 		{
-			LogError!(line,file)("%s".format(fmt.format(t)));
+			LogError!(line,file)(fmt.format(t));
 			assert(cond);
 		}
 

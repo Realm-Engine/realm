@@ -11,7 +11,6 @@ struct ObjectData
 {
 	vec4 color;
 	vec4 albedo;
-	vec4 emissive;
 };
 
 layout (std430,binding = 1) buffer _perObjectData
@@ -43,7 +42,5 @@ void main()
 	vec4 albedo = RESurfaceDataOut.objectData.albedo;
 	vec2 albedoUv = (RESurfaceDataOut.texCoord * vec2(albedo.x,albedo.y)) + vec2(albedo.z,albedo.w);
 	
-	vec2 emissiveUV = samplerUV(RESurfaceDataOut.objectData.emissive);
-	vec4 emissiuveSample = texture(atlasTextures[RESurfaceDataOut.drawId],emissiveUV);
-	outColor = Color * texture(atlasTextures[RESurfaceDataOut.drawId],albedoUv) * emissiuveSample;
+	outColor = Color * texture(atlasTextures[RESurfaceDataOut.drawId],albedoUv);
 }

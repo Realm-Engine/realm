@@ -110,6 +110,11 @@ class Material(UserDataVarTypes[string] uniforms)
 
     }
 
+    static void useShaderProgram()
+	{
+        program.use();
+	}
+
     void writeUniformData()
     {
         
