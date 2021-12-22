@@ -174,7 +174,7 @@ class Material(UserDataVarTypes[string] uniforms)
         int totalHeight = 0;
         int rowWidth = 0;
         int rowHeight = int.min;
-        textureAtlas.store(1024,1024);
+        textureAtlas.store(4096,4096);
         
         foreach(index,texture; sorted.enumerate(0))
 		{

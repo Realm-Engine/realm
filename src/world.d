@@ -10,6 +10,7 @@ import std.file : read;
 import core.math;
 import std.range;
 import realm.engine.logging;
+import gl3n.math : asin, atan2;
 import std.stdio;
 alias WorldMaterialLayout = Alias!(["albedo" : UserDataVarTypes.TEXTURE2D]);
 alias WorldMaterial = Alias!(Material!WorldMaterialLayout);
@@ -58,7 +59,7 @@ class World
 		squarePositions = [vec3(-0.5f,-0.5f,0),vec3(0.5,-0.5f,0),vec3(0.5,0.5f,0),vec3(-0.5,0.5f,0.0f)];
 		squareUV = [vec2(0,0),vec2(1,0),vec2(1,1),vec2(0,1)];
 		//faces = [0,1,2,2,3,0];
-		grassImg = readImageBytes("./Assets/Images/white.png");
+		grassImg = readImageBytes("./Assets/Images/terrain.png");
 
 	}
 
@@ -79,9 +80,18 @@ class World
 				cube.faces ~= idx  + ((res*res) * i) ;
 			}
 		}
+
+		vec2 pointToCoord(vec3 point)
+		{
+			float latitude = asin(point.y);
+			float longitude = atan2(point.x, - point.z);
+			return vec2(latitude,longitude);
+		}
+
 		foreach(i,pos;cube.positions)
 		{
 			(&cube.positions[i]).normalize();
+			
 		}
 		meshData = cube;
 		//meshData.calculateNormals();

@@ -47,5 +47,5 @@ void main()
 	vec4 albedo = RESurfaceDataOut.objectData.albedo;
 	vec2 albedoUv = (RESurfaceDataOut.texCoord * vec2(albedo.x,albedo.y)) + vec2(albedo.z,albedo.w);
 	
-	outColor =  texture(textureAtlas(),albedoUv) * abs(vec4(RESurfaceDataOut.normal,1.0));
+	outColor =  texture(textureAtlas(),albedoUv);
 }
