@@ -75,6 +75,15 @@ class ArcballCamera
 		updateCamera();
 	}
 
+	void zoom(float amount)
+	{
+		vec3 motion = vec3(0,0,amount);
+		
+		translation = mat4.translation(motion) * translation;
+		updateCamera();
+		
+	}
+
 	quat screenToArcball(vec2 p)
 	{
 		float dist = p * p;

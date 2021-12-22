@@ -15,13 +15,15 @@ class Player
     mixin RealmEntity!(Transform, ArcballCamera);
     float lastX;
     float lastY;
+    float lastScrollX;
+    float lastScrollY;
     this(Camera* cam)
     {
         lastX = float.max;
         lastY = float.max;
 
         this.camera = cam;
-        camera.position = vec3(0, 0, 0);
+        camera.position = vec3(0, 0, -2);
         transform = new Transform();
         arcballcamera = new ArcballCamera(cam.position, cam.position + vec3(0,
                 0, 1), vec3(0, 1, 0));
@@ -51,44 +53,41 @@ class Player
         vec2 mouse = transformMouse(vec2(x, y));
         vec2 prevMouse = vec2(lastX, lastY);
 
-        if (InputManager.getKey(RealmKey.Left) == KeyState.Press )
+        if (InputManager.getMouseButton(RealmMouseButton.ButtonLeft) == KeyState.Press )
         {
 
-           camera.turn(vec2(-1,0));
-            //getComponent!(ArcballCamera)().rotate(prevMouse,mouse);
+//           camera.turn(vec2(-1,0));
+           getComponent!(ArcballCamera)().rotate(prevMouse,mouse);
         }
         if (InputManager.getKey(RealmKey.Right) == KeyState.Press)
         {
 
             camera.turn(vec2(1,0));
-            //getComponent!(ArcballCamera)().rotate(prevMouse,mouse);
+            getComponent!(ArcballCamera)().rotate(prevMouse,mouse);
         }
         else if (InputManager.getMouseButton(RealmMouseButton.ButtonRight) == KeyState.Press)
         {
-            //getComponent!(ArcballCamera)().pan(mouse-prevMouse);
+            getComponent!(ArcballCamera)().pan(mouse-prevMouse);
         }
+
+        if(InputManager.getKey(RealmKey.Space) == KeyState.Press)
+		{
+
+			double zoom = InputManager.getMouseScroll(ScrollOffset.Y);
+            if(zoom != lastScrollY)
+			{
+                getComponent!(ArcballCamera).zoom(zoom );
+                lastScrollY = zoom;
+			}
+			
+		}
+
 
         lastX = mouse.x;
         lastY = mouse.y;
         vec3 moveVector = vec3(0, 0, 0);
-        if (InputManager.getKey(RealmKey.W) == KeyState.Press)
-        {
-            moveVector = camera.front * 0.05;
-        }
-        else if (InputManager.getKey(RealmKey.S) == KeyState.Press)
-        {
-            moveVector = camera.front * -0.05;
-        }
+        
 
-        if (InputManager.getKey(RealmKey.A) == KeyState.Press)
-        {
-            moveVector = camera.front.cross(vec3(0, 1, 0)).normalized() * -0.05;
-        }
-        else if (InputManager.getKey(RealmKey.D) == KeyState.Press)
-        {
-            moveVector = camera.front.cross(vec3(0, 1, 0)).normalized() * 0.05;
-        }
-        camera.position += moveVector;
         //arcballcamera.pan(vec2(lastX,lastY),vec2(x,y));
 
     }
@@ -99,8 +98,10 @@ class Player
         processInput();
 
         updateComponents();
-        camera.update();
-
+        //camera.update();
+        camera.view = getComponent!(ArcballCamera).camera;
     }
+
+    
 
 }

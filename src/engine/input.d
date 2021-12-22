@@ -13,7 +13,16 @@ class InputManager
     
 
     alias KeyCallback = void function(KeyState action, int key) nothrow @nogc;
+	alias ScrollCallback = void function(double xoffset, double yoffset) nothrow @nogc;
     private static KeyCallback keyEvent;
+	private static ScrollCallback scrollEvent;
+	private static double scrollX;
+	private static double scrollY;
+	static this()
+	{
+		scrollX = 0;
+		scrollY = 0;
+	}
 
     static KeyState getKey(RealmKey key)
 	{
@@ -46,6 +55,20 @@ class InputManager
 		}
 	}
 
+	static double getMouseScroll(ScrollOffset offset)
+	{
+		switch(offset)
+		{
+			case ScrollOffset.X:
+				return scrollX;
+			case ScrollOffset.Y:
+				return scrollY;
+			default:
+				return 0.0f;
+
+		}
+	}
+
 	static KeyState getMouseButton(RealmMouseButton button)
 	{
 		int state = glfwGetMouseButton(window,button);
@@ -60,10 +83,24 @@ class InputManager
 		}
 	}
     
+	extern(C) static void internalScrollCallback(GLFWwindow* window, double x, double y) nothrow @nogc
+	{
+		scrollX = x;
+		scrollY = y;
+		
+	}
+
+
+	void setScrollCallback(ScrollCallback cb)
+	{
+		scrollEvent = cb;
+	}
+
 
     static void initialze(GLFWwindow* w)
     {
 		window = w;
+		glfwSetScrollCallback(w,&internalScrollCallback);
     }
 
 }
@@ -75,6 +112,12 @@ enum KeyState
 }
 
 enum MouseAxis
+{
+	X,
+	Y
+}
+
+enum ScrollOffset
 {
 	X,
 	Y
