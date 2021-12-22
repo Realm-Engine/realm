@@ -1,13 +1,16 @@
 module realm.engine.core;
 public import gl3n.linalg;
+import gl3n.math;
 import realm.engine.logging;
+import std.stdio;
 class Transform
 {
 	import std.meta;
 	vec3 position;
-	quat rotation;
+	vec3 rotation;
 	vec3 scale;
-	this(vec3 position, quat rotation, vec3 scale)
+	private mat4 transformMat;
+	this(vec3 position, vec3 rotation, vec3 scale)
 	{
 		this.position = position;
 		this.rotation = rotation;
@@ -16,22 +19,18 @@ class Transform
 	this()
 	{
 		this.position = vec3(0,0,0);
-		this.rotation = quat(0,0,0,0);
+		this.rotation = vec3(0,0,0);
 		this.scale = vec3(1,1,1);
+		transformMat = mat4(1.0f);
 	}
-	@property mat4 model()
+	@property mat4 transformation()
 	{
-		mat4 M = mat4.identity;
-		M = M.scale(scale.x,scale.y,scale.z);
-		quat normalizedRot = rotation.normalized();
-		mat4 rotationMatrix = normalizedRot.to_matrix!(4,4);
-		M = M * rotationMatrix;
-		M = M.translate(position.x,position.y,position.z).matrix;
-		return M;
-		
+		return transformMat;
 	}
+
 	
-	vec3 computeDirection(vec3 direction)
+	
+	/*vec3 computeDirection(vec3 direction)
 	{
 		vec4 dir = rotation.to_matrix!(4,4) * vec4(direction,1.0);
 		
@@ -50,26 +49,34 @@ class Transform
 	@property right()
 	{
 		return computeDirection(vec3(1,0,0));
-	}
+	}*/
 
 
-	mat4 lookAt(vec3 eye, vec3 target, vec3 up)
-	{
-		mat4 lookMat = mat4.look_at(eye,target,up);
-		mat4 translation = mat4.identity;
-		translation[3]= vec4(-eye.x,-eye.y,-eye.z,1.0f).vector;
-		return lookMat;
-	}
 	
+	void updateTransformation()
+	{
 
-	@property eulerRotation(vec3 euler) 
-	{
-		rotation = quat.euler_rotation(euler.x,euler.y,euler.z);
+		mat4 M = mat4.identity;
+		
+		M = M.scale(scale.x,scale.y,scale.z);
+		M = M.translate(position.x,position.y,position.z).matrix;
+		M.rotate(rotation.x,vec3(1,0,0));
+		M.rotate(rotation.y,vec3(0,1,0));
+		M.rotate(rotation.z,vec3(0,0,1));
+
+		transformMat = M;
 	}
-	void rotateEuler(vec3 axis)
+
+	void lookAt(vec3 x, vec3 y, vec3 z)
 	{
-		rotation = rotation.rotate_euler(axis.x,axis.y,axis.z);
-	}	
+		transformMat *= mat4.look_at(x,y,z);
+	}
+
+	void componentUpdate()
+	{
+		updateTransformation();
+
+	}
 }
 
 struct Mesh
@@ -115,32 +122,58 @@ class Camera
 	private vec2 size;
 	private float farPlane;
 	private float nearPlane;
-	private CameraProjection projection;
+	private CameraProjection projectionType;
 	private mat4 vp;
+	private mat4 cameraTransformation;
+	private float yaw;
+	private float pitch;
 	//Front
 	//Maybe goes in transform?
 	
-	@property viewProjection()
+	@property projection()
 	{
-		return vp;
+		return calculateProjection();
 	}
+	@property view()
+	{
+		return cameraTransformation;
+	}
+	@property view(mat4 view)
+	{
+		cameraTransformation = view;
+	}
+	@property front()
+	{
+		vec3 dir = vec3(0);
+		dir.x = cos(radians(yaw)) * cos(radians(pitch));
+		dir.y = sin(radians(pitch));
+		dir.z = sin(radians(yaw)) * cos(radians(pitch));
+		dir.normalize();
+		return dir;
+	}
+
+
+
+
 	alias transform this;
 
-	this(CameraProjection projectionType, vec2 size,float farPlane,float nearPlane,float fieldOfView)
+	this(CameraProjection projectionType, vec2 size,float nearPlane,float farPlane,float fieldOfView)
 	{
-		this.projection = projectionType;
+		this.projectionType = projectionType;
 		this.size = size;
 		this.farPlane = farPlane;
 		this.nearPlane = nearPlane;
 		this.fieldOfView = fieldOfView;
+		yaw = 0;
+		pitch = 0;
 		transform = new Transform;
-		updateViewProjection();
+		update();
 	}
 
 	private mat4 calculateProjection()
 	{
 		mat4 proj;
-		switch(projection)
+		switch(projectionType)
 		{
 			case CameraProjection.PERSPECTIVE:
 				proj = mat4.perspective(size.x,size.y,fieldOfView,nearPlane,farPlane);
@@ -149,18 +182,33 @@ class Camera
 				proj = mat4.perspective(size.x,size.y,fieldOfView,nearPlane,farPlane);
 				break;
 		}
+		//proj.transpose();
 		return proj;
 
 
 	}
 
-	void updateViewProjection()
+	void turn(vec2 v)
+	{
+		yaw += v.x;
+		pitch += v.y;
+	}
+	
+	void updateViewProjection(mat4 view)
 	{
 		mat4 proj = calculateProjection();
-		mat4 view = transform.lookAt(transform.position,transform.position + transform.front,transform.up);
-		
 		vp = proj * view;
 	}
+
+	void update()
+	{
+		mat4 lookMat = mat4(mat4.look_at(transform.position,transform.position + front, vec3(0,1,0)));
+		lookMat.matrix[3] = vec4(0,0,0,1).vector;
+		mat4 translation = mat4.identity;
+		translation.matrix[3] = vec4(-transform.position.x,-transform.position.y,-transform.position.z,1.0).vector;
+		cameraTransformation = lookMat;
+	}
+
 	
 
 

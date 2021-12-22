@@ -39,7 +39,7 @@ class RealmGame : RealmApp
 		super(width,height,title);
 		renderer = new Renderer;
 		renderer.activeCamera = &cam;
-		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),100,-1.,45);
+		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),0.1,200,45);
 		player = new Player(&cam);
 		world = new World;
 

@@ -6,6 +6,7 @@ import std.stdio;
 import std.algorithm.sorting;
 import std.range;
 import gl3n.linalg;
+import realm.engine.core;
 mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
 {
     import std.format;
@@ -78,6 +79,7 @@ class Material(UserDataVarTypes[string] uniforms)
 
     private SamplerObject!(TextureType.TEXTURE2D) textureAtlas;
     private static ShaderProgram program;
+    private static Mesh*[] meshes;
     this()
     {
         writeln(numMaterials);
@@ -114,6 +116,11 @@ class Material(UserDataVarTypes[string] uniforms)
        
 
     }
+
+    static void addMesh(Mesh* mesh)
+	{
+        meshes~= mesh;
+	}
 
     static void useShaderProgram()
 	{

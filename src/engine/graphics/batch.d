@@ -34,7 +34,7 @@ class Batch(T)
 		this.numElementsInFrame= 0;
 		this.capacity = 0;
 		cmdBufferBase = 0;
-		bufferAmount =2;
+		bufferAmount =1;
 		maxElementsInFrame = 0;
 		numVerticesInFrame = 0;
 		this.program = program;

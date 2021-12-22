@@ -28,7 +28,7 @@ class Entity(Mat)
 
 	void update()
 	{
-		
+		updateComponents();
 	}
 
 

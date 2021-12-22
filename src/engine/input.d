@@ -29,6 +29,36 @@ class InputManager
 		}
 
 	}
+
+	static double getMouseAxis(MouseAxis axis)
+	{
+		double x;
+		double y;
+		glfwGetCursorPos(window,&x,&y);
+		switch(axis)
+		{
+			case MouseAxis.X:
+				return x;
+			case MouseAxis.Y:
+				return y;
+			default:
+				return x;
+		}
+	}
+
+	static KeyState getMouseButton(RealmMouseButton button)
+	{
+		int state = glfwGetMouseButton(window,button);
+		switch(state)
+		{
+            case GLFW_PRESS:
+                return KeyState.Press;
+            case GLFW_RELEASE:
+                return KeyState.Release;
+            default:
+                return KeyState.Press;
+		}
+	}
     
 
     static void initialze(GLFWwindow* w)
@@ -42,6 +72,19 @@ enum KeyState
 {
 	Press,
 	Release
+}
+
+enum MouseAxis
+{
+	X,
+	Y
+}
+
+enum RealmMouseButton : int
+{
+	ButtonLeft = GLFW_MOUSE_BUTTON_LEFT,
+	ButtonRight = GLFW_MOUSE_BUTTON_RIGHT,
+
 }
 
 enum RealmKey : int

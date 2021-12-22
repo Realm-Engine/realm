@@ -7,6 +7,7 @@ import std.meta;
 import realm.engine.core;
 import realm.engine.logging;
 import realm.engine.input;
+import std.typecons;
 class RealmApp
 {
 
@@ -17,6 +18,15 @@ class RealmApp
     private bool shutdown;
     private const GLMAX_VER = GLVersion.GL45;
     private const GLMIN_VER = GLVersion.GL43;
+
+    static Tuple!(int,int) getWindowSize()
+	{
+        int width,height;
+        glfwGetWindowSize(window,&width,&height);
+        return Tuple!(int,int)(width,height);
+
+	}
+
     this(int width, int height, const char* title)
     {
         Logger.Assert(width >= 0 && height >=0,"Width and height of app are negative");

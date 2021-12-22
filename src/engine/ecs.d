@@ -9,6 +9,7 @@ import std.ascii;
 
 mixin template RealmEntity(T...)
 {
+    
     private
     {
         import realm.engine.logging;
@@ -18,30 +19,27 @@ mixin template RealmEntity(T...)
 
     struct Components
     {
-        enum getComponents = (__traits(allMembers, Components));
         static foreach (Type; T)
         {
+            
 
-            mixin("private %s %s;".format(Type.stringof, toLower(Type.stringof)));
+            mixin("%s %s;".format(Type.stringof, toLower(Type.stringof)));
         }
 
         void updateComponents()
         {
 
-            static foreach (componentMember; getComponents)
+            static foreach (componentMember; (__traits(allMembers, Components)))
             {
-
+                
                 static if (__traits(compiles, __traits(getMember, this,
                         componentMember).componentUpdate()))
                 {
-
+                    
                     __traits(getMember, this, componentMember).componentUpdate();
                 }
             }
         }   
-
-       
-
     }
 
     Components components;

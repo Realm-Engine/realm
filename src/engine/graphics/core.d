@@ -59,6 +59,7 @@ struct RealmVertex
 
 	vec3 position;
 	vec2 texCoord;
+	vec3 normal;
 	/*
 	vec3 normal;
 	vec2 uv;
@@ -111,7 +112,7 @@ class Texture2D
 
 struct RealmGlobalData
 {
-	mat4 viewProjection;
+	float[16] vp;
 
 }
 

@@ -3,13 +3,12 @@
 
 layout(std140, binding = 0) uniform _reGloblaData
 {
-	mat4 _vp;
+	mat4 u_vp;
 
 };
 
 struct ObjectData
 {
-	vec4 color;
 	vec4 albedo;
 };
 
@@ -29,6 +28,7 @@ in RESurfaceData
 	vec2 texCoord;
 	flat int drawId;
 	ObjectData objectData;
+	vec3 normal;
 
 } RESurfaceDataOut;
 
@@ -47,5 +47,5 @@ void main()
 	vec4 albedo = RESurfaceDataOut.objectData.albedo;
 	vec2 albedoUv = (RESurfaceDataOut.texCoord * vec2(albedo.x,albedo.y)) + vec2(albedo.z,albedo.w);
 	
-	outColor = Color * texture(textureAtlas(),albedoUv);
+	outColor =  texture(textureAtlas(),albedoUv) * abs(vec4(RESurfaceDataOut.normal,1.0));
 }
