@@ -33,6 +33,7 @@ class Ocean
 		material.color = vec4(0,0,0.7,1.0);
 		material.setShaderProgram(shaderProgram);
 		material.packTextureAtlas();
+		
 		mesh = generateFace(vec3(0,-1,0),10);
 		
 
@@ -45,6 +46,6 @@ class Ocean
 
 	void componentUpdate()
 	{
-
+		updateComponents();
 	}
 }

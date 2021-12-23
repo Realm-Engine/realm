@@ -59,7 +59,8 @@ class World
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		ocean = new Ocean;
-
+		ocean.getComponent!(Transform).position = vec3(0,0.15,0);
+		ocean.getComponent!(Transform).scale = vec3(5,1,3.5);
 		//material.color = vec4(1.0,1.0,1.0,1.0);
 		
 
