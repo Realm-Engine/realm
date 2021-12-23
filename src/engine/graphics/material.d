@@ -80,6 +80,8 @@ class Material(UserDataVarTypes[string] uniforms)
     private SamplerObject!(TextureType.TEXTURE2D) textureAtlas;
     private static ShaderProgram program;
     private static Mesh*[] meshes;
+
+
     this()
     {
         writeln(numMaterials);
@@ -88,10 +90,16 @@ class Material(UserDataVarTypes[string] uniforms)
         numMaterials++;
         
         textureAtlas.create();
+        
         textureAtlas.slot = materialIndex;
 
 		
     }
+
+    SamplerObject!(TextureType.TEXTURE2D) getTextureAtlas()
+	{
+        return this.textureAtlas;
+	}
 
     static void setShaderProgram(ShaderProgram sp)
 	{
@@ -141,9 +149,12 @@ class Material(UserDataVarTypes[string] uniforms)
         textureAtlas.setActive();
         program.setUniformInt(program.uniformLocation("atlasTextures[%d]".format(materialIndex)),materialIndex);
 	}
+
+    
     
     void packTextureAtlas()
 	{
+        textureAtlas.setActive();
         textureAtlas.textureDesc = textures.settings;
         Texture2D[] textures;
 		int sumWidth = 0;

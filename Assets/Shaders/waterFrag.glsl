@@ -9,9 +9,7 @@ layout(std140, binding = 0) uniform _reGloblaData
 
 struct ObjectData
 {
-	vec4 heightMap;
-	float heightStrength;
-	float oceanLevel;
+	vec4 color;
 };
 
 layout (std430,binding = 1) buffer _perObjectData
@@ -61,8 +59,6 @@ vec2 samplerUV(vec4 to)
 
 void main()
 { 
-	
-	outColor =  vec4(0,0.3,0,1.0);
-	
+	outColor = RESurfaceDataIn.objectData.color;
 	
 }

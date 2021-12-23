@@ -24,6 +24,7 @@ class Batch(T)
 	private uint cmdBufferBase;
 	private uint bufferAmount;
 	private uint maxElementsInFrame;
+	private SamplerObject!(TextureType.TEXTURE2D)[] textureAtlases;
 	this(MeshTopology topology,ShaderProgram program)
 	{
 		this.topology = topology;
@@ -38,6 +39,7 @@ class Batch(T)
 		maxElementsInFrame = 0;
 		numVerticesInFrame = 0;
 		this.program = program;
+		
 		
 	}
 
@@ -115,16 +117,19 @@ class Batch(T)
 		numIndicesInFrame+=faces.length;
 		material.writeUniformData();
 		material.activateTextures();
+		textureAtlases~=material.getTextureAtlas();
 
 
 	}
 
 	void drawBatch()
 	{
+
 		program.use();
 		int cmdTypeSize = cast(int)DrawElementsIndirectCommand.sizeof;
 		bindBuffers();
 		uint offset = cmdBufferBase * (maxElementsInFrame * cmdTypeSize);
+
 		//writeln(offset);
 		GraphicsSubsystem.drawMultiElementsIndirect(offset, numElementsInFrame);
 		unbindBuffers();
@@ -132,7 +137,7 @@ class Batch(T)
 		numElementsInFrame = 0;
 		numVerticesInFrame = 0;
 		numIndicesInFrame = 0;
-		
+		textureAtlases.length = 0;
 		
 	}
 
