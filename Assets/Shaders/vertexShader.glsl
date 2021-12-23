@@ -13,6 +13,7 @@ struct ObjectData
 {
 	vec4 heightMap;
 	float heightStrength;
+	float oceanLevel;
 };
 
 struct REVertexData
@@ -58,7 +59,9 @@ vec4 vert(REVertexData IN)
 	
 	
 	vec4 heightSample =texture(textureAtlas(),samplerUV(IN.objectData.heightMap));
-	float height = (heightSample.x) * IN.objectData.heightStrength;
+	float height = (heightSample.x);
+	height = clamp(height,IN.objectData.oceanLevel,1.0);
+	height = height * IN.objectData.heightStrength;
 	vec3 position = v_Position + vec3(0,height,0);
 	RESurfaceDataOut.objectData = IN.objectData;
 	RESurfaceDataOut.objectId = IN.objectId;

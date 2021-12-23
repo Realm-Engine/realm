@@ -11,6 +11,7 @@ struct ObjectData
 {
 	vec4 heightMap;
 	float heightStrength;
+	float oceanLevel;
 };
 
 layout (std430,binding = 1) buffer _perObjectData
@@ -63,5 +64,14 @@ void main()
 	vec4 height = RESurfaceDataIn.objectData.heightMap;
 	vec2 heightUV = samplerUV(height);
 	vec3 normal = grayToNormal(textureAtlas(),heightUV,0.0078125);
-	outColor =  vec4(normal,1.0);
+	vec4 heightSample = texture(textureAtlas(),heightUV);
+	if(heightSample.x < RESurfaceDataIn.objectData.oceanLevel)
+	{
+		outColor = vec4(0,0,0.5,0.5);
+	}
+	else
+	{
+		outColor =  vec4(0,0.3,0,1.0);
+	}
+	
 }

@@ -12,7 +12,7 @@ import std.range;
 import realm.engine.logging;
 import gl3n.math : asin, atan2;
 import std.stdio;
-alias WorldMaterialLayout = Alias!(["heightMap" : UserDataVarTypes.TEXTURE2D,"heightStrength" : UserDataVarTypes.FLOAT]);
+alias WorldMaterialLayout = Alias!(["heightMap" : UserDataVarTypes.TEXTURE2D,"heightStrength" : UserDataVarTypes.FLOAT,"oceanLevel" : UserDataVarTypes.FLOAT]);
 alias WorldMaterial = Alias!(Material!WorldMaterialLayout);
 
 class World
@@ -34,7 +34,7 @@ class World
 		WorldMaterial.initialze();
 		WorldMaterial.reserve(1);
 		//generateCube(8);
-		meshData = generateFace(vec3(0,-1,0),12);
+		meshData = generateFace(vec3(0,-1,0),20);
 		transform.position = vec3(0,0,0);
 		transform.scale = vec3(2,1,2);
 		auto vertexShader = read("./Assets/Shaders/vertexShader.glsl");
@@ -43,7 +43,8 @@ class World
 		Shader fragment = new Shader(ShaderType.FRAGMENT,cast(string)fragmentShader,"Fragment Shader");
 		shaderProgram = new ShaderProgram(vertex,fragment,"MyProgram");
 		material = new WorldMaterial;
-		material.heightStrength = 0.5;
+		material.heightStrength = 0.25;
+		material.oceanLevel = 0.4;
 		material.setShaderProgram(shaderProgram);
 		material.textures.heightMap = new Texture2D(&heightImg,TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER));
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
@@ -118,7 +119,7 @@ class World
 			{
 				int vertexIndex = x + y * resolution;
 				vec2 t = vec2(x,y) / (resolution - 1.0f);
-				vec3 point = normal + axisA * (3 * t.x -1) + axisB * (2 * t.y - 1);
+				vec3 point = normal + axisA * (2 * t.x -1) + axisB * (2 * t.y - 1);
 				vertices[vertexIndex] = point;
 				uv[vertexIndex] = t;
 				if(x != resolution -1 && y != resolution - 1)
