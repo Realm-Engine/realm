@@ -23,7 +23,7 @@ class Player
         lastY = float.max;
 
         this.camera = cam;
-        camera.position = vec3(0, 0, -2);
+        camera.position = vec3(0, 0, -5);
         transform = new Transform();
         arcballcamera = new ArcballCamera(cam.position, cam.position + vec3(0,
                 0, 1), vec3(0, 1, 0));

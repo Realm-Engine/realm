@@ -12,7 +12,7 @@ import std.range;
 import realm.engine.logging;
 import gl3n.math : asin, atan2;
 import std.stdio;
-alias WorldMaterialLayout = Alias!(["albedo" : UserDataVarTypes.TEXTURE2D]);
+alias WorldMaterialLayout = Alias!(["heightMap" : UserDataVarTypes.TEXTURE2D,"heightStrength" : UserDataVarTypes.FLOAT]);
 alias WorldMaterial = Alias!(Material!WorldMaterialLayout);
 
 class World
@@ -22,7 +22,7 @@ class World
 	static vec3[] squarePositions;
 	static vec2[] squareUV;
 	//static uint[] faces;
-	static IFImage grassImg;
+	static IFImage heightImg;
 	WorldMaterial material;
 	ShaderProgram shaderProgram;
 	this()
@@ -33,16 +33,19 @@ class World
 		//mesh.calculateNormals();
 		WorldMaterial.initialze();
 		WorldMaterial.reserve(1);
-		generateCube(8);
+		//generateCube(8);
+		meshData = generateFace(vec3(0,-1,0),12);
 		transform.position = vec3(0,0,0);
+		transform.scale = vec3(2,1,2);
 		auto vertexShader = read("./Assets/Shaders/vertexShader.glsl");
 		auto fragmentShader = read("./Assets/Shaders/fragShader.glsl");
 		Shader vertex = new Shader(ShaderType.VERTEX,cast(string) vertexShader,"Vetex Shader");
 		Shader fragment = new Shader(ShaderType.FRAGMENT,cast(string)fragmentShader,"Fragment Shader");
 		shaderProgram = new ShaderProgram(vertex,fragment,"MyProgram");
 		material = new WorldMaterial;
+		material.heightStrength = 0.5;
 		material.setShaderProgram(shaderProgram);
-		material.textures.albedo = new Texture2D(&grassImg,TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER));
+		material.textures.heightMap = new Texture2D(&heightImg,TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER));
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		//material.color = vec4(1.0,1.0,1.0,1.0);
@@ -50,7 +53,8 @@ class World
 
 		scope(exit)
 		{
-			grassImg.free();
+
+			heightImg.free();
 		}
 
 	}
@@ -59,7 +63,7 @@ class World
 		squarePositions = [vec3(-0.5f,-0.5f,0),vec3(0.5,-0.5f,0),vec3(0.5,0.5f,0),vec3(-0.5,0.5f,0.0f)];
 		squareUV = [vec2(0,0),vec2(1,0),vec2(1,1),vec2(0,1)];
 		//faces = [0,1,2,2,3,0];
-		grassImg = readImageBytes("./Assets/Images/terrain.png");
+		heightImg = readImageBytes("./Assets/Images/height.png");
 
 	}
 
@@ -114,7 +118,7 @@ class World
 			{
 				int vertexIndex = x + y * resolution;
 				vec2 t = vec2(x,y) / (resolution - 1.0f);
-				vec3 point = normal + axisA * (2 * t.x -1) + axisB * (2 * t.y - 1);
+				vec3 point = normal + axisA * (3 * t.x -1) + axisB * (2 * t.y - 1);
 				vertices[vertexIndex] = point;
 				uv[vertexIndex] = t;
 				if(x != resolution -1 && y != resolution - 1)

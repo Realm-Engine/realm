@@ -11,7 +11,18 @@ layout(std140, binding = 0) uniform _reGloblaData
 
 struct ObjectData
 {
-	vec4 albedo;
+	vec4 heightMap;
+	float heightStrength;
+};
+
+struct REVertexData
+{
+	vec3 position;
+	vec2 texCoord;
+	vec3 normal;
+	ObjectData objectData;
+	int objectId;
+
 };
 
 layout (std430,binding = 1) buffer _perObjectData
@@ -24,22 +35,52 @@ out RESurfaceData
 	vec3 posWS;
 	vec4 posCS;
 	vec2 texCoord;
-	flat int drawId;
+	flat int objectId;
 	ObjectData objectData;
 	vec3 normal;
 
 } RESurfaceDataOut;
 
+uniform sampler2D atlasTextures[16];
 
+sampler2D textureAtlas()
+{
+	return atlasTextures[gl_DrawID];
+}
+
+vec2 samplerUV(vec4 to)
+{
+	return (v_TexCoord * vec2(to.x,to.y)) + vec2(to.z,to.w);
+}
+
+vec4 vert(REVertexData IN)
+{
+	
+	
+	vec4 heightSample =texture(textureAtlas(),samplerUV(IN.objectData.heightMap));
+	float height = (heightSample.x) * IN.objectData.heightStrength;
+	vec3 position = v_Position + vec3(0,height,0);
+	RESurfaceDataOut.objectData = IN.objectData;
+	RESurfaceDataOut.objectId = IN.objectId;
+	RESurfaceDataOut.posCS = transpose(u_vp) * vec4(position, 1.0);
+	RESurfaceDataOut.posWS = position;
+	RESurfaceDataOut.texCoord = IN.texCoord;
+	RESurfaceDataOut.normal = IN.normal;
+	return RESurfaceDataOut.posCS;
+	
+
+
+}
 void main()
 {
-	RESurfaceDataOut.objectData = data[gl_DrawID];
-	RESurfaceDataOut.drawId = gl_DrawID;
-	RESurfaceDataOut.posCS = transpose(u_vp) * vec4(v_Position, 1.0);
-	RESurfaceDataOut.posWS = v_Position;
-	RESurfaceDataOut.texCoord = v_TexCoord;
-	RESurfaceDataOut.normal = v_Normal;
-	gl_Position = RESurfaceDataOut.posCS;
+	REVertexData vertexData;
+	vertexData.position = v_Position;
+	vertexData.texCoord = v_TexCoord;
+	vertexData.normal = v_Normal;
+	vertexData.objectData = data[gl_DrawID];
+	vertexData.objectId = gl_DrawID;
+	gl_Position = vert(vertexData);
 	
 }
+
 

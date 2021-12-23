@@ -6,7 +6,9 @@ import std.stdio;
 import std.algorithm.sorting;
 import std.range;
 import gl3n.linalg;
+import gl3n.math;
 import realm.engine.core;
+import realm.engine.logging;
 mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
 {
     import std.format;
@@ -54,11 +56,9 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
 }
 
 
-enum bool isMaterial(T) = (__traits(hasMember, T, "shaderStorageBuffer") == true
-            && __traits(hasMember, T, "textures") == true && __traits(hasMember, T, "layout") == true);
+enum bool isMaterial(T) = (__traits(hasMember, T, "shaderStorageBuffer") == true && __traits(hasMember, T, "textures") == true && __traits(hasMember, T, "layout") == true);
 enum texturesMembers(T) = (__traits(allMembers, T.Textures));
-enum texturesAttributes(T, alias Member) = (__traits(getAttributes,
-            __traits(getMember, T.Textures, Member)));
+enum texturesAttributes(T, alias Member) = (__traits(getAttributes, __traits(getMember, T.Textures, Member)));
 enum isSampler(alias T) = (T == "Sampler");
 
 class Material(UserDataVarTypes[string] uniforms)
@@ -145,10 +145,9 @@ class Material(UserDataVarTypes[string] uniforms)
     void packTextureAtlas()
 	{
         textureAtlas.textureDesc = textures.settings;
-        int width = 1024;
-        int height = 1024;
         Texture2D[] textures;
-       
+		int sumWidth = 0;
+        int sumHeight = 0;
         vec4*[] tilingOffsets;
         static foreach (member; texturesMembers!(UniformLayout))
         {
@@ -162,19 +161,25 @@ class Material(UserDataVarTypes[string] uniforms)
                         writeln(member);
                         textures~= __traits(getMember, this.textures, member);
                         tilingOffsets ~= &__traits(getMember,this.layout,member);
+                        sumWidth += __traits(getMember, this.textures, member).w;
+                        sumHeight += __traits(getMember, this.textures, member).h;
+
 					}
                     
 
 				}
 			}
 		}
-
+        
+        int textureAtlasWidth = cast(int)(sumWidth * 1.5);
+        int textureAtlasHeight = cast(int)(sumHeight * 1.5);
+        Logger.LogInfo("%d %d",textureAtlasWidth,textureAtlasHeight);
         auto sorted = textures.sort!((t1, t2) => (t1.w * t1.h) > (t2.w * t2.h));
         int totalWidth = 0;
         int totalHeight = 0;
         int rowWidth = 0;
         int rowHeight = int.min;
-        textureAtlas.store(4096,4096);
+        textureAtlas.store(textureAtlasWidth,textureAtlasHeight);
         
         foreach(index,texture; sorted.enumerate(0))
 		{
