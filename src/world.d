@@ -34,7 +34,7 @@ class World
 	this()
 	{
 		transform = new Transform;
-		ocean = new Ocean;
+		
 		
 		//mesh.calculateNormals();
 		WorldMaterial.initialze();
@@ -58,7 +58,7 @@ class World
 		material.textures.heightMap = new Texture2D(&heightImg,TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER));
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
-		
+		ocean = new Ocean;
 
 		//material.color = vec4(1.0,1.0,1.0,1.0);
 		
@@ -86,8 +86,9 @@ class World
 		//vec3[6] faceNormals = [vec3(0,1,0),vec3(0,-1,0),vec3(-1,0,0),vec3(1,0,0),vec3(0,0,1),vec3(0,0,-1)];
 		
 		
-		ocean.draw(renderer);
+		
 		renderer.submitMesh!(WorldMaterial)(meshData,transform,material);
+		ocean.draw(renderer);
 		//renderer.submitMesh!(WorldMaterial)(mesh,transform,material);
 	}
 

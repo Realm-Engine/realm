@@ -125,6 +125,11 @@ class Material(UserDataVarTypes[string] uniforms)
 
     }
 
+    static void bindShaderStorage()
+	{
+        shaderStorageBuffer.bindBase(1);
+	}
+
     static void addMesh(Mesh* mesh)
 	{
         meshes~= mesh;

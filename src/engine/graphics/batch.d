@@ -25,6 +25,8 @@ class Batch(T)
 	private uint bufferAmount;
 	private uint maxElementsInFrame;
 	private SamplerObject!(TextureType.TEXTURE2D)[] textureAtlases;
+	alias BindShaderStorageCallback = void function();
+	private BindShaderStorageCallback bindShaderStorage;
 	this(MeshTopology topology,ShaderProgram program)
 	{
 		this.topology = topology;
@@ -41,6 +43,12 @@ class Batch(T)
 		this.program = program;
 		
 		
+		
+	}
+
+	void setShaderStorageCallback(BindShaderStorageCallback cb)
+	{
+		bindShaderStorage = cb;
 	}
 
 	void reserve(size_t amount)
@@ -129,7 +137,11 @@ class Batch(T)
 		int cmdTypeSize = cast(int)DrawElementsIndirectCommand.sizeof;
 		bindBuffers();
 		uint offset = cmdBufferBase * (maxElementsInFrame * cmdTypeSize);
-
+		foreach(texture; textureAtlases)
+		{
+			texture.setActive();
+		}
+		bindShaderStorage();
 		//writeln(offset);
 		GraphicsSubsystem.drawMultiElementsIndirect(offset, numElementsInFrame);
 		unbindBuffers();

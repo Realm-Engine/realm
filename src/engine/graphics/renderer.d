@@ -72,6 +72,7 @@ class Renderer
 		{
 
 			batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram());
+			batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
 			batches[materialId].initialize(vertex3DAttributes,2048);
 			batches[materialId].reserve(1);
 			batches[materialId].submitVertices!(Mat)(vertexData,mesh.faces,mat);
