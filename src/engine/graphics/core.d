@@ -60,6 +60,7 @@ struct RealmVertex
 	vec3 position;
 	vec2 texCoord;
 	vec3 normal;
+	vec3 tangent;
 	/*
 	vec3 normal;
 	vec2 uv;

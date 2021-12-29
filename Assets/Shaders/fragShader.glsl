@@ -49,10 +49,6 @@ vec3 grayToNormal(sampler2D grayTexture,vec2 uv,float delta)
 }
 
 
-sampler2D textureAtlas()
-{
-	return atlasTextures[RESurfaceDataIn.objectId];
-}
 
 vec2 samplerUV(vec4 to)
 {
@@ -62,7 +58,12 @@ vec2 samplerUV(vec4 to)
 void main()
 { 
 	
-	outColor =  vec4(0,0.3,0,1.0);
+	float height = texture(atlasTextures[RESurfaceDataIn.objectId],samplerUV(RESurfaceDataIn.objectData.heightMap)).x;
+	float difference = abs(height - RESurfaceDataIn.objectData.oceanLevel);
+	outColor = vec4(1 - difference,1.0,0.1,1.0);
+
+	//outColor = vec4(height,1-height,0,1.0);
+	//outColor =  vec4(grayToNormal(atlasTextures[RESurfaceDataIn.objectId],samplerUV(RESurfaceDataIn.objectData.heightMap),0.0071358),1.0);
 	
 	
 }

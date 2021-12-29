@@ -2,7 +2,7 @@
 layout(location = 0) in vec3 v_Position;
 layout(location = 1) in vec2 v_TexCoord;
 layout(location =2) in vec3 v_Normal;
-
+layout(location = 3) in vec3 v_Tangent;
 layout(std140, binding = 0) uniform _reGloblaData
 {
 	mat4 u_vp;
@@ -12,6 +12,8 @@ layout(std140, binding = 0) uniform _reGloblaData
 struct ObjectData
 {
 	vec4 color;
+	float oceanLevel;
+
 };
 
 struct REVertexData
@@ -42,10 +44,7 @@ out RESurfaceData
 
 uniform sampler2D atlasTextures[16];
 
-sampler2D textureAtlas()
-{
-	return atlasTextures[gl_DrawID];
-}
+
 
 vec2 samplerUV(vec4 to)
 {
@@ -56,10 +55,13 @@ vec4 vert(REVertexData IN)
 {
 	
 	
+	float oceanLevel = IN.objectData.oceanLevel;
+	vec3 position = IN.position + vec3(0,oceanLevel,0);
+
 
 	RESurfaceDataOut.objectData = IN.objectData;
 	RESurfaceDataOut.objectId = IN.objectId;
-	RESurfaceDataOut.posCS = transpose(u_vp) * vec4(IN.position, 1.0);
+	RESurfaceDataOut.posCS = transpose(u_vp) * vec4(position, 1.0);
 	RESurfaceDataOut.posWS = v_Position;
 	RESurfaceDataOut.texCoord = IN.texCoord;
 	RESurfaceDataOut.normal = IN.normal;

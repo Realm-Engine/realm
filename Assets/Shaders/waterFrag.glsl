@@ -10,6 +10,7 @@ layout(std140, binding = 0) uniform _reGloblaData
 struct ObjectData
 {
 	vec4 color;
+	float oceanLevel;
 };
 
 layout (std430,binding = 1) buffer _perObjectData
@@ -47,10 +48,6 @@ vec3 grayToNormal(sampler2D grayTexture,vec2 uv,float delta)
 }
 
 
-sampler2D textureAtlas()
-{
-	return atlasTextures[RESurfaceDataIn.objectId];
-}
 
 vec2 samplerUV(vec4 to)
 {

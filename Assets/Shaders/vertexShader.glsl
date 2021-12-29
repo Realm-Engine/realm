@@ -2,7 +2,7 @@
 layout(location = 0) in vec3 v_Position;
 layout(location = 1) in vec2 v_TexCoord;
 layout(location =2) in vec3 v_Normal;
-
+layout(location =3) in vec3 v_Tangent;
 layout(std140, binding = 0) uniform _reGloblaData
 {
 	mat4 u_vp;
@@ -44,10 +44,7 @@ out RESurfaceData
 
 uniform sampler2D atlasTextures[16];
 
-sampler2D textureAtlas()
-{
-	return atlasTextures[gl_DrawID];
-}
+
 
 vec2 samplerUV(vec4 to)
 {
@@ -58,9 +55,9 @@ vec4 vert(REVertexData IN)
 {
 	
 	
-	vec4 heightSample =texture(textureAtlas(),samplerUV(IN.objectData.heightMap));
+	vec4 heightSample =texture(atlasTextures[gl_DrawID],samplerUV(IN.objectData.heightMap));
 	float height = (heightSample.x);
-	height = clamp(height,IN.objectData.oceanLevel,1.0);
+	//height = clamp(height,IN.objectData.oceanLevel,1.0);
 	height = height * IN.objectData.heightStrength;
 	vec3 position = v_Position + vec3(0,height,0);
 	RESurfaceDataOut.objectData = IN.objectData;

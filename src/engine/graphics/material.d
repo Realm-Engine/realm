@@ -84,7 +84,7 @@ class Material(UserDataVarTypes[string] uniforms)
 
     this()
     {
-        writeln(numMaterials);
+        //writeln(numMaterials);
         storageBufferPtr = &shaderStorageBuffer.ptr[numMaterials];
         materialIndex = numMaterials;
         numMaterials++;
@@ -174,7 +174,7 @@ class Material(UserDataVarTypes[string] uniforms)
                     
                     if(__traits(getMember, this.textures, member) !is null)
 					{
-                        writeln(member);
+                       
                         textures~= __traits(getMember, this.textures, member);
                         tilingOffsets ~= &__traits(getMember,this.layout,member);
                         sumWidth += __traits(getMember, this.textures, member).w;
@@ -189,7 +189,7 @@ class Material(UserDataVarTypes[string] uniforms)
         
         int textureAtlasWidth = cast(int)(sumWidth * 1.5);
         int textureAtlasHeight = cast(int)(sumHeight * 1.5);
-        Logger.LogInfo("%d %d",textureAtlasWidth,textureAtlasHeight);
+        Logger.LogInfo("Createing atlas texture size (%d,%d)",textureAtlasWidth,textureAtlasHeight);
         auto sorted = textures.sort!((t1, t2) => (t1.w * t1.h) > (t2.w * t2.h));
         int totalWidth = 0;
         int totalHeight = 0;

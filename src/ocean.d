@@ -8,7 +8,7 @@ import realm.engine.graphics.renderer;
 import std.meta;
 import realm.util;
 import std.file : read;
-alias WaterMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR]);
+alias WaterMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR, "oceanLevel" : UserDataVarTypes.FLOAT]);
 alias WaterMaterial = Alias!(Material!WaterMaterialLayout);
 class Ocean
 {
@@ -16,7 +16,7 @@ class Ocean
 	mixin RealmEntity!(Transform,Mesh);
 	WaterMaterial material;
 	ShaderProgram shaderProgram;
-	this()
+	this(float oceanLevel)
 	{
 		transform = new Transform;
 		WaterMaterial.initialze();
@@ -31,6 +31,7 @@ class Ocean
 		
 		material = new WaterMaterial;
 		material.color = vec4(0,0,0.7,1.0);
+		material.oceanLevel = oceanLevel;
 		material.setShaderProgram(shaderProgram);
 		material.packTextureAtlas();
 		

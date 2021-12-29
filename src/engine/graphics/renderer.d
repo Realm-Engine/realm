@@ -39,9 +39,11 @@ class Renderer
 		VertexAttribute position = {VertexType.FLOAT3,0,0};
 		VertexAttribute texCoord = {VertexType.FLOAT2,12,1};
 		VertexAttribute normal = {VertexType.FLOAT3,20,2};
+		VertexAttribute tangent = {VertexType.FLOAT3,32,3};
 		vertex3DAttributes ~= position;
 		vertex3DAttributes ~= texCoord;
 		vertex3DAttributes ~= normal;
+		vertex3DAttributes ~= tangent;
 
 	}
 
