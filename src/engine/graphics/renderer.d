@@ -21,10 +21,13 @@ class Renderer
 	VertexAttribute[] vertex3DAttributes;
 	private RealmGlobalData globalData;
 	private Camera* camera;
+ 
+  
 
 	@property activeCamera(Camera* cam)
 	{
 		camera = cam;
+                
 	}
 
 
@@ -35,6 +38,7 @@ class Renderer
 		GraphicsSubsystem.setClearColor(126,32,32,true);
 		GraphicsSubsystem.enableDepthTest();
 		globalData.vp = mat4.identity.value_ptr[0..16].dup;
+                
 		GraphicsSubsystem.updateGlobalData(&globalData);
 		VertexAttribute position = {VertexType.FLOAT3,0,0};
 		VertexAttribute texCoord = {VertexType.FLOAT2,12,1};
@@ -54,7 +58,7 @@ class Renderer
 		RealmVertex[] vertexData;
 		vertexData.length = mesh.positions.length;
 		mat4 modelMatrix = transform.transformation;
-
+		mat4 transInv = modelMatrix.inverse().transposed();
 		for(int i = 0; i < mesh.positions.length;i++)
 		{
 			RealmVertex vertex;
@@ -62,7 +66,8 @@ class Renderer
 			vertex.position = vec3( modelMatrix * vec4(mesh.positions[i],1.0));
 			
 			vertex.texCoord = mesh.textureCoordinates[i];
-			vertex.normal = mesh.normals[i];
+			vertex.normal =  vec3(transInv * vec4(mesh.normals[i],1.0));
+			vertex.tangent = vec3(modelMatrix * vec4(mesh.tangents[i],1.0));
 			vertexData[i] = vertex;
 		}
 		ulong materialId = Mat.materialId();
@@ -83,6 +88,17 @@ class Renderer
 
 		
 		
+	}
+
+	void mainLight(DirectionalLight light)
+	{
+		light.transform.updateTransformation;
+		mat4 modelMatrix = light.transform.transformation;
+		vec4 direction = modelMatrix * vec4(vec3(0,-1,0),1.0);
+		globalData.mainLightDirection[0..$] = direction.value_ptr[0..4].dup;
+		globalData.mainLightColor[0..$] = vec4(light.color,0.0).value_ptr[0..4].dup;
+		
+
 	}
 
 	void update()

@@ -245,3 +245,12 @@ class Camera
 
 
 }
+
+struct DirectionalLight
+{
+	Transform transform;
+	vec3 color;
+	
+	
+  
+}

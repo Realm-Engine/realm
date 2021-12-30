@@ -74,7 +74,8 @@ Mesh generateFace(vec3 normal, int resolution)
 	mesh.textureCoordinates = uv;
 	mesh.faces = faces;
 	mesh.normals = new vec3[](mesh.positions.length);
-	mesh.normals[0..$] = normal;
+        mesh.normals[0..$] = normal;
+        
 	mesh.calculateTangents();
 	return mesh;
 

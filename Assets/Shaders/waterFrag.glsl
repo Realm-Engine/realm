@@ -1,9 +1,18 @@
 
 #version 460 core
 
+struct DirectionalLight
+{
+        vec4 direction;
+        vec4 color;
+};
+
+
 layout(std140, binding = 0) uniform _reGloblaData
 {
 	mat4 u_vp;
+    DirectionalLight mainLight;
+        
 
 };
 
@@ -30,6 +39,7 @@ in RESurfaceData
 	flat int objectId;
 	ObjectData objectData;
 	vec3 normal;
+	mat3 TBN;
 
 } RESurfaceDataIn;
 

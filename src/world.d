@@ -35,14 +35,14 @@ class World
 	{
 		transform = new Transform;
 		
-		
+                
 		//mesh.calculateNormals();
 		WorldMaterial.initialze();
 		WorldMaterial.reserve(1);
 		//generateCube(8);
-		meshData = generateFace(vec3(0,-1,0),24);
+		meshData = generateFace(vec3(0,1,0),24);
 
-		transform.position = vec3(0,0,0);
+		transform.position = vec3(0,-2,0);
 		transform.scale = vec3(5,1,3.5);
 		auto vertexShader = read("./Assets/Shaders/vertexShader.glsl");
 		auto fragmentShader = read("./Assets/Shaders/fragShader.glsl");
@@ -53,7 +53,7 @@ class World
 		shaderProgram = new ShaderProgram(vertex,fragment,"MyProgram");
 		material = new WorldMaterial;
 		material.heightStrength = 0.5;
-		material.oceanLevel = 0.25;
+		material.oceanLevel = 0.225;
 		material.setShaderProgram(shaderProgram);
 		material.textures.heightMap = new Texture2D(&heightImg,TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER));
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);

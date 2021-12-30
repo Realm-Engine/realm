@@ -102,6 +102,7 @@ class Texture2D
 		format = desc.fmt;
 		filter = desc.filter;
 		wrap = desc.wrap;
+                
 	}
 
 	void freeImage()
@@ -111,10 +112,14 @@ class Texture2D
 
 }
 
+
+
 struct RealmGlobalData
 {
-	float[16] vp;
-
+  float[16] vp;
+  float[4] mainLightDirection;
+  float[4] mainLightColor;
+  
 }
 
 

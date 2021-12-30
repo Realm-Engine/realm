@@ -7,6 +7,7 @@ import realm.entity;
 import realm.engine.graphics.core;
 import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.renderer;
+import realm.engine.input;
 import std.file : read;
 import realm.engine.graphics.material;
 import std.meta;
@@ -29,7 +30,7 @@ class RealmGame : RealmApp
 	Renderer renderer;
 	Player player;
 	World world;	
-
+	DirectionalLight mainLight;
 
 
 	this(int width, int height, const char* title)
@@ -42,6 +43,10 @@ class RealmGame : RealmApp
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),0.1,200,45);
 		player = new Player(&cam);
 		world = new World;
+		mainLight.transform = new Transform;
+		mainLight.transform.rotation = vec3(10,0,0);
+		mainLight.color = vec3(1.0,1.0,1.0);
+		//renderer.mainLight(mainLight);
 
 	}
 	
@@ -55,8 +60,13 @@ class RealmGame : RealmApp
 		
 	}
 
+
+
+
 	override void update()
 	{
+		
+		renderer.mainLight(mainLight);
 		player.update();
 		world.update();
 		world.draw(renderer);
