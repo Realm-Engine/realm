@@ -17,6 +17,7 @@ class GraphicsSubsystem
 
 	private static ShaderBlock globalDataBuffer;
 	static State depthTest = State.None;
+
 	
 	static void setClearColor(float r, float g, float b, bool normalize)
 	{
@@ -83,6 +84,8 @@ class GraphicsSubsystem
 		depthTest = State.None;
 		disable(State.DepthTest);
 	}
+
+
 	
 
 }

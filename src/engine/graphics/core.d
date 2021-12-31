@@ -24,6 +24,11 @@ alias FrameBufferAttachment = GFrameBufferAttachment;
 alias FrameBufferTarget = GFrameBufferTarget;
 alias DrawBufferTarget = GDrawBufferTarget;
 alias FrameMask = GFrameMask;
+alias BlendFuncType = GBlendFuncType;
+alias blendFunc = gBlendFunc;
+alias blendFuncSeperate = gBlendFuncSeperate;
+alias enable =gEnable;
+alias disable =gDisable;
 enum VertexType : int
 {
 	FLOAT = 0x4011,
@@ -37,8 +42,10 @@ enum UserDataVarTypes : int
 	VECTOR = VertexType.FLOAT4,
 	MATRIX = 0x4101,
 	FLOAT = VertexType.FLOAT,
-	TEXTURE2D = 0x101E,
-	FRAMEBUFFER = 0x101F
+	TEXTURE2D = 0x101D,
+	DEPTHTEXTURE = 0x101E,
+	SCREENTEXTURE = 0x101F
+
 
 	
 

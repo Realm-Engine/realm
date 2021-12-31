@@ -11,7 +11,8 @@ import std.variant;
 import std.range;
 import std.typecons;
 import std.meta;
-alias ScreenMaterialLayout = Alias!(["screenTexture" : UserDataVarTypes.FRAMEBUFFER]);
+import std.algorithm;
+alias ScreenMaterialLayout = Alias!(["screenTexture" : UserDataVarTypes.SCREENTEXTURE]);
 alias ScreenMaterial = Alias!(Material!(ScreenMaterialLayout));
 
 class Renderer
@@ -57,6 +58,8 @@ class Renderer
 		mainFrameBuffer.create!([FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT])(windowSize[0],windowSize[1]);
 		screenMaterial = new ScreenMaterial;
 		screenMaterial.textures.screenTexture = &mainFrameBuffer;
+		enable(State.Blend);
+		blendFunc(BlendFuncType.SRC_ALPHA,BlendFuncType.ONE_MINUS_SRC_ALPHA);
 
 	}
 	static FrameBuffer* getMainFrameBuffer()
@@ -92,7 +95,7 @@ class Renderer
 		else
 		{
 
-			batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram());
+			batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
 			batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
 			batches[materialId].initialize(vertex3DAttributes,2048);
 			batches[materialId].reserve(1);
@@ -129,7 +132,8 @@ class Renderer
 			globalData.vp[0..$] = vp.value_ptr[0..16].dup;
 		}
 		GraphicsSubsystem.updateGlobalData(&globalData);
-		foreach(batch; batches)
+		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
+		foreach(batch; orderedBatches)
 		{
 			batch.drawBatch();
 		}

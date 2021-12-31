@@ -476,6 +476,12 @@ struct GSamplerObject(GTextureType target)
 
     }
 
+    void setActive(int slot)
+    {
+        glActiveTexture(GL_TEXTURE0 + slot);
+        glBindTexture(target,id);
+    }
+
     void bind()
     {
         glBindTexture(target,id);
@@ -633,6 +639,22 @@ enum GFrameMask : GLenum
     STENCIL = GL_STENCIL_BUFFER_BIT
 }
 
+enum GBlendFuncType : GLenum
+{
+    ZERO = GL_ZERO,
+    ONE = GL_ONE,
+    SRC_COLOR = GL_SRC_COLOR,
+    ONE_MINUS_SRC_COLOR = GL_ONE_MINUS_SRC_COLOR,
+    DST_COLOR = GL_DST_COLOR,
+    ONE_MINUS_DST_COLOR = GL_ONE_MINUS_DST_COLOR,
+    SRC_ALPHA = GL_SRC_ALPHA,
+    ONE_MINUS_SRC_ALPHA = GL_ONE_MINUS_SRC_ALPHA,
+    CONSTANT_COLOR = GL_CONSTANT_COLOR,
+    ONE_MINUS_CONSTANT_COLOR = GL_ONE_MINUS_CONSTANT_COLOR,
+    CONSTANT_ALPHA = GL_CONSTANT_ALPHA,
+    ONE_MINUS_CONSTANT_ALPHA = GL_ONE_MINUS_CONSTANT_ALPHA
+}
+
 GLenum imageFormatToInternalFormat(ImageFormat format)
 {
     GLenum result;
@@ -723,11 +745,11 @@ void drawElements(uint count)
 }
 
 
-void enable(GState state)
+void gEnable(GState state)
 {
     glEnable(state);
 }
-void disable(GState state)
+void gDisable(GState state)
 {
     glDisable(state);
 }
@@ -735,4 +757,13 @@ void disable(GState state)
 static void gDrawBuffers(GDrawBufferTarget[] targets)
 {
     glDrawBuffers(cast(int)targets.length,cast(const(GLenum)*)targets.ptr);
+}
+
+static void gBlendFunc(GBlendFuncType sfactor, GBlendFuncType dfactor)
+{
+    glBlendFunc(sfactor, dfactor);
+}
+static void gBlendFuncSeperate(GBlendFuncType r, GBlendFuncType g, GBlendFuncType b, GBlendFuncType a)
+{
+    glBlendFuncSeparate(r,g,b,a);
 }

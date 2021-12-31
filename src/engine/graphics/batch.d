@@ -27,8 +27,14 @@ class Batch(T)
 	private SamplerObject!(TextureType.TEXTURE2D)[] textureAtlases;
 	alias BindShaderStorageCallback = void function();
 	private BindShaderStorageCallback bindShaderStorage;
-	this(MeshTopology topology,ShaderProgram program)
+	private int order;
+	@property renderOrder()
 	{
+		return order;
+	}
+	this(MeshTopology topology,ShaderProgram program,int order)
+	{
+		this.order = order;
 		this.topology = topology;
 		vao.create();
 		vertexBuffer.create();
@@ -126,6 +132,10 @@ class Batch(T)
 		material.writeUniformData();
 		material.activateTextures();
 		textureAtlases~=material.getTextureAtlas();
+		if(material.hasDepthTexture())
+		{
+			textureAtlases ~= material.getDepthTexture();
+		}
 
 
 	}

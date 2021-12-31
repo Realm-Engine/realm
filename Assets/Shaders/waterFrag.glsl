@@ -8,6 +8,8 @@ struct DirectionalLight
 };
 
 
+
+
 layout(std140, binding = 0) uniform _reGloblaData
 {
 	mat4 u_vp;
@@ -19,7 +21,6 @@ layout(std140, binding = 0) uniform _reGloblaData
 struct ObjectData
 {
 	vec4 color;
-	vec4 mainTexture;
 	float oceanLevel;
 };
 
@@ -27,7 +28,8 @@ layout (std430,binding = 1) buffer _perObjectData
 {
 	ObjectData data[];
 };
-
+layout(location = 0) uniform sampler2D screenTexture;
+layout(location = 1) uniform sampler2D depthTexture;
 uniform sampler2D atlasTextures[16];
 
 out vec4 outColor; 
@@ -68,5 +70,6 @@ vec2 samplerUV(vec4 to)
 void main()
 { 
 	outColor = RESurfaceDataIn.objectData.color;
+	outColor.w = 0.5f;
 	
 }

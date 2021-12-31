@@ -27,7 +27,8 @@ layout (std430,binding = 1) buffer _perObjectData
 {
 	ObjectData data[];
 };
-
+layout(location = 0) uniform sampler2D screenTexture;
+layout(location = 1) uniform sampler2D depthTexture;
 uniform sampler2D atlasTextures[16];
 
 in RESurfaceData

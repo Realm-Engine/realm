@@ -27,7 +27,7 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
                     mixin("%s %s;".format("float", uniform));
                 }
 
-                static if (uniforms[uniform] == UserDataVarTypes.VECTOR || uniforms[uniform] == UserDataVarTypes.TEXTURE2D || uniforms[uniform] == UserDataVarTypes.FRAMEBUFFER)
+                static if (uniforms[uniform] == UserDataVarTypes.VECTOR || uniforms[uniform] == UserDataVarTypes.TEXTURE2D)
                 {
                     mixin("%s %s;".format("vec4", uniform));
                 }
@@ -47,9 +47,13 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
 
                     mixin("@(\"Texture\") %s %s;".format("Texture2D", uniform));
                 }
-                static if(uniforms[uniform] == UserDataVarTypes.FRAMEBUFFER)
+                static if(uniforms[uniform] == UserDataVarTypes.DEPTHTEXTURE)
                 {
-                    mixin("@(\"FrameBuffer\") %s %s;".format("FrameBuffer*", uniform));
+                    mixin("@(\"DepthTexture\") %s %s;".format("FrameBuffer*", uniform));
+                }
+                static if(uniforms[uniform] == UserDataVarTypes.SCREENTEXTURE)
+                {
+                    mixin("@(\"ScreenTexture\") %s %s;".format("FrameBuffer*", uniform));
                 }
             }
         }
@@ -64,7 +68,9 @@ enum texturesMembers(T) = (__traits(allMembers, T.Textures));
 enum texturesAttributes(T, alias Member) = (__traits(getAttributes, __traits(getMember, T.Textures, Member)));
 enum isTexture(alias T) = (T == "Texture");
 enum isFrameBuffer(alias T) = (T == "FrameBuffer");
-class Material(UserDataVarTypes[string] uniforms)
+enum isDepthTexture(alias T) = (T == "DepthTexture");
+enum isScreenTexture(alias T) = (T == "ScreenTexture");
+class Material(UserDataVarTypes[string] uniforms,int order = 0)
 {
     import std.format;
     import std.stdio;
@@ -84,6 +90,10 @@ class Material(UserDataVarTypes[string] uniforms)
     private static ShaderProgram program;
     private static Mesh*[] meshes;
 
+    static int getOrder()
+    {
+        return order;
+    }
 
     this()
     {
@@ -151,11 +161,100 @@ class Material(UserDataVarTypes[string] uniforms)
 
     }
 
+    bool hasDepthTexture()
+    {
+        bool result = false;
+        static foreach(member; texturesMembers!(UniformLayout))
+        {
+            static foreach(attribute; texturesAttributes!(UniformLayout,member))
+            {
+                static if(isDepthTexture!(attribute))
+                {
+                    result = true;
+                }
+                
+            }
+        }
+        return result;
+        
+    }
+    bool hasScreenTexture()
+    {
+        bool result = false;
+        static foreach(member; texturesMembers!(UniformLayout))
+        {
+            static foreach(attribute; texturesAttributes!(UniformLayout,member))
+            {
+                static if(isScreenTexture!(attribute))
+                {
+                    result = true;
+                }
+                
+            }
+        }
+        return result;
+    }
+
+    SamplerObject!(TextureType.TEXTURE2D) getDepthTexture()
+    {
+        Logger.Assert(hasDepthTexture() == true, "Material does not have depth texture");
+        SamplerObject!(TextureType.TEXTURE2D) texture;
+        static foreach(member; texturesMembers!(UniformLayout))
+        {
+            static foreach(attribute; texturesAttributes!(UniformLayout,member))
+            {
+                static if(isDepthTexture!(attribute))
+                {
+                    texture =  __traits(getMember, this.textures, member).fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture;
+                }
+            }
+        }
+        return texture;
+    }
+
+    SamplerObject!(TextureType.TEXTURE2D) getScreenTexture()
+    {
+        Logger.Assert(hasScreenTexture() == true, "Material does not have screen texture");
+        SamplerObject!(TextureType.TEXTURE2D) texture;
+        static foreach(member; texturesMembers!(UniformLayout))
+        {
+            static foreach(attribute; texturesAttributes!(UniformLayout,member))
+            {
+                static if(isScreenTexture!(attribute))
+                {
+                    texture =  __traits(getMember, this.textures, member).fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture;
+                }
+            }
+        }
+        return texture;
+    }
+
+    
+
+
     void activateTextures()
 	{
         
         textureAtlas.setActive();
         program.setUniformInt(program.uniformLocation("atlasTextures[%d]".format(materialIndex)),materialIndex);
+        
+        /*static foreach(member; texturesMembers!(UniformLayout))
+        {
+            static foreach(attribute; texturesAttributes!(UniformLayout,member))
+            {
+                static if(isDepthTexture!(attribute))
+                {
+                    __traits(getMember, this.textures, member).fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture.setActive(1);
+                    program.setUniformInt(1,1);
+                   
+                }
+                static if(isScreenTexture!(attribute))
+                {
+                    __traits(getMember, this.textures, member).fbAttachments[FrameBufferAttachmentType.COLOR_ATTACHMENT].texture.setActive(0);
+                    program.setUniformInt(0,0);
+                }
+            }
+        }*/
 	}
 
     
@@ -165,7 +264,6 @@ class Material(UserDataVarTypes[string] uniforms)
         textureAtlas.setActive();
         textureAtlas.textureDesc = textures.settings;
         Texture2D[] textures;
-        FrameBuffer*[] frameBuffers;
 		int sumWidth = 0;
         int sumHeight = 0;
         vec4*[] tilingOffsets;
@@ -188,17 +286,6 @@ class Material(UserDataVarTypes[string] uniforms)
                     
 
 				}
-                static if(isFrameBuffer!(attribute))
-                {
-                    if(__traits(getMember,this.textures,member) !is null)
-                    {
-                        frameBuffers ~= __traits(getMember,this.textures,member);
-                        tilingOffsets ~= &__traits(getMember,this.layout,member);
-                        sumWidth +=   __traits(getMember, this.textures, member).width;
-                        sumHeight += __traits(getMember, this.textures, member).height;
-
-                    }
-                }
 			}
 		}
         
@@ -206,7 +293,7 @@ class Material(UserDataVarTypes[string] uniforms)
         int textureAtlasHeight = cast(int)(sumHeight * 1.5);
         Logger.LogInfo("Createing atlas texture size (%d,%d)",textureAtlasWidth,textureAtlasHeight);
         auto sortedTextures = textures.sort!((t1, t2) => (t1.w * t1.h) > (t2.w * t2.h));
-        auto sortedFrameBuffers = frameBuffers.sort!((s1, s2) => (s1.width * s1.height) > (s2.width * s2.height));
+    
         int totalWidth = 0;
         int totalHeight = 0;
         int rowWidth = 0;
@@ -252,28 +339,7 @@ WriteImage:
 
 		}
 
-        foreach(index, framebuffer ; sortedFrameBuffers.enumerate(0))
-        {
-WriteFrameBuffer:
-            if(framebuffer.width + rowWidth < cast(int) textureAtlas.width)
-            {
-                framebuffer.copyToTexture2D(textureAtlas,0,rowWidth,totalHeight,framebuffer.width,framebuffer.height);
-                *tilingOffsets[index] = calculateTilingOffset(framebuffer.width, framebuffer.height);
-                if(cast(int)framebuffer.width > rowWidth)
-                {
-                    rowHeight = framebuffer.height;
-                }
-                rowWidth += framebuffer.width;
-            }
-            else
-            {
-                totalHeight += rowHeight;
-                rowWidth = 0;
-                goto WriteFrameBuffer;
-            }
-            
-            
-        }
+
        
 	}
 
@@ -283,7 +349,7 @@ WriteFrameBuffer:
     }
     void updateAtlas(FrameBuffer* fb, vec4 tilingOffset)
     {
-        fb.copyToTexture2D(textureAtlas,0,cast(int)tilingOffset.z * textureAtlas.width,cast(int)tilingOffset.w * textureAtlas.height,fb.width,fb.height);
+        
     }
    
 
