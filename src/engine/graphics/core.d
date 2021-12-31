@@ -5,7 +5,7 @@ import realm.engine.graphics.opengl;
 import realm.engine.asset;
 
 alias ShaderType = GShaderType;
-alias FrameBufferAttachment = GFrameBufferAttachment;
+alias FrameBufferAttachmentType = GFrameBufferAttachmentType;
 alias TextureFilterfunc = GTextureFilterFunc;
 alias TextureWrapFunc = GTextureWrapFunc;
 alias TextureType = GTextureType;
@@ -14,6 +14,11 @@ alias Shader = GShader;
 alias ShaderProgram = GShaderProgram;
 alias SamplerObject = GSamplerObject;
 alias State = GState;
+alias FrameBuffer = GFrameBuffer;
+alias FrameBufferAttachment = GFrameBufferAttachment;
+alias FrameBufferTarget = GFrameBufferTarget;
+alias DrawBufferTarget = GDrawBufferTarget;
+alias FrameMask = GFrameMask;
 enum VertexType : int
 {
 	FLOAT = 0x4011,
@@ -27,7 +32,8 @@ enum UserDataVarTypes : int
 	VECTOR = VertexType.FLOAT4,
 	MATRIX = 0x4101,
 	FLOAT = VertexType.FLOAT,
-	TEXTURE2D = 0x101F
+	TEXTURE2D = 0x101E,
+	FRAMEBUFFER = 0x101F
 
 	
 

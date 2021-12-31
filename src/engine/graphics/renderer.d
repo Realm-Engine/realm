@@ -3,12 +3,16 @@ import realm.engine.graphics.batch;
 import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.core;
 import realm.engine.core;
+import realm.engine.app;
 import realm.engine.graphics.material;
 import gl3n.linalg;
 import std.container.array;
 import std.variant;
 import std.range;
-
+import std.typecons;
+import std.meta;
+alias ScreenMaterialLayout = Alias!(["screenTexture" : UserDataVarTypes.FRAMEBUFFER]);
+alias ScreenMaterial = Alias!(Material!(ScreenMaterialLayout));
 
 class Renderer
 {
@@ -21,8 +25,9 @@ class Renderer
 	VertexAttribute[] vertex3DAttributes;
 	private RealmGlobalData globalData;
 	private Camera* camera;
- 
-  
+	private FrameBuffer!([FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT]) mainFrameBuffer;
+	private ShaderProgram screenShader;
+	private ScreenMaterial screenMaterial;
 
 	@property activeCamera(Camera* cam)
 	{
@@ -48,6 +53,10 @@ class Renderer
 		vertex3DAttributes ~= texCoord;
 		vertex3DAttributes ~= normal;
 		vertex3DAttributes ~= tangent;
+		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
+		mainFrameBuffer.create(windowSize[0],windowSize[1]);
+		screenMaterial = new ScreenMaterial;
+		screenMaterial.textures.screenTexture = mainFrameBuffer.fbAttachments[FrameBufferAttachmentType.COLOR_ATTACHMENT].texture;
 
 	}
 
@@ -103,6 +112,9 @@ class Renderer
 
 	void update()
 	{
+		mainFrameBuffer.refresh();
+		mainFrameBuffer.bind(FrameBufferTarget.DRAW);
+		drawBuffers([DrawBufferTarget.COLOR]);
 		GraphicsSubsystem.clearScreen();
 		if(camera !is null)
 		{
@@ -115,6 +127,8 @@ class Renderer
 		{
 			batch.drawBatch();
 		}
+		mainFrameBuffer.unbind(FrameBufferTarget.DRAW );
+		mainFrameBuffer.blitToScreen(FrameMask.COLOR );
 
 
 		

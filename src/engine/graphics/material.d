@@ -28,7 +28,7 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
                     mixin("%s %s;".format("float", uniform));
                 }
 
-                static if (uniforms[uniform] == UserDataVarTypes.VECTOR || uniforms[uniform] == UserDataVarTypes.TEXTURE2D )
+                static if (uniforms[uniform] == UserDataVarTypes.VECTOR || uniforms[uniform] == UserDataVarTypes.TEXTURE2D)
                 {
                     mixin("%s %s;".format("vec4", uniform));
                 }
@@ -46,7 +46,11 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
                 static if (uniforms[uniform] == UserDataVarTypes.TEXTURE2D)
                 {
 
-                    mixin("@(\"Sampler\") %s %s;".format("Texture2D", uniform));
+                    mixin("@(\"Texture\") %s %s;".format("Texture2D", uniform));
+                }
+                static if(uniforms[uniform] == UserDataVarTypes.FRAMEBUFFER)
+                {
+                    mixin("%s %s;".format("SamplerObject!(TextureType.TEXTURE2D)", uniform));
                 }
             }
         }
@@ -59,7 +63,7 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
 enum bool isMaterial(T) = (__traits(hasMember, T, "shaderStorageBuffer") == true && __traits(hasMember, T, "textures") == true && __traits(hasMember, T, "layout") == true);
 enum texturesMembers(T) = (__traits(allMembers, T.Textures));
 enum texturesAttributes(T, alias Member) = (__traits(getAttributes, __traits(getMember, T.Textures, Member)));
-enum isSampler(alias T) = (T == "Sampler");
+enum isTexture(alias T) = (T == "Texture");
 
 class Material(UserDataVarTypes[string] uniforms)
 {
@@ -169,7 +173,7 @@ class Material(UserDataVarTypes[string] uniforms)
         {
             static foreach (attribute; texturesAttributes!(UniformLayout, member))
             {
-                static if (isSampler!(attribute))
+                static if (isTexture!(attribute))
                 {
                     
                     if(__traits(getMember, this.textures, member) !is null)

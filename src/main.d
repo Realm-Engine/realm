@@ -6,7 +6,7 @@ import realm.game;
 int main()
 {
 
-	RealmGame game = new RealmGame(800,600,"Realm!");
+	RealmGame game = new RealmGame(1280,720,"Realm!");
 
 	game.run();
 	scope(exit)

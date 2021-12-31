@@ -269,29 +269,91 @@ class GShaderProgram
 
 }
 
-struct FrameBuffer(GFrameBufferStorage storage, GFrameBufferAttachment attachment)
+struct GFrameBufferAttachment
+{
+    GSamplerObject!(GTextureType.TEXTURE2D) texture;
+    this(GFrameBufferAttachmentType type,int width, int height)
+    {
+        texture.create();
+        TextureDesc desc;
+        desc.wrap = GTextureWrapFunc.CLAMP_TO_EDGE;
+        desc.filter = GTextureFilterFunc.LINEAR;
+        if(type == GFrameBufferAttachmentType.COLOR_ATTACHMENT)
+        {
+            desc.fmt = GImageFormat.RGB;
+            
+        }
+        else if(type == GFrameBufferAttachmentType.DEPTH_ATTACHMENT)
+        {
+            desc.fmt = GImageFormat.DEPTH;
+
+        }
+        else if(type == GFrameBufferAttachmentType.DEPTH_STENCIL_ATTACHMENT)
+        {
+            desc.fmt = GImageFormat.DEPTH_STENCIL;
+        }
+        texture.textureDesc = desc;
+        texture.store(width,height);
+        texture.uploadImage(0,0,null);
+    }
+}
+
+struct GFrameBuffer( GFrameBufferAttachmentType[] attachmentTypes)
 {
     mixin OpenGLObject;
-
-    void create(size_t width, size_t height)
+    GFrameBufferAttachment[GFrameBufferAttachmentType] fbAttachments;
+    private int width;
+    private int height;
+    void create(int width, int height)
     {
-        glGenFramebuffers(1, &this);
+        this.width = width;
+        this.height = height;
+        glGenFramebuffers(1, &id);
+        glBindFramebuffer(GL_FRAMEBUFFER,id);
+        foreach (type; attachmentTypes)
+        {
+            GFrameBufferAttachment attachment =  GFrameBufferAttachment(type,width,height);
+            
+            fbAttachments[type]= attachment;
+            attachment.texture.bind();
+            glFramebufferTexture2D(GL_FRAMEBUFFER,type,GL_TEXTURE_2D,attachment.texture.ID(),0);
+            attachment.texture.unbind();
+        }
+        Logger.Assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE,"Framebuffer %d not complete error: %d",id, glCheckFramebufferStatus(GL_FRAMEBUFFER));
+        glBindFramebuffer(GL_FRAMEBUFFER,0);
+
     }
 
-    void bind()
+    void bind(GFrameBufferTarget target)
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, this);
+        glBindFramebuffer(target, this);
     }
 
-    void unbind()
+    void unbind(GFrameBufferTarget target)
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(target, 0);
+    }
+
+    void blitToScreen(GFrameMask mask)
+    {
+        bind(FrameBufferTarget.READ);
+        glBindFramebuffer(FrameBufferTarget.DRAW,0);
+        glBlitFramebuffer(0,0,width,height,0,0,width,height,mask,GL_LINEAR);
+    }
+
+    void refresh()
+    {
+        foreach(type; attachmentTypes)
+        {
+            fbAttachments[type].texture.uploadImage(0,0,null);
+        }
     }
 
     ~this()
     {
-        glDeleteFramebuffers(1, &this);
+        glDeleteFramebuffers(1, &id);
     }
+
 
 }
 
@@ -396,6 +458,15 @@ struct GSamplerObject(GTextureType target)
 
     }
 
+    void bind()
+    {
+        glBindTexture(target,id);
+    }
+    void unbind()
+    {
+        glBindTexture(target,0);
+    }
+
     static if (target == GTextureType.TEXTURE2D)
     {
         void store(int width, int height)
@@ -407,7 +478,7 @@ struct GSamplerObject(GTextureType target)
             glGenerateMipmap(target);
             this.width = width;
             this.height = height;
-            glPixelStorei(GL_PACK_ALIGNMENT, 1);
+            //glPixelStorei(GL_PACK_ALIGNMENT, 1);
             glBindTexture(target, 0);
 
         }
@@ -478,12 +549,12 @@ enum GShaderType : GLenum
 
 }
 
-enum GFrameBufferAttachment : GLenum
+enum GFrameBufferAttachmentType : GLenum
 {
     COLOR_ATTACHMENT = GL_COLOR_ATTACHMENT0,
     DEPTH_ATTACHMENT = GL_DEPTH_ATTACHMENT,
     STENCIL_ATTACHMENT = GL_STENCIL_ATTACHMENT,
-    DPETH_STENCIL_ATTACHMENT = GL_DEPTH_STENCIL_ATTACHMENT
+    DEPTH_STENCIL_ATTACHMENT = GL_DEPTH_STENCIL_ATTACHMENT
 }
 
 enum GTextureFilterFunc : GLenum
@@ -491,6 +562,13 @@ enum GTextureFilterFunc : GLenum
     NEAREST = GL_NEAREST,
     LINEAR = GL_LINEAR
 
+}
+
+enum GFrameBufferTarget : GLenum
+{
+    FRAMEBUFFER = GL_FRAMEBUFFER,
+    DRAW = GL_DRAW_FRAMEBUFFER,
+    READ = GL_READ_FRAMEBUFFER
 }
 
 enum GTextureWrapFunc : GLenum
@@ -518,6 +596,23 @@ enum GImageFormat : GLenum
     DEPTH_STENCIL = GL_DEPTH_STENCIL,
     DEPTH = GL_DEPTH_COMPONENT
 
+}
+
+enum GDrawBufferTarget : GLenum
+{
+    NONE = GL_NONE,
+    FRONT_LEFT = GL_FRONT_LEFT,
+    FRONT_RIGHT = GL_FRONT_RIGHT,
+    BACK_LEFT  = GL_BACK_LEFT,
+    BACK_RIGHT = GL_BACK_RIGHT,
+    COLOR = GL_COLOR_ATTACHMENT0
+}
+
+enum GFrameMask : GLenum
+{
+    COLOR = GL_COLOR_BUFFER_BIT,
+    DEPTH = GL_DEPTH_BUFFER_BIT,
+    STENCIL = GL_STENCIL_BUFFER_BIT
 }
 
 GLenum imageFormatToInternalFormat(ImageFormat format)
@@ -617,4 +712,9 @@ void enable(GState state)
 void disable(GState state)
 {
     glDisable(state);
+}
+
+static void gDrawBuffers(GDrawBufferTarget[] targets)
+{
+    glDrawBuffers(cast(int)targets.length,cast(const(GLenum)*)targets.ptr);
 }
