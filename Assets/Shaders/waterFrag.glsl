@@ -19,6 +19,7 @@ layout(std140, binding = 0) uniform _reGloblaData
 struct ObjectData
 {
 	vec4 color;
+	vec4 mainTexture;
 	float oceanLevel;
 };
 

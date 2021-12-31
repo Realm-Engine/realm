@@ -1,14 +1,12 @@
 module realm.ocean;
-import realm.engine.ecs;
 import realm.engine.core;
-import realm.engine.asset;
 import realm.engine.graphics.core;
 import realm.engine.graphics.material;
 import realm.engine.graphics.renderer;
 import std.meta;
 import realm.util;
 import std.file : read;
-alias WaterMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR, "oceanLevel" : UserDataVarTypes.FLOAT]);
+alias WaterMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR, "screenTexture" : UserDataVarTypes.FRAMEBUFFER,"oceanLevel" : UserDataVarTypes.FLOAT]);
 alias WaterMaterial = Alias!(Material!WaterMaterialLayout);
 class Ocean
 {
@@ -32,6 +30,7 @@ class Ocean
 		material = new WaterMaterial;
 		material.color = vec4(0,0,0.7,1.0);
 		material.oceanLevel = oceanLevel;
+		material.textures.screenTexture = Renderer.getMainFrameBuffer();
 		material.setShaderProgram(shaderProgram);
 		material.packTextureAtlas();
 		
@@ -42,6 +41,7 @@ class Ocean
 
 	void draw(Renderer renderer)
 	{
+		material.updateAtlas(material.textures.screenTexture,material.screenTexture);
 		renderer.submitMesh!(WaterMaterial)(mesh,transform,material);
 	}
 

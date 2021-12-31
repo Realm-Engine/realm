@@ -2,20 +2,11 @@ module realm.game;
 import realm.engine.app;
 import std.stdio;
 import realm.engine.core;
-import gl3n.linalg;
 import realm.entity;
 import realm.engine.graphics.core;
 import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.renderer;
-import realm.engine.input;
-import std.file : read;
 import realm.engine.graphics.material;
-import std.meta;
-import realm.engine.ecs;
-import realm.engine.asset;
-import imagefmt;
-import realm.engine.logging;
-import realm.engine.input;
 import realm.player;
 import std.math.trigonometry;
 import std.math.constants : PI;
@@ -71,6 +62,7 @@ class RealmGame : RealmApp
 		world.update();
 		world.draw(renderer);
 		renderer.update();
+		
 
 	}
 

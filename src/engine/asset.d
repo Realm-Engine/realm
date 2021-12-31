@@ -10,6 +10,8 @@ private
 	import std.string;
 	import std.stdio;
 	import std.file;
+	import realm.engine.graphics.core;
+	import realm.engine.graphics.material;
 }
 
 IFImage readImageBytes(string path)
@@ -51,4 +53,14 @@ Image readImage(string path)
 			break;
 	}
 	return texture;
+}
+
+
+ShaderProgram loadShaderProgram(Mat)(string path)
+{
+	static assert(isMaterial(Mat) == true);
+
+	
+
+
 }

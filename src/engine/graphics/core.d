@@ -4,6 +4,11 @@ import std.format;
 import realm.engine.graphics.opengl;
 import realm.engine.asset;
 
+public
+{
+	import realm.engine.graphics.shadered;
+}
+
 alias ShaderType = GShaderType;
 alias FrameBufferAttachmentType = GFrameBufferAttachmentType;
 alias TextureFilterfunc = GTextureFilterFunc;

@@ -30,8 +30,6 @@ layout (std430,binding = 1) buffer _perObjectData
 
 uniform sampler2D atlasTextures[16];
 
-out vec4 outColor; 
-in vec4 Color;
 in RESurfaceData
 {
 	vec3 posWS;
@@ -72,9 +70,8 @@ vec3 calculateDiffuse(vec3 normal)
 
 }
 
-void main()
-{ 
-	
+vec4 frag()
+{
 	float height = texture(atlasTextures[RESurfaceDataIn.objectId],samplerUV(RESurfaceDataIn.objectData.heightMap)).x;
 	float difference = abs(height - RESurfaceDataIn.objectData.oceanLevel);
 	vec4 terrainColor= vec4(1 - difference,1.0,0.1,1.0);
@@ -82,7 +79,15 @@ void main()
 	//outColor = vec4(height,1-height,0,1.0);
 	vec3 normal = grayToNormal(atlasTextures[RESurfaceDataIn.objectId],samplerUV(RESurfaceDataIn.objectData.heightMap),0.0071358);
     normal = normal * 2.0 + 1;
-	outColor =  vec4(calculateDiffuse(normal),1.0) * terrainColor;
-	
-	
+	return vec4(calculateDiffuse(normal),1.0) * terrainColor;
+
+
+}
+
+
+out vec4 FragColor; 
+
+void main()
+{ 
+	FragColor = frag();
 }

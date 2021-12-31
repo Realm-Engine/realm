@@ -1,7 +1,6 @@
 module realm.entity;
 import realm.engine.core;
 import realm.engine.graphics.material;
-import realm.engine.ecs;
 import std.format;
 class Entity(Mat)
 {

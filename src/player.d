@@ -1,8 +1,5 @@
 module realm.player;
 import realm.engine.core;
-import realm.engine.ecs;
-import realm.engine.input;
-import realm.engine.logging;
 import realm.arcballcamera;
 import std.stdio;
 import realm.engine.app;

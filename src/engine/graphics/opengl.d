@@ -298,16 +298,24 @@ struct GFrameBufferAttachment
     }
 }
 
-struct GFrameBuffer( GFrameBufferAttachmentType[] attachmentTypes)
+struct GFrameBuffer
 {
     mixin OpenGLObject;
     GFrameBufferAttachment[GFrameBufferAttachmentType] fbAttachments;
-    private int width;
-    private int height;
-    void create(int width, int height)
+    private int fbWidth;
+    private int fbHeight;
+    @property width()
     {
-        this.width = width;
-        this.height = height;
+        return fbWidth;
+    }
+    @property height()
+    {
+        return fbHeight;
+    }
+    void create(GFrameBufferAttachmentType[] attachmentTypes)(int width, int height)
+    {
+        this.fbWidth = width;
+        this.fbHeight = height;
         glGenFramebuffers(1, &id);
         glBindFramebuffer(GL_FRAMEBUFFER,id);
         foreach (type; attachmentTypes)
@@ -343,10 +351,20 @@ struct GFrameBuffer( GFrameBufferAttachmentType[] attachmentTypes)
 
     void refresh()
     {
-        foreach(type; attachmentTypes)
+        foreach(attachment; fbAttachments)
         {
-            fbAttachments[type].texture.uploadImage(0,0,null);
+            attachment.texture.uploadImage(0,0,null);
         }
+    }
+
+    void copyToTexture2D(GSamplerObject!(TextureType.TEXTURE2D) texture, int level,int xoffset, int yoffset, int width, int height)
+    {
+        bind(GFrameBufferTarget.READ);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        texture.bind();
+        glCopyTexSubImage2D(GL_TEXTURE_2D,level,xoffset,yoffset,0,0,width,height);
+        texture.unbind();
+        unbind(GFrameBufferTarget.READ);
     }
 
     ~this()

@@ -30,9 +30,6 @@ class GraphicsSubsystem
 
 	}
 
-	static this()
-	{
-	}
 	
 	static void initialze()
 	{

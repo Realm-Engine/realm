@@ -5,8 +5,6 @@ public import derelict.opengl3.gl3;
 import std.conv;
 import std.meta;
 import realm.engine.core;
-import realm.engine.logging;
-import realm.engine.input;
 import std.typecons;
 class RealmApp
 {

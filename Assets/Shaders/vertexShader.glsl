@@ -69,11 +69,13 @@ vec2 samplerUV(vec4 to)
 	return (v_TexCoord * vec2(to.x,to.y)) + vec2(to.z,to.w);
 }
 
+#define objectTexture atlasTextures[gl_DrawID]
+
 vec4 vert(REVertexData IN)
 {
 	
 	
-	vec4 heightSample =texture(atlasTextures[gl_DrawID],samplerUV(IN.objectData.heightMap));
+	vec4 heightSample =texture(objectTexture,samplerUV(IN.objectData.heightMap));
 	float height = (heightSample.x);
 	//height = clamp(height,IN.objectData.oceanLevel,1.0);
 	height = height * IN.objectData.heightStrength;
