@@ -37,16 +37,10 @@ class World
 		WorldMaterial.reserve(1);
 		//generateCube(8);
 		meshData = generateFace(vec3(0,1,0),24);
-
+		
 		transform.position = vec3(0,-2,0);
 		transform.scale = vec3(5,1,3.5);
-		auto vertexShader = read("./Assets/Shaders/vertexShader.glsl");
-		auto fragmentShader = read("./Assets/Shaders/fragShader.glsl");
-		
-
-		Shader vertex = new Shader(ShaderType.VERTEX,cast(string) vertexShader,"Vetex Shader");
-		Shader fragment = new Shader(ShaderType.FRAGMENT,cast(string)fragmentShader,"Fragment Shader");
-		shaderProgram = new ShaderProgram(vertex,fragment,"MyProgram");
+		shaderProgram = loadShaderProgram("./Assets/Shaders/world.shader","World shader");
 		material = new WorldMaterial;
 		material.heightStrength = 0.5;
 		material.oceanLevel = 0.225;

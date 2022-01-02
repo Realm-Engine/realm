@@ -20,12 +20,8 @@ class Ocean
 		WaterMaterial.initialze();
 		WaterMaterial.reserve(1);
 
-		auto waterVertexShader = read("Assets/Shaders/waterVertex.glsl");
-		auto waterFragmentShader = read("Assets/Shaders/waterFrag.glsl");
-		Shader waterVertex = new Shader(ShaderType.VERTEX,cast(string)waterVertexShader,"Water vertex");
-		Shader waterFragment = new Shader(ShaderType.FRAGMENT,cast(string)waterFragmentShader,"Water fragment");
 		
-		shaderProgram = new ShaderProgram(waterVertex,waterFragment,"MyProgram");
+		shaderProgram = loadShaderProgram("Assets/Shaders/water.shader","Water");
 		
 		material = new WaterMaterial;
 		material.color = vec4(0,0,0.7,1.0);

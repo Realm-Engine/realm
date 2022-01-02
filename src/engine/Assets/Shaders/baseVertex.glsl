@@ -1,3 +1,16 @@
+
+layout(location = 0) in vec3 v_Position;
+layout(location = 1) in vec2 v_TexCoord;
+layout(location =2) in vec3 v_Normal;
+layout(location =3) in vec3 v_Tangent;
+
+
+layout (std430,binding = 1) buffer _perObjectData
+{
+	ObjectData data[];
+};
+
+
 out RESurfaceData
 {
 	vec3 posWS;
@@ -10,6 +23,33 @@ out RESurfaceData
 
 } RESurfaceDataOut;
 
+
+struct REVertexData
+{
+	vec3 position;
+	vec2 texCoord;
+	vec3 normal;
+	ObjectData objectData;
+	int objectId;
+	vec3 tangent;
+
+};
+
+
+vec4 vertex(REVertexData IN);
+
+mat3 calculateTBN()
+{
+	vec3 T = normalize(v_Tangent);
+	vec3 N = normalize(v_Normal);
+	vec3 B = normalize(cross(N,T));
+	return mat3(T,B,N);
+
+
+}
+
+#define objectTexture atlasTextures[gl_DrawID]
+
 void main()
 {
 	REVertexData vertexData;
@@ -19,6 +59,6 @@ void main()
 	vertexData.normal = v_Normal;
 	vertexData.objectData = data[gl_DrawID];
 	vertexData.objectId = gl_DrawID;
-	gl_Position = vert(vertexData);
+	gl_Position = vertex(vertexData);
 	
 }

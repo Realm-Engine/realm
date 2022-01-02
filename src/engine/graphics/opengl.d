@@ -158,7 +158,7 @@ class GShader
 
     void compile(string source)
     {
-        
+        writeln("Name: " ~name);
         Logger.LogInfo("Compiling shader %s",name);
 
         id = glCreateShader(type);

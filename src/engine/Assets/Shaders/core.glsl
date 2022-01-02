@@ -11,41 +11,19 @@ layout(std140, binding = 0) uniform _reGloblaData
 
 };
 
-struct REVertexData
+
+vec3 calculateDiffuse(vec3 normal)
 {
-	vec3 position;
-	vec2 texCoord;
-	vec3 normal;
-	ObjectData objectData;
-	int objectId;
-	vec3 tangent;
-
-};
-
-layout (std430,binding = 1) buffer _perObjectData
-{
-	ObjectData data[];
-};
-
-
-
-
-mat3 calculateTBN()
-{
-	vec3 T = normalize(v_Tangent);
-	vec3 N = normalize(v_Normal);
-	vec3 B = normalize(cross(N,T));
-	return mat3(T,B,N);
-
+	float amount = max(dot(normal,vec3(normalize(-mainLight.direction))),0.0);
+	return amount * vec3(mainLight.color);
 
 }
 
 
-vec2 samplerUV(vec4 to)
+vec2 samplerUV(vec4 to,vec2 texCoord)
 {
-	return (v_TexCoord * vec2(to.x,to.y)) + vec2(to.z,to.w);
+	return (texCoord * vec2(to.x,to.y)) + vec2(to.z,to.w);
 }
 
 uniform sampler2D atlasTextures[16];
 
-#define objectTexture atlasTextures[gl_DrawID]

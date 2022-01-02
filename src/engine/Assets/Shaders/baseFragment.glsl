@@ -1,3 +1,11 @@
+
+
+layout (std430,binding = 1) buffer _perObjectData
+{
+	ObjectData data[];
+};
+
+
 in RESurfaceData
 {
 	vec3 posWS;
@@ -9,8 +17,10 @@ in RESurfaceData
 	mat3 TBN;
 
 } RESurfaceDataIn;
-
+#define objectTexture atlasTextures[RESurfaceDataIn.objectId]
+out vec4 FragColor;
+vec4 fragment();
 void main()
 { 
-	FragColor = frag();
+	FragColor = fragment();
 }
