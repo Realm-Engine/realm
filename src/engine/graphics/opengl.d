@@ -148,6 +148,7 @@ class GShader
     private GShaderType type;
     string sourceHash;
     string nameHash;
+    string source;
     ubyte[] checkCache(string source,string name)
     {
 
@@ -179,8 +180,9 @@ class GShader
         {
             loadShaderBinary();
         }
-        
-        compile(shaderSource);
+        this.source = shaderSource;
+        id = glCreateShader(type);
+        //compile(shaderSource);
         
     }
 
@@ -207,11 +209,11 @@ class GShader
         
     }
 
-    void compile(string source)
+    void compile()
     {
         Logger.LogInfo("Compiling shader %s",name);
 
-        id = glCreateShader(type);
+        //id = glCreateShader(type);
         const(char*)[] strings;
         strings ~= source.toStringz();
         glShaderSource(id, 1, strings.ptr, null);
@@ -297,7 +299,10 @@ class GShaderProgram
         }
         else
         {
+            shaders[0].compile();
+            shaders[1].compile();
             glLinkProgram(this);
+            
             foreach (shader; shaders)
             {
                 glDeleteShader(shader);
