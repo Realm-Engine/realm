@@ -34,3 +34,6 @@ bin/
 Makefile
 *.Makefile
 
+#realm
+/Cache
+
