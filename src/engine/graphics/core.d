@@ -2,12 +2,12 @@ module realm.engine.graphics.core;
 import gl3n.linalg;
 import std.format;
 import realm.engine.graphics.opengl;
-import realm.engine.asset;
-
-public
+private
 {
-	import realm.engine.graphics.shadered;
+	import realm.engine.asset;
 }
+
+
 
 alias ShaderType = GShaderType;
 alias FrameBufferAttachmentType = GFrameBufferAttachmentType;

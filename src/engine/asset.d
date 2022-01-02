@@ -11,9 +11,19 @@ private
 	import std.stdio;
 	import std.file;
 	import std.array;
-	import realm.engine.graphics.core;
+	import realm.engine.graphics.core : Shader,ShaderProgram, ShaderType;
 	import realm.engine.graphics.material;
 	import std.algorithm.comparison : equal;
+	import realm.engine.logging;
+}
+
+static this()
+{
+	if(!exists("Cache"))
+	{
+		Logger.LogInfo("Creating cache folder");
+		mkdir("Cache");
+	}
 }
 
 IFImage readImageBytes(string path)
@@ -68,19 +78,20 @@ ShaderProgram loadShaderProgram(string path,string name)
 		Vertex,
 		None
 	}
+
 	ShaderProgram program;
 	//string shader = readText(path);
 	auto file = File(path);
 	auto range = file.byLine();
-	string sharedData ="";
-	string fragmentData = "";
-	string vertexData = "";
+
 	CurrentProcess current = CurrentProcess.None;
 	string baseVertex = readText("./src/engine/Assets/Shaders/baseVertex.glsl");
 	string baseFragment = readText("./src/engine/Assets/Shaders/baseFragment.glsl");
 	string core = readText("./src/engine/Assets/Shaders/core.glsl");
-	string vertexName;
-	string fragmentName;
+
+	string sharedData ="";
+	string fragmentData = "";
+	string vertexData = "";
 	foreach (line; range)
 	{
 		//writeln(line);
@@ -97,14 +108,14 @@ ShaderProgram loadShaderProgram(string path,string name)
 			else if(args[1].strip() == "vertex")
 			{
 				current = CurrentProcess.Vertex;
-				vertexName = cast(string)args[2].strip();
+
 				
 			}
 			else if(args[1].strip() == "fragment")
 			{
 				current = CurrentProcess.Fragment;
 				
-				fragmentName = cast(string)args[2].strip();
+
 				
 			}
 			continue;
@@ -129,8 +140,9 @@ ShaderProgram loadShaderProgram(string path,string name)
 
 	string vertexText = "#version 460 core\n"~sharedData ~"\n" ~baseVertex ~ "\n" ~core ~ vertexData;
 	string fragmentText = "#version 460 core\n" ~ sharedData ~"\n" ~baseFragment ~ "\n" ~ core  ~ "\n"  ~ fragmentData;
-	Shader vertexShader = new Shader(ShaderType.VERTEX,vertexText,vertexName);
-	Shader fragmentShader = new Shader(ShaderType.FRAGMENT,fragmentText,fragmentName);
+
+	Shader vertexShader = new Shader(ShaderType.VERTEX,vertexText, name ~ " Vertex");
+	Shader fragmentShader = new Shader(ShaderType.FRAGMENT,fragmentText,name ~ " Fragment");
 	program = new ShaderProgram(vertexShader,fragmentShader,name);
 
 	return program;

@@ -25,6 +25,6 @@ vec4 vertex(REVertexData IN)
 vec4 fragment()
 {
 	vec4 color = RESurfaceDataIn.objectData.color;
-	color.w = 0.5f;
+	color.w = 0.6f;
 	return color;
 }

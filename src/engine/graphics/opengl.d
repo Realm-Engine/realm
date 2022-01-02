@@ -7,6 +7,9 @@ import std.string;
 import std.stdio;
 import realm.engine.graphics.core;
 import realm.engine.logging;
+import std.file ;
+import std.format;
+import std.digest.md;
 struct DrawElementsIndirectCommand
 {
     uint count;
@@ -16,10 +19,6 @@ struct DrawElementsIndirectCommand
     uint baseInstance;
 }
 
-static this()
-{
-
-}
 
 mixin template OpenGLObject()
 {
@@ -147,18 +146,69 @@ class GShader
     mixin OpenGLObject;
     private string name;
     private GShaderType type;
+    string sourceHash;
+    string nameHash;
+    ubyte[] checkCache(string source,string name)
+    {
+
+        if(!exists("./Cache/Shaders"))
+        {
+            Logger.LogInfo("Creating shader cache folder");
+            mkdir("Cache/Shaders");
+            
+        }
+        ubyte[] result;
+        auto md5 = new MD5Digest();
+
+        sourceHash = toHexString(md5.digest(source));
+        nameHash = toHexString(md5.digest(name));
+        string fileName = "./Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
+        if(exists(fileName))
+        {
+            result = cast(ubyte[])read(fileName);
+        }
+        return result;
+    }
 
     this(GShaderType type, string shaderSource, string name)
     {
         this.type = type;
         this.name = name;
+        ubyte[] binary = checkCache(shaderSource,name);
+        if(binary.length > 0)
+        {
+            loadShaderBinary();
+        }
+        
         compile(shaderSource);
+        
+    }
+
+    static int getNumSupportedShaderBinaryFormats()
+    {
+        int result;
+        glGetIntegerv(GL_NUM_SHADER_BINARY_FORMATS,&result);
+        return result;
+    }
+    //Finish
+    void loadShaderBinary()
+    {
+        Logger.LogInfo("Loading binary for shader %s",name);
+        id = glCreateShader(type);
+        int numFormats = getNumSupportedShaderBinaryFormats();
+        Logger.LogInfo("Num supported binary formats: %d",numFormats);
+        if(numFormats <= 0)
+        {
+            Logger.LogError("Loading shader binaries not supported on system");
+            return;
+        }
+        int format;
+        //glGetIntegeri_v(GL_PROGRAM_BINARY_FORMATS,0,&format);
         
     }
 
     void compile(string source)
     {
-        writeln("Name: " ~name);
         Logger.LogInfo("Compiling shader %s",name);
 
         id = glCreateShader(type);
@@ -189,6 +239,8 @@ class GShader
 
 }
 
+
+
 class GShaderProgram
 {
     mixin OpenGLObject;
@@ -202,10 +254,33 @@ class GShaderProgram
         glUseProgram(this);
     }
 
+    void loadProgramBinary(ubyte[]* binary)
+    {
+        int numFormats = getNumSupportedProgramBinaryFormats();
+        ubyte[] result;
+        if(numFormats <= 0)
+        {
+            Logger.LogError("Loading program binary not supported on system");
+            
+        }
+        else 
+        {
+            int length;
+            glGetProgramiv(id,GL_PROGRAM_BINARY_LENGTH,&length);
+            result.length = length;
+            int[] formats;
+            formats.length = numFormats;
+            int size;
+            glGetIntegerv(GL_PROGRAM_BINARY_FORMATS,formats.ptr);
+            glProgramBinary(id,cast(GLenum)formats[0],cast(void*)binary.ptr,cast(int)binary.length);
+        }
+    }
+
     this(GShader vertex, GShader fragment, string name)
     {
         id = glCreateProgram();
         this.name = name;
+
         shaders[0] = vertex;
         shaders[1] = fragment;
         foreach (shader; shaders)
@@ -213,10 +288,31 @@ class GShaderProgram
             glAttachShader(this, shader);
 
         }
-        glLinkProgram(this);
-        foreach (shader; shaders)
+        ubyte[] binaryCache = checkCache(vertex,fragment,name);
+        if(binaryCache.length > 0)
         {
-            glDeleteShader(shader);
+            Logger.LogInfo("Loading program %s from binary", name);
+            loadProgramBinary(&binaryCache);
+           
+        }
+        else
+        {
+            glLinkProgram(this);
+            foreach (shader; shaders)
+            {
+                glDeleteShader(shader);
+            }
+            
+            auto md5 = new MD5Digest();
+            string nameHash = toHexString(md5.digest(name));
+            string sourceHash = toHexString(md5.digest(vertex.sourceHash ~ fragment.sourceHash));
+            string fileName = "./Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
+            if(!exists(fileName))
+            {
+                Logger.LogInfo("Writing program binary %s to cache",name);
+                ubyte[] binary = getBinary();
+                std.file.write(fileName,binary);
+            }
         }
         char[256] result;
         int success;
@@ -226,12 +322,15 @@ class GShaderProgram
             glGetProgramInfoLog(this, 256, null, result.ptr);
             Logger.Assert(true,"Could not link program: %s\nError:%s",name, result);
         }
-
+        else
+        {
+            Logger.LogInfo("Program %s linked", name);
+        }
+        
         int numUniforms = 0;
         glGetProgramiv(this, GL_ACTIVE_UNIFORMS, &numUniforms);
         for (uint i = 0; i < numUniforms; i++)
         {
-
             int type;
             glGetActiveUniformsiv(this, 1, &i, GL_UNIFORM_TYPE, &type);
             if (type == GL_SAMPLER_2D)
@@ -244,11 +343,54 @@ class GShaderProgram
                 GLint location = glGetUniformLocation(this, uniformName.ptr);
                 samplerUniformCache[fromStringz(uniformName).idup] = location;
             }
-
         }
+    
 
     }
 
+    ubyte[] checkCache(GShader vertex, GShader fragment, string name)
+    {
+        auto md5 = new MD5Digest();
+        string nameHash = toHexString(md5.digest(name));
+        string sourceHash = toHexString(md5.digest(vertex.sourceHash ~ fragment.sourceHash));
+        string fileName = "./Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
+        ubyte[] result;
+        if(exists(fileName))
+        {
+            result = cast(ubyte[])read(fileName);
+        }
+        
+        return result;
+    }
+
+    ubyte[] getBinary()
+    {
+        int numFormats = getNumSupportedProgramBinaryFormats();
+        ubyte[] result;
+        if(numFormats <= 0)
+        {
+            Logger.LogError("Loading program binary not supported on system");
+            return result;
+
+        }
+        int length;
+        glGetProgramiv(id,GL_PROGRAM_BINARY_LENGTH,&length);
+        result.length = length;
+        int[] formats;
+        formats.length = numFormats;
+        int size;
+        glGetIntegerv(GL_PROGRAM_BINARY_FORMATS,formats.ptr);
+        glGetProgramBinary(id,cast(int)result.length,&size,cast(GLenum*)&formats[0],cast(void*)result.ptr);
+        return result;
+        
+    }
+
+    static int getNumSupportedProgramBinaryFormats()
+    {
+        int result;
+        glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS,&result);
+        return result;
+    }
     int uniformLocation(string uniform)
     {
         int* loc = (uniform in samplerUniformCache);
