@@ -29,6 +29,7 @@ alias blendFunc = gBlendFunc;
 alias blendFuncSeperate = gBlendFuncSeperate;
 alias enable =gEnable;
 alias disable =gDisable;
+alias clear = gClear;
 enum VertexType : int
 {
 	FLOAT = 0x4011,
@@ -137,6 +138,7 @@ struct RealmGlobalData
   float[16] vp;
   float[4] mainLightDirection;
   float[4] mainLightColor;
+  float[16] lightSpaceMatrix;
   
 }
 

@@ -1,6 +1,7 @@
 module realm.engine.core;
-
+import realm.engine.graphics.core;
 import std.stdio;
+import realm.engine.app;
 public
 {
 	import gl3n.linalg;
@@ -163,13 +164,13 @@ class Camera
 	Transform transform;
 	private float fieldOfView;
 	private vec2 size;
-	private float farPlane;
-	private float nearPlane;
+	float farPlane;
+	float nearPlane;
 	private CameraProjection projectionType;
 	private mat4 vp;
 	private mat4 cameraTransformation;
-	private float yaw;
-	private float pitch;
+	float yaw;
+	float pitch;
 	//Front
 	//Maybe goes in transform?
 	
@@ -221,6 +222,9 @@ class Camera
 			case CameraProjection.PERSPECTIVE:
 				proj = mat4.perspective(size.x,size.y,fieldOfView,nearPlane,farPlane);
 				break;
+			case CameraProjection.ORTHOGRAPHIC:
+				proj = mat4.orthographic(-size.x,size.x,size.y,-size.y,nearPlane,farPlane);
+				break;
 			default:
 				proj = mat4.perspective(size.x,size.y,fieldOfView,nearPlane,farPlane);
 				break;
@@ -251,6 +255,14 @@ class Camera
 		translation.matrix[3] = vec4(-transform.position.x,-transform.position.y,-transform.position.z,1.0).vector;
 		cameraTransformation = lookMat;
 	}
+	void cameraLookAt(vec3 x, vec3 y, vec3 z)
+	{
+		mat4 lookMat = mat4(mat4.look_at( x,y,z));
+		lookMat.matrix[3] = vec4(0,0,0,1).vector;
+		mat4 translation = mat4.identity;
+		translation.matrix[3] = vec4(-transform.position.x,-transform.position.y,-transform.position.z,1.0).vector;
+		cameraTransformation = lookMat;
+	}
 
 	
 
@@ -260,8 +272,13 @@ class Camera
 struct DirectionalLight
 {
 	Transform transform;
-	vec3 color;
-	
-	
-  
+	vec3 color; 
+	FrameBuffer shadowFrameBuffer; 
+	void createFrameBuffer()
+	{
+		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
+		shadowFrameBuffer.create!([FrameBufferAttachmentType.DEPTH_ATTACHMENT,FrameBufferAttachmentType.COLOR_ATTACHMENT])(1024,1024);
+
+	}
+
 }

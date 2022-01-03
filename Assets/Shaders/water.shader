@@ -1,4 +1,5 @@
 #shader shared
+#define OBJECT_DATA
 struct ObjectData
 {
 	vec4 color;
@@ -17,6 +18,7 @@ vec4 vertex(REVertexData IN)
 	RESurfaceDataOut.posWS = v_Position;
 	RESurfaceDataOut.texCoord = IN.texCoord;
 	RESurfaceDataOut.normal = IN.normal;
+    RESurfaceDataOut.lightSpacePosition = transpose(lightSpaceMatrix) * vec4(position,1.0);
 	return RESurfaceDataOut.posCS;
 
 }

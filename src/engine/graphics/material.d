@@ -70,7 +70,7 @@ enum isTexture(alias T) = (T == "Texture");
 enum isFrameBuffer(alias T) = (T == "FrameBuffer");
 enum isDepthTexture(alias T) = (T == "DepthTexture");
 enum isScreenTexture(alias T) = (T == "ScreenTexture");
-class Material(UserDataVarTypes[string] uniforms,int order = 0)
+class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
 {
     import std.format;
     import std.stdio;
@@ -89,7 +89,7 @@ class Material(UserDataVarTypes[string] uniforms,int order = 0)
     private SamplerObject!(TextureType.TEXTURE2D) textureAtlas;
     private static ShaderProgram program;
     private static Mesh*[] meshes;
-
+    private bool shadows;
     static int getOrder()
     {
         return order;
@@ -105,10 +105,18 @@ class Material(UserDataVarTypes[string] uniforms,int order = 0)
         textureAtlas.create();
         
         textureAtlas.slot = materialIndex;
-
+        shadows = true;
 		
     }
 
+    @property recieveShadows()
+    {
+        return shadows;
+    }
+    @property recieveShadows(bool shadows)
+    {
+        this.shadows = shadows;
+    }
     SamplerObject!(TextureType.TEXTURE2D) getTextureAtlas()
 	{
         return this.textureAtlas;
@@ -156,8 +164,11 @@ class Material(UserDataVarTypes[string] uniforms,int order = 0)
     void writeUniformData()
     {
         
-
+        Logger.Assert(storageBufferPtr !is null, "Shader storage buffer ptr is null");
+       
         *storageBufferPtr = layout;
+        
+        
 
     }
 
@@ -234,9 +245,9 @@ class Material(UserDataVarTypes[string] uniforms,int order = 0)
 
     void activateTextures()
 	{
-        
-        textureAtlas.setActive();
         program.setUniformInt(program.uniformLocation("atlasTextures[%d]".format(materialIndex)),materialIndex);
+        /*textureAtlas.setActive();
+        */
         
         /*static foreach(member; texturesMembers!(UniformLayout))
         {

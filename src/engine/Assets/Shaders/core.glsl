@@ -7,7 +7,7 @@ layout(std140, binding = 0) uniform _reGloblaData
 {
 	mat4 u_vp;
     DirectionalLight mainLight;
-        
+    mat4 lightSpaceMatrix;
 
 };
 
@@ -24,6 +24,7 @@ vec2 samplerUV(vec4 to,vec2 texCoord)
 {
 	return (texCoord * vec2(to.x,to.y)) + vec2(to.z,to.w);
 }
+
 
 uniform sampler2D atlasTextures[16];
 

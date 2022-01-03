@@ -17,7 +17,7 @@ class GraphicsSubsystem
 
 	private static ShaderBlock globalDataBuffer;
 	static State depthTest = State.None;
-
+	private static SamplerObject!(TextureType.TEXTURE2D) shadowMap;
 	
 	static void setClearColor(float r, float g, float b, bool normalize)
 	{
@@ -31,6 +31,18 @@ class GraphicsSubsystem
 
 	}
 
+	static SamplerObject!(TextureType.TEXTURE2D) getShadowMap()
+	{
+		Logger.Assert(shadowMap.ID > 0, "No shadow map");
+		return shadowMap;
+	}
+
+	static void setShadowMap(SamplerObject!(TextureType.TEXTURE2D) map)
+	{
+		Logger.Assert(map.ID >0, "Shadow map object not created");
+		shadowMap = map;
+		map.slot = 2;
+	}
 	
 	static void initialze()
 	{

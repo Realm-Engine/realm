@@ -4,6 +4,7 @@ import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.core;
 import realm.engine.core;
 import realm.engine.app;
+import realm.engine.asset;
 import realm.engine.graphics.material;
 import gl3n.linalg;
 import std.container.array;
@@ -14,6 +15,8 @@ import std.meta;
 import std.algorithm;
 alias ScreenMaterialLayout = Alias!(["screenTexture" : UserDataVarTypes.SCREENTEXTURE]);
 alias ScreenMaterial = Alias!(Material!(ScreenMaterialLayout));
+alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "cameraNear" : UserDataVarTypes.FLOAT]);
+alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
 
 class Renderer
 {
@@ -22,17 +25,20 @@ class Renderer
 	//private Batch!RealmVertex batch;
 	
 	private Batch!(RealmVertex)[ulong] batches;
-
+	private Batch!(RealmVertex) lightSpaceBatch;
 	VertexAttribute[] vertex3DAttributes;
 	private RealmGlobalData globalData;
 	private Camera* camera;
 	private static FrameBuffer mainFrameBuffer;
-	private ShaderProgram screenShader;
-	private ScreenMaterial screenMaterial;
-
+	private ShaderProgram lightSpaceShaderProgram;
+	private LightSpaceMaterial lightSpaceMaterial;
+	private DirectionalLight* mainDirLight;
+	private Camera lightSpaceCamera;
 	@property activeCamera(Camera* cam)
 	{
 		camera = cam;
+		lightSpaceMaterial.cameraFar = cam.farPlane;
+		lightSpaceMaterial.cameraNear = cam.nearPlane;
                 
 	}
 
@@ -56,10 +62,21 @@ class Renderer
 		vertex3DAttributes ~= tangent;
 		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
 		mainFrameBuffer.create!([FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT])(windowSize[0],windowSize[1]);
-		screenMaterial = new ScreenMaterial;
-		screenMaterial.textures.screenTexture = &mainFrameBuffer;
+		LightSpaceMaterial.initialze();
+		LightSpaceMaterial.reserve(2);
+		lightSpaceMaterial = new LightSpaceMaterial;
+
+		lightSpaceShaderProgram = loadShaderProgram("./src/engine/Assets/Shaders/simpleShaded.shader","Simple shaded");
+		lightSpaceMaterial.setShaderProgram(lightSpaceShaderProgram);
+		lightSpaceMaterial.recieveShadows = false;
 		enable(State.Blend);
 		blendFunc(BlendFuncType.SRC_ALPHA,BlendFuncType.ONE_MINUS_SRC_ALPHA);
+		
+		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(5,5),1,7.5,0);
+		lightSpaceBatch = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,lightSpaceShaderProgram,0);
+		lightSpaceBatch.initialize(vertex3DAttributes, 4096);
+		lightSpaceBatch.reserve(4);
+		lightSpaceBatch.setShaderStorageCallback(&(LightSpaceMaterial.bindShaderStorage));
 
 	}
 	static FrameBuffer* getMainFrameBuffer()
@@ -98,29 +115,64 @@ class Renderer
 			batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
 			batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
 			batches[materialId].initialize(vertex3DAttributes,2048);
-			batches[materialId].reserve(1);
+			batches[materialId].reserve(4);
 			batches[materialId].submitVertices!(Mat)(vertexData,mesh.faces,mat);
 		}
+		//lightSpaceBatch.submitVertices!(LightSpaceMaterial)(vertexData,mesh.faces,lightSpaceMaterial);
 		
-
+		
 		
 		
 	}
 
-	void mainLight(DirectionalLight light)
+	void renderLightSpace()
 	{
-		light.transform.updateTransformation;
-		mat4 modelMatrix = light.transform.transformation;
+		mat4 modelMatrix = mainDirLight.transform.transformation;
+		vec4 direction = modelMatrix * vec4(vec3(0,0,1),1.0);
+		lightSpaceCamera.yaw = mainDirLight.transform.rotation.y;
+		lightSpaceCamera.pitch = mainDirLight.transform.rotation.x;
+		lightSpaceCamera.update();
+		mat4 lightSpaceMatrix = lightSpaceCamera.projection * lightSpaceCamera.view;
+		globalData.vp[0..$] = lightSpaceMatrix.value_ptr[0..16].dup;
+		globalData.lightSpaceMatrix[0..$] = lightSpaceMatrix.value_ptr[0..16].dup;
+		GraphicsSubsystem.updateGlobalData(&globalData);
+		mainDirLight.shadowFrameBuffer.refresh();
+		mainDirLight.shadowFrameBuffer.bind(FrameBufferTarget.FRAMEBUFFER);
+		GraphicsSubsystem.clearScreen();
+		
+		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
+		foreach(batch; orderedBatches)
+		{
+			batch.drawBatch!(false)();
+		}
+		mainDirLight.shadowFrameBuffer.unbind(FrameBufferTarget.FRAMEBUFFER);
+		//mainDirLight.shadowFrameBuffer.blitToScreen(FrameMask.COLOR );
+		GraphicsSubsystem.setShadowMap(mainDirLight.shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture);
+		
+	}
+
+	@property void mainLight(DirectionalLight* light)
+	{
+		mainDirLight = light;
+		mainDirLight.createFrameBuffer();
+	}
+
+	void updateMainLight()
+	{
+		//mainDirLight = light;
+		mainDirLight.transform.updateTransformation();
+		mat4 modelMatrix = mainDirLight.transform.transformation;
 		vec4 direction = modelMatrix * vec4(vec3(0,-1,0),1.0);
 		globalData.mainLightDirection[0..$] = direction.value_ptr[0..4].dup;
-		globalData.mainLightColor[0..$] = vec4(light.color,0.0).value_ptr[0..4].dup;
+		globalData.mainLightColor[0..$] = vec4(mainDirLight.color,0.0).value_ptr[0..4].dup;
 		
 
 	}
 
 	void update()
 	{
-		
+		renderLightSpace();
+		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
 		mainFrameBuffer.refresh();
 		mainFrameBuffer.bind(FrameBufferTarget.DRAW);
 		drawBuffers([DrawBufferTarget.COLOR]);
@@ -131,16 +183,24 @@ class Renderer
 			mat4 vp = camera.projection * camera.view;
 			globalData.vp[0..$] = vp.value_ptr[0..16].dup;
 		}
+		if(mainDirLight !is null)
+		{
+			updateMainLight();
+		}
 		GraphicsSubsystem.updateGlobalData(&globalData);
-		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
+		
 		foreach(batch; orderedBatches)
 		{
-			batch.drawBatch();
+			batch.drawBatch!(true)();
 		}
 		
 		mainFrameBuffer.unbind(FrameBufferTarget.DRAW );
 		mainFrameBuffer.blitToScreen(FrameMask.COLOR );
-
+		
+		foreach(batch; orderedBatches)
+		{
+			batch.resetBatch();
+		}
 
 		
 	}

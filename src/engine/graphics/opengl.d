@@ -152,7 +152,7 @@ class GShader
     ubyte[] checkCache(string source,string name)
     {
 
-        if(!exists("./Cache/Shaders"))
+        if(!exists("Cache/Shaders"))
         {
             Logger.LogInfo("Creating shader cache folder");
             mkdir("Cache/Shaders");
@@ -163,7 +163,7 @@ class GShader
 
         sourceHash = toHexString(md5.digest(source));
         nameHash = toHexString(md5.digest(name));
-        string fileName = "./Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
+        string fileName = "Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
         if(exists(fileName))
         {
             result = cast(ubyte[])read(fileName);
@@ -311,7 +311,7 @@ class GShaderProgram
             auto md5 = new MD5Digest();
             string nameHash = toHexString(md5.digest(name));
             string sourceHash = toHexString(md5.digest(vertex.sourceHash ~ fragment.sourceHash));
-            string fileName = "./Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
+            string fileName = "Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
             if(!exists(fileName))
             {
                 Logger.LogInfo("Writing program binary %s to cache",name);
@@ -358,7 +358,7 @@ class GShaderProgram
         auto md5 = new MD5Digest();
         string nameHash = toHexString(md5.digest(name));
         string sourceHash = toHexString(md5.digest(vertex.sourceHash ~ fragment.sourceHash));
-        string fileName = "./Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
+        string fileName = "Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
         ubyte[] result;
         if(exists(fileName))
         {
@@ -691,6 +691,11 @@ struct GSamplerObject(GTextureType target)
 
     }
 
+    static if(target == GTextureType.CUBEMAP)
+    {
+
+    }
+
 }
 
 struct VertexArrayObject
@@ -913,4 +918,9 @@ static void gBlendFunc(GBlendFuncType sfactor, GBlendFuncType dfactor)
 static void gBlendFuncSeperate(GBlendFuncType r, GBlendFuncType g, GBlendFuncType b, GBlendFuncType a)
 {
     glBlendFuncSeparate(r,g,b,a);
+}
+
+static void gClear(GFrameMask mask)
+{
+    glClear(mask);
 }

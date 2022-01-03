@@ -22,6 +22,7 @@ vec4 vertex(REVertexData IN)
 	RESurfaceDataOut.posWS = position;
 	RESurfaceDataOut.texCoord = IN.texCoord;
 	RESurfaceDataOut.normal = IN.normal;
+	RESurfaceDataOut.lightSpacePosition = transpose(lightSpaceMatrix) * vec4(position,1.0);
 	return RESurfaceDataOut.posCS;
 	
 
@@ -49,12 +50,16 @@ vec4 fragment()
 {
 	float height = texture(objectTexture,samplerUV(RESurfaceDataIn.objectData.heightMap,RESurfaceDataIn.texCoord)).x;
 	float difference = abs(height - RESurfaceDataIn.objectData.oceanLevel);
-	vec4 terrainColor= vec4(1 - difference,1.0,0.1,1.0);
+	vec3 terrainColor= vec3(1 - difference,1.0,0.1);
 
 	//outColor = vec4(height,1-height,0,1.0);
 	vec3 normal = grayToNormal(objectTexture,samplerUV(RESurfaceDataIn.objectData.heightMap,RESurfaceDataIn.texCoord),0.0071358);
     normal = normal * 2.0 + 1;
-	return vec4(calculateDiffuse(normal),1.0) * terrainColor;
+	/*float shadow = calculateShadow(RESurfaceDataIn.lightSpacePosition);
+	vec3 lighting = (vec3(1.0,1.0,1.0) + (1.0 - shadow)) * (calculateDiffuse(normal) * terrainColor);*/
+	float shadow = texture(shadowMap,calcShadowMapCoordinates(RESurfaceDataIn.lightSpacePosition)).r;
+	vec3 color = vec3(shadow,shadow,shadow);
+	return   vec4(color,1.0);
 
 
 }

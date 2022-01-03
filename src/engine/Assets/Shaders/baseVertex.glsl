@@ -20,7 +20,7 @@ out RESurfaceData
 	ObjectData objectData;
 	vec3 normal;
 	mat3 TBN;
-
+	vec4 lightSpacePosition;
 } RESurfaceDataOut;
 
 
@@ -44,8 +44,6 @@ mat3 calculateTBN()
 	vec3 N = normalize(v_Normal);
 	vec3 B = normalize(cross(N,T));
 	return mat3(T,B,N);
-
-
 }
 
 #define objectTexture atlasTextures[gl_DrawID]
@@ -59,6 +57,7 @@ void main()
 	vertexData.normal = v_Normal;
 	vertexData.objectData = data[gl_DrawID];
 	vertexData.objectId = gl_DrawID;
+	
 	gl_Position = vertex(vertexData);
 	
 }

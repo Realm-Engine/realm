@@ -28,6 +28,7 @@ class Batch(T)
 	alias BindShaderStorageCallback = void function();
 	private BindShaderStorageCallback bindShaderStorage;
 	private int order;
+
 	@property renderOrder()
 	{
 		return order;
@@ -78,7 +79,7 @@ class Batch(T)
 		elementBuffer.bind();
 
 		uint stride = attributes.map!((a) => shaderVarElements( a.type) * shaderVarBytes(a.type)).fold!((a,b) => a+b);
-		writeln(stride);
+		
 		foreach(attribute; attributes)
 		{
 			
@@ -132,6 +133,7 @@ class Batch(T)
 		material.writeUniformData();
 		material.activateTextures();
 		textureAtlases~=material.getTextureAtlas();
+		
 		if(material.hasDepthTexture())
 		{
 			textureAtlases ~= material.getDepthTexture();
@@ -140,7 +142,7 @@ class Batch(T)
 
 	}
 
-	void drawBatch()
+	void drawBatch(bool renderShadows = true)()
 	{
 
 		program.use();
@@ -151,16 +153,32 @@ class Batch(T)
 		{
 			texture.setActive();
 		}
-		bindShaderStorage();
+		if(renderShadows)
+		{
+			GraphicsSubsystem.getShadowMap().setActive(2);
+			
+		
+			program.setUniformInt(2,2);
+		}
+		if(bindShaderStorage !is null)
+		{
+			bindShaderStorage();
+		}
+		
+		
 		//writeln(offset);
 		GraphicsSubsystem.drawMultiElementsIndirect(offset, numElementsInFrame);
 		unbindBuffers();
+
+		
+	}
+	void resetBatch()
+	{
 		cmdBufferBase = (cmdBufferBase + 1) % bufferAmount;
 		numElementsInFrame = 0;
 		numVerticesInFrame = 0;
 		numIndicesInFrame = 0;
 		textureAtlases.length = 0;
-		
 	}
 
 }
