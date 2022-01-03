@@ -31,13 +31,15 @@ vec2 calcShadowMapCoordinates(vec4 lightSpace)
 	return vec2(projCoords.xy);
 }
 
-float calculateShadow(vec4 lightSpace)
+
+
+float calculateShadow(vec4 lightSpace,float bias)
 {
 	vec3 projCoords = lightSpace.xyz/lightSpace.w;
-	projCoords *0.5 + 0.5;
+	projCoords = projCoords * 0.5 + 0.5;
 	float closest= texture(shadowMap,projCoords.xy).r;
 	float currentDepth = projCoords.z;
-	float shadow = currentDepth > closest ? 1.0 : 0.0;
+	float shadow = currentDepth - bias > closest ? 1.0 : 0.0;
 	return shadow;
 }
 

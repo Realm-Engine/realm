@@ -10,7 +10,7 @@ vec4 vertex(REVertexData IN)
     RESurfaceDataOut.TBN = calculateTBN();
 	RESurfaceDataOut.objectData = IN.objectData;
 	RESurfaceDataOut.objectId = IN.objectId;
-	RESurfaceDataOut.posCS = transpose(u_vp) * vec4(v_Position, 1.0);
+	RESurfaceDataOut.posCS = u_vp * vec4(v_Position, 1.0);
 	RESurfaceDataOut.posWS = v_Position;
 	RESurfaceDataOut.texCoord = IN.texCoord;
 	RESurfaceDataOut.normal = IN.normal;

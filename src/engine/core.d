@@ -19,10 +19,10 @@ class Transform
 {
 	import std.meta;
 	vec3 position;
-	vec3 rotation;
+	quat rotation;
 	vec3 scale;
 	private mat4 transformMat;
-	this(vec3 position, vec3 rotation, vec3 scale)
+	this(vec3 position, quat rotation, vec3 scale)
 	{
 		this.position = position;
 		this.rotation = rotation;
@@ -31,7 +31,7 @@ class Transform
 	this()
 	{
 		this.position = vec3(0,0,0);
-		this.rotation = vec3(0,0,0);
+		this.rotation = quat(0,0,0,1);
 		this.scale = vec3(1,1,1);
 		transformMat = mat4(1.0f);
 	}
@@ -42,13 +42,14 @@ class Transform
 
 	
 	
-	/*vec3 computeDirection(vec3 direction)
+	vec3 computeDirection(vec3 direction)
 	{
 		vec4 dir = rotation.to_matrix!(4,4) * vec4(direction,1.0);
 		
 		return vec3(dir).normalized();
 
 	}
+
 	
 	@property front()
 	{
@@ -61,9 +62,22 @@ class Transform
 	@property right()
 	{
 		return computeDirection(vec3(1,0,0));
-	}*/
+	}
 
-
+	@property eulerRotation(vec3 euler)
+	{
+		rotation =quat.euler_rotation(euler.x,euler.y,euler.z);
+	}
+	void rotateEuler(vec3 euler)
+	{
+		rotation.rotate_euler(euler.x,euler.y,euler.z);
+	}
+	void rotate(quat axis)
+	{
+		rotation.rotatex(axis.x);
+		rotation.rotatey(axis.y);
+		rotation.rotatez(axis.z);
+	}
 	
 	void updateTransformation()
 	{
@@ -71,10 +85,13 @@ class Transform
 		mat4 M = mat4.identity;
 		
 		M = M.scale(scale.x,scale.y,scale.z);
+		quat normalizedRotation = rotation.normalized();
+		mat4 rotationMatrix = normalizedRotation.to_matrix!(4,4);
+		M = M * rotationMatrix;
 		M = M.translate(position.x,position.y,position.z).matrix;
-		M.rotate(rotation.x,vec3(1,0,0));
+		/*M.rotate(rotation.x,vec3(1,0,0));
 		M.rotate(rotation.y,vec3(0,1,0));
-		M.rotate(rotation.z,vec3(0,0,1));
+		M.rotate(rotation.z,vec3(0,0,1));*/
 
 		transformMat = M;
 	}
@@ -277,7 +294,7 @@ struct DirectionalLight
 	void createFrameBuffer()
 	{
 		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
-		shadowFrameBuffer.create!([FrameBufferAttachmentType.DEPTH_ATTACHMENT,FrameBufferAttachmentType.COLOR_ATTACHMENT])(1024,1024);
+		shadowFrameBuffer.create!([FrameBufferAttachmentType.DEPTH_ATTACHMENT,FrameBufferAttachmentType.COLOR_ATTACHMENT])(windowSize[0],windowSize[1]);
 
 	}
 

@@ -14,11 +14,11 @@ vec4 vertex(REVertexData IN)
 	RESurfaceDataOut.TBN = calculateTBN();
 	RESurfaceDataOut.objectData = IN.objectData;
 	RESurfaceDataOut.objectId = IN.objectId;
-	RESurfaceDataOut.posCS = transpose(u_vp) * vec4(position, 1.0);
+	RESurfaceDataOut.posCS = u_vp * vec4(position, 1.0);
 	RESurfaceDataOut.posWS = v_Position;
 	RESurfaceDataOut.texCoord = IN.texCoord;
 	RESurfaceDataOut.normal = IN.normal;
-    RESurfaceDataOut.lightSpacePosition = transpose(lightSpaceMatrix) * vec4(position,1.0);
+    RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * vec4(position,1.0);
 	return RESurfaceDataOut.posCS;
 
 }
@@ -27,6 +27,9 @@ vec4 vertex(REVertexData IN)
 vec4 fragment()
 {
 	vec4 color = RESurfaceDataIn.objectData.color;
-	color.w = 0.6f;
-	return color;
+	float bias = max(0.05 * (1.0 - dot(RESurfaceDataIn.normal, -mainLight.direction.xyz)), 0.005);
+	float shadow = calculateShadow(RESurfaceDataIn.lightSpacePosition,bias);
+	vec3 lighting = (vec3(1.0,0.25,0.25) + (1.0 - shadow)) *   color.xyz;
+	
+	return vec4(lighting,1.0);
 }

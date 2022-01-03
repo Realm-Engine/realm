@@ -274,6 +274,7 @@ class GShaderProgram
             formats.length = numFormats;
             int size;
             glGetIntegerv(GL_PROGRAM_BINARY_FORMATS,formats.ptr);
+            Logger.LogInfo("Loading program %s from binary", name);
             glProgramBinary(id,cast(GLenum)formats[0],cast(void*)binary.ptr,cast(int)binary.length);
         }
     }
@@ -293,14 +294,16 @@ class GShaderProgram
         ubyte[] binaryCache = checkCache(vertex,fragment,name);
         if(binaryCache.length > 0)
         {
-            Logger.LogInfo("Loading program %s from binary", name);
+            
             loadProgramBinary(&binaryCache);
            
         }
         else
         {
+            
             shaders[0].compile();
             shaders[1].compile();
+            
             glLinkProgram(this);
             
             foreach (shader; shaders)
@@ -362,7 +365,9 @@ class GShaderProgram
         ubyte[] result;
         if(exists(fileName))
         {
+            
             result = cast(ubyte[])read(fileName);
+            Logger.LogInfo("Binary for program %s found in %s",name, fileName);
         }
         
         return result;
@@ -807,6 +812,12 @@ enum GBlendFuncType : GLenum
     ONE_MINUS_CONSTANT_ALPHA = GL_ONE_MINUS_CONSTANT_ALPHA
 }
 
+enum GCullFace : GLenum
+{
+    FRONT = GL_FRONT,
+    BACK = GL_BACK
+}
+
 GLenum imageFormatToInternalFormat(ImageFormat format)
 {
     GLenum result;
@@ -923,4 +934,9 @@ static void gBlendFuncSeperate(GBlendFuncType r, GBlendFuncType g, GBlendFuncTyp
 static void gClear(GFrameMask mask)
 {
     glClear(mask);
+}
+
+static void gCull(GCullFace face)
+{
+    glCullFace(face);
 }

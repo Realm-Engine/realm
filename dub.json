@@ -12,7 +12,9 @@
 	},
 	"description": "A minimal D application.",
 	"extraDependencyFiles": [
-		"./Assets/Shaders/*.glsl"
+		"./Assets/Shaders/*.shader",
+		"./src/engine/Assets/Shaders/*.shader",
+		"./src/engine/Assets/Shaders/*.glsl"
 	],
 	"license": "proprietary",
 	"name": "realm"

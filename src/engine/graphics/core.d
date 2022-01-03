@@ -25,11 +25,13 @@ alias FrameBufferTarget = GFrameBufferTarget;
 alias DrawBufferTarget = GDrawBufferTarget;
 alias FrameMask = GFrameMask;
 alias BlendFuncType = GBlendFuncType;
+alias CullFace = GCullFace;
 alias blendFunc = gBlendFunc;
 alias blendFuncSeperate = gBlendFuncSeperate;
 alias enable =gEnable;
 alias disable =gDisable;
 alias clear = gClear;
+alias cull = gCull;
 enum VertexType : int
 {
 	FLOAT = 0x4011,

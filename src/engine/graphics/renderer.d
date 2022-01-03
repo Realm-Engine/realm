@@ -34,6 +34,7 @@ class Renderer
 	private LightSpaceMaterial lightSpaceMaterial;
 	private DirectionalLight* mainDirLight;
 	private Camera lightSpaceCamera;
+	private static mat4 shadowBias = mat4(vec4(0.5,0,0,0),vec4(0,0.5,0,0),vec4(0,0,0.5,0),vec4(0.5,0.5,0.5,1.0));
 	@property activeCamera(Camera* cam)
 	{
 		camera = cam;
@@ -72,7 +73,7 @@ class Renderer
 		enable(State.Blend);
 		blendFunc(BlendFuncType.SRC_ALPHA,BlendFuncType.ONE_MINUS_SRC_ALPHA);
 		
-		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(5,5),1,7.5,0);
+		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(5,5),-10,20,0);
 		lightSpaceBatch = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,lightSpaceShaderProgram,0);
 		lightSpaceBatch.initialize(vertex3DAttributes, 4096);
 		lightSpaceBatch.reserve(4);
@@ -127,14 +128,18 @@ class Renderer
 
 	void renderLightSpace()
 	{
-		mat4 modelMatrix = mainDirLight.transform.transformation;
-		vec4 direction = modelMatrix * vec4(vec3(0,0,1),1.0);
+	
+		cull(CullFace.FRONT);
 		lightSpaceCamera.yaw = mainDirLight.transform.rotation.y;
 		lightSpaceCamera.pitch = mainDirLight.transform.rotation.x;
-		lightSpaceCamera.update();
-		mat4 lightSpaceMatrix = lightSpaceCamera.projection * lightSpaceCamera.view;
+		
+		//lightSpaceCamera.update();
+		
+		mat4 view = mat4.look_at(lightSpaceCamera.front,vec3(0,0,0),vec3(0,1,0));
+		mat4 lightSpaceMatrix = lightSpaceCamera.projection * view;
+		lightSpaceMatrix.transpose();
 		globalData.vp[0..$] = lightSpaceMatrix.value_ptr[0..16].dup;
-		globalData.lightSpaceMatrix[0..$] = lightSpaceMatrix.value_ptr[0..16].dup;
+		globalData.lightSpaceMatrix[0..$] =  lightSpaceMatrix.value_ptr[0..16].dup;
 		GraphicsSubsystem.updateGlobalData(&globalData);
 		mainDirLight.shadowFrameBuffer.refresh();
 		mainDirLight.shadowFrameBuffer.bind(FrameBufferTarget.FRAMEBUFFER);
@@ -148,7 +153,7 @@ class Renderer
 		mainDirLight.shadowFrameBuffer.unbind(FrameBufferTarget.FRAMEBUFFER);
 		//mainDirLight.shadowFrameBuffer.blitToScreen(FrameMask.COLOR );
 		GraphicsSubsystem.setShadowMap(mainDirLight.shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture);
-		
+		cull(CullFace.BACK);
 	}
 
 	@property void mainLight(DirectionalLight* light)
@@ -162,7 +167,7 @@ class Renderer
 		//mainDirLight = light;
 		mainDirLight.transform.updateTransformation();
 		mat4 modelMatrix = mainDirLight.transform.transformation;
-		vec4 direction = modelMatrix * vec4(vec3(0,-1,0),1.0);
+		vec4 direction = vec4(mainDirLight.transform.front,1.0);
 		globalData.mainLightDirection[0..$] = direction.value_ptr[0..4].dup;
 		globalData.mainLightColor[0..$] = vec4(mainDirLight.color,0.0).value_ptr[0..4].dup;
 		
@@ -171,6 +176,10 @@ class Renderer
 
 	void update()
 	{
+		if(mainDirLight !is null)
+		{
+			updateMainLight();
+		}
 		renderLightSpace();
 		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
 		mainFrameBuffer.refresh();
@@ -181,12 +190,10 @@ class Renderer
 		{
 			//camera.updateViewProjection();
 			mat4 vp = camera.projection * camera.view;
+			vp.transpose();
 			globalData.vp[0..$] = vp.value_ptr[0..16].dup;
 		}
-		if(mainDirLight !is null)
-		{
-			updateMainLight();
-		}
+
 		GraphicsSubsystem.updateGlobalData(&globalData);
 		
 		foreach(batch; orderedBatches)

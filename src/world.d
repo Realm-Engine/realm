@@ -79,7 +79,7 @@ class World
 		
 		
 		renderer.submitMesh!(WorldMaterial)(meshData,transform,material);
-		ocean.draw(renderer);
+		//ocean.draw(renderer);
 		//renderer.submitMesh!(WorldMaterial)(mesh,transform,material);
 	}
 
