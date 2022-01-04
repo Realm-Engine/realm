@@ -280,10 +280,10 @@ struct DirectionalLight
 	Transform transform;
 	vec3 color; 
 	FrameBuffer shadowFrameBuffer; 
-	void createFrameBuffer()
+	void createFrameBuffer(int width, int height)
 	{
-		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
-		shadowFrameBuffer.create!([FrameBufferAttachmentType.DEPTH_ATTACHMENT])(windowSize[0],windowSize[1]);
+
+		shadowFrameBuffer.create!([FrameBufferAttachmentType.DEPTH_ATTACHMENT])(width,height);
 
 	}
 

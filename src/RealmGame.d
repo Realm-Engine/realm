@@ -62,7 +62,7 @@ class RealmGame : RealmApp
 	override void update()
 	{
 		double time = glfwGetTime() *0.5 ;
-		mainLight.transform.rotation = vec3(-2,sin(time) * 90,0);
+		mainLight.transform.rotation = vec3(0,sin(time) * 90,0);
 		//world.getComponent!(Transform).rotation = vec3(0,sin(time),0);
 		player.update();
 		world.update();

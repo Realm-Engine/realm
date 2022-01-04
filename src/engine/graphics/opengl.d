@@ -940,3 +940,8 @@ static void gCull(GCullFace face)
 {
     glCullFace(face);
 }
+
+static void gSetViewport(int x, int y, int width, int height)
+{
+    glViewport(x,y,width,height);
+}

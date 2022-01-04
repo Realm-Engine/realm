@@ -27,9 +27,10 @@ vec4 vertex(REVertexData IN)
 vec4 fragment()
 {
 	vec4 color = RESurfaceDataIn.objectData.color;
-	float bias = max(0.05 * (1.0 - dot(RESurfaceDataIn.normal, -mainLight.direction.xyz)), 0.005);
-	float shadow = calculateShadow(RESurfaceDataIn.lightSpacePosition,bias);
-	vec3 lighting = (vec3(1) + (1.0 - shadow)) *   color.xyz;
+	float bias = max(0.05 * (1.0 - dot(-RESurfaceDataIn.normal, -mainLight.direction.xyz)), 0.005);
+	float shadow = calculateShadow(RESurfaceDataIn.lightSpacePosition, bias);
+	vec3 ambient = vec3(0.1);
+	vec3 lighting = ambient + color.rgb;
 	
-	return vec4(lighting,1.0);
+	return vec4(lighting,0.6);
 }

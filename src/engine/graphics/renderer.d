@@ -73,7 +73,7 @@ class Renderer
 		enable(State.Blend);
 		blendFunc(BlendFuncType.SRC_ALPHA,BlendFuncType.ONE_MINUS_SRC_ALPHA);
 		
-		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(5,5),-10,20,0);
+		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(7.5,7.5),1,7.5,0);
 		lightSpaceBatch = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,lightSpaceShaderProgram,0);
 		lightSpaceBatch.initialize(vertex3DAttributes, 4096);
 		lightSpaceBatch.reserve(4);
@@ -130,7 +130,8 @@ class Renderer
 	{
 	
 		cull(CullFace.FRONT);
-
+		FrameBuffer shadowFramebuffer = mainDirLight.shadowFrameBuffer;
+		setViewport(0,0,shadowFramebuffer.width, shadowFramebuffer.height);
 		
 		//lightSpaceCamera.update();
 		
@@ -158,7 +159,7 @@ class Renderer
 	@property void mainLight(DirectionalLight* light)
 	{
 		mainDirLight = light;
-		mainDirLight.createFrameBuffer();
+		mainDirLight.createFrameBuffer(2048,2048);
 	}
 
 	void updateMainLight()
@@ -180,9 +181,11 @@ class Renderer
 			updateMainLight();
 		}
 		renderLightSpace();
+		setViewport(0,0,mainFrameBuffer.width,mainFrameBuffer.height);
 		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
 		mainFrameBuffer.refresh();
 		mainFrameBuffer.bind(FrameBufferTarget.DRAW);
+		
 		drawBuffers([DrawBufferTarget.COLOR]);
 		GraphicsSubsystem.clearScreen();
 		if(camera !is null)
