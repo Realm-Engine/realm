@@ -614,7 +614,10 @@ struct GSamplerObject(GTextureType target)
     {
         texSlot = s;
     }
-
+    @property int slot()
+	{
+        return texSlot;
+	}
     void create()
     {
         glGenTextures(1, &id);
@@ -757,6 +760,7 @@ enum GTextureWrapFunc : GLenum
     CLAMP_TO_EDGE = GL_CLAMP_TO_EDGE,
     CLAMP_TO_BORDER = GL_CLAMP_TO_BORDER,
     REPEAT = GL_REPEAT,
+    MIRROR = GL_MIRRORED_REPEAT
 
 }
 

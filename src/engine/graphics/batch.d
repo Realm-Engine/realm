@@ -3,6 +3,9 @@ import realm.engine.graphics.opengl;
 import realm.engine.graphics.core;
 import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.material;
+import realm.engine.graphics.renderer;
+import std.range;
+import std.format;
 class Batch(T)
 {
 	import std.algorithm.iteration : fold,map;
@@ -131,28 +134,36 @@ class Batch(T)
 		numVerticesInFrame+=vertices.length;
 		numIndicesInFrame+=faces.length;
 		material.writeUniformData();
-		material.activateTextures();
+		//material.activateTextures();
+		
 		textureAtlases~=material.getTextureAtlas();
 		
-		if(material.hasDepthTexture())
-		{
-			textureAtlases ~= material.getDepthTexture();
-		}
+
 
 
 	}
 
 	void drawBatch(bool renderShadows = true)()
 	{
-
+	
 		program.use();
 		int cmdTypeSize = cast(int)DrawElementsIndirectCommand.sizeof;
 		bindBuffers();
 		uint offset = cmdBufferBase * (maxElementsInFrame * cmdTypeSize);
-		foreach(texture; textureAtlases)
+		foreach(i,texture; textureAtlases.enumerate(0))
 		{
 			texture.setActive();
+			program.setUniformInt(program.uniformLocation("atlasTextures[%d]".format(i)),texture.slot);
+			
 		}
+		SamplerObject!(TextureType.TEXTURE2D) cameraDepth;
+		SamplerObject!(TextureType.TEXTURE2D) cameraScreen;
+		cameraDepth =Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture;
+		cameraDepth.setActive(0);
+		program.setUniformInt(0,0);
+		cameraScreen = Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.COLOR_ATTACHMENT].texture;
+		cameraScreen.setActive(1);
+		program.setUniformInt(1,1);
 		if(renderShadows)
 		{
 			GraphicsSubsystem.getShadowMap().setActive(2);

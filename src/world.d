@@ -10,7 +10,9 @@ import gl3n.math : asin, atan2;
 import std.stdio;
 import realm.ocean;
 import realm.util;
-alias WorldMaterialLayout = Alias!(["heightMap" : UserDataVarTypes.TEXTURE2D,"heightStrength" : UserDataVarTypes.FLOAT,"oceanLevel" : UserDataVarTypes.FLOAT]);
+alias WorldMaterialLayout = Alias!(["heightMap" : UserDataVarTypes.TEXTURE2D,
+									"heightStrength" : UserDataVarTypes.FLOAT,
+									"oceanLevel" : UserDataVarTypes.FLOAT]);
 alias WorldMaterial = Alias!(Material!WorldMaterialLayout);
 
 class World
@@ -48,7 +50,8 @@ class World
 		material.textures.heightMap = new Texture2D(&heightImg,TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER));
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
-		ocean = new Ocean(material.oceanLevel);
+		
+		ocean = new Ocean(material.oceanLevel,material.textures.heightMap,material.heightStrength);
 		//ocean.getComponent!(Transform).position = vec3(0,0.15,0);
 		ocean.getComponent!(Transform).scale = vec3(5,1,3.5);
 		//material.color = vec4(1.0,1.0,1.0,1.0);

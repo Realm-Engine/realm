@@ -142,6 +142,11 @@ struct RealmGlobalData
   float[4] mainLightDirection;
   float[4] mainLightColor;
   float[16] lightSpaceMatrix;
+  float[4] camPosition;
+  float[4] camDirection;
+  float nearPlane;
+  float farPlane;
+  float[2] size;
   
 }
 

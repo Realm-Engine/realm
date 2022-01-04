@@ -129,10 +129,10 @@ class Renderer
 	void renderLightSpace()
 	{
 	
-		cull(CullFace.FRONT);
+		
 		FrameBuffer shadowFramebuffer = mainDirLight.shadowFrameBuffer;
 		setViewport(0,0,shadowFramebuffer.width, shadowFramebuffer.height);
-		
+		cull(CullFace.FRONT);
 		//lightSpaceCamera.update();
 		
 		mat4 view = mat4.look_at(mainDirLight.transform.front,vec3(0,0,0),vec3(0,1,0));
@@ -174,6 +174,11 @@ class Renderer
 
 	}
 
+	private void updateGlobalData()
+	{
+		
+	}
+
 	void update()
 	{
 		if(mainDirLight !is null)
@@ -194,6 +199,11 @@ class Renderer
 			mat4 vp = camera.projection * camera.view;
 			vp.transpose();
 			globalData.vp[0..$] = vp.value_ptr[0..16].dup;
+			globalData.camPosition[0..$] = camera.transform.position.value_ptr[0..4].dup;
+			globalData.camDirection[0..$] = camera.transform.front.value_ptr[0..4].dup;
+			globalData.nearPlane = camera.nearPlane;
+			globalData.farPlane = camera.farPlane;
+			globalData.size[0..$] = camera.size.value_ptr[0..2].dup;
 		}
 
 		GraphicsSubsystem.updateGlobalData(&globalData);

@@ -4,7 +4,9 @@ struct ObjectData
 {
 	vec4 heightMap;
 	float heightStrength;
+	float packing1;
 	float oceanLevel;
+	float packing2;
 };
 
 #shader vertex worldVertex
@@ -14,6 +16,7 @@ vec4 vertex(REVertexData IN)
 	vec4 heightSample =texture(objectTexture,samplerUV(IN.objectData.heightMap,IN.texCoord));
 	float height = (heightSample.x);
 	height = height * IN.objectData.heightStrength;
+	
 	vec3 position = v_Position + vec3(0,height,0);
 	RESurfaceDataOut.TBN = calculateTBN();
 	RESurfaceDataOut.objectData = IN.objectData;
@@ -50,21 +53,28 @@ vec3 grayToNormal(sampler2D grayTexture,vec2 uv,float delta)
 
 vec4 fragment()
 {
-	float height = texture(objectTexture,samplerUV(RESurfaceDataIn.objectData.heightMap,RESurfaceDataIn.texCoord)).x;
-	float difference = abs(height - RESurfaceDataIn.objectData.oceanLevel);
+	float height = texture(objectTexture,samplerUV(getObjectData(heightMap), RESurfaceDataIn.texCoord)).x;
+	
+	float difference = abs(height - getObjectData(oceanLevel));
 	vec3 terrainColor= vec3(1 - difference,1.0,0.1);
 
 	//outColor = vec4(height,1-height,0,1.0);
-	vec3 normal = grayToNormal(objectTexture,samplerUV(RESurfaceDataIn.objectData.heightMap,RESurfaceDataIn.texCoord),0.0071358);
+	vec3 normal = grayToNormal(objectTexture,samplerUV(getObjectData(heightMap),RESurfaceDataIn.texCoord),0.0071358);
     normal = normal * 2.0;
 	normal = normalize(RESurfaceDataIn.TBN * normal);
+	
 	float bias = max(0.05 * (1.0 - dot(normal, -mainLight.direction.xyz)), 0.005);
 	float shadow = calculateShadow(RESurfaceDataIn.lightSpacePosition,bias);
 	vec3 ambient = vec3(0.1);
-	vec3 lighting = ( ambient + (1.0 - shadow)) * (calculateDiffuse(normal,ambient) * terrainColor);
 	
 	
-	return vec4(lighting, 1.0);
+	
+	vec3 lighting = (ambient + (1.0 - shadow)) *  (calculateDiffuse(normal, ambient) * terrainColor);
+	return vec4(lighting,1.0);
+	//return vec4(vec3(lighting), 1.0);
+	
+
+
 
 
 }

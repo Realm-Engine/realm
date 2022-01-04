@@ -47,6 +47,7 @@ mat3 calculateTBN()
 }
 
 #define objectTexture atlasTextures[gl_DrawID]
+#define getObjectData(v) IN.objectData.v
 
 void main()
 {

@@ -19,9 +19,13 @@ in RESurfaceData
 
 } RESurfaceDataIn;
 #define objectTexture atlasTextures[RESurfaceDataIn.objectId]
+#define getObjectData(v) RESurfaceDataIn.objectData.v
 out vec4 FragColor;
 vec4 fragment();
+layout(location = 0) uniform sampler2D cameraDepthTexture;
+layout(location = 1) uniform sampler2D cameraScreenTexture;
 layout(location = 2) uniform sampler2D shadowMap;
+
 
 
 

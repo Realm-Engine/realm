@@ -168,13 +168,13 @@ enum CameraProjection
 class Camera
 {
 	Transform transform;
-	private float fieldOfView;
-	private vec2 size;
+	float fieldOfView;
+	vec2 size;
 	float farPlane;
 	float nearPlane;
 	private CameraProjection projectionType;
-	private mat4 vp;
-	private mat4 cameraTransformation;
+	mat4 vp;
+	mat4 cameraTransformation;
 	float yaw;
 	float pitch;
 	//Front

@@ -25,6 +25,11 @@ class RealmApp
 
 	}
 
+    static float getTicks()
+	{
+        return glfwGetTime();
+	}
+
     this(int width, int height, const char* title)
     {
         Logger.Assert(width >= 0 && height >=0,"Width and height of app are negative");
@@ -43,7 +48,7 @@ class RealmApp
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         InputManager.initialze(window);
     }
-
+    
     abstract void update();
     abstract void start();
     void run()

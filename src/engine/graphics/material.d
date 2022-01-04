@@ -25,6 +25,7 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
                 static if (uniforms[uniform] == UserDataVarTypes.FLOAT)
                 {
                     mixin("%s %s;".format("float", uniform));
+                    mixin("%s %s;".format("float",(uniform~"packing")));
                 }
 
                 static if (uniforms[uniform] == UserDataVarTypes.VECTOR || uniforms[uniform] == UserDataVarTypes.TEXTURE2D)
@@ -104,7 +105,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
         
         textureAtlas.create();
         
-        textureAtlas.slot = materialIndex;
+        textureAtlas.slot = materialIndex + 3;
         shadows = true;
 		
     }
@@ -245,7 +246,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
 
     void activateTextures()
 	{
-        program.setUniformInt(program.uniformLocation("atlasTextures[%d]".format(materialIndex)),materialIndex);
+        program.setUniformInt(program.uniformLocation("atlasTextures[%d]".format(materialIndex)),textureAtlas.slot);
         /*textureAtlas.setActive();
         */
         
@@ -325,10 +326,14 @@ WriteImage:
             if(texture.w + rowWidth < cast(int)textureAtlas.width)
 			{
                 
-                 vec4 tilingOffset = calculateTilingOffset(texture.w,texture.h);
-                *tilingOffsets[index] = tilingOffset;
-                //textureAtlas.uploadSubImage(0,rowWidth,totalHeight,texture.w,texture.h,texture.buf8.ptr);
-                updateAtlas(texture,*tilingOffsets[index]);
+                tilingOffsets[index].x = cast(float)texture.w / textureAtlas.width;
+                tilingOffsets[index].y = cast(float)texture.h/ textureAtlas.height;
+                tilingOffsets[index].z = cast(float)rowWidth / textureAtlas.width;
+                tilingOffsets[index].w = cast(float)totalHeight/textureAtlas.height;
+                textureAtlas.uploadSubImage(0,rowWidth,totalHeight,texture.w,texture.h,texture.buf8.ptr);
+                
+                
+                //updateAtlas(texture,*tilingOffsets[index]);
 
                
                 
