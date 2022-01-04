@@ -36,4 +36,5 @@ Makefile
 
 #realm
 /Cache
+*.log
 
