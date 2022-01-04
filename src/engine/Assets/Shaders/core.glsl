@@ -12,10 +12,11 @@ layout(std140, binding = 0) uniform _reGloblaData
 };
 
 
-vec3 calculateDiffuse(vec3 normal)
+vec3 calculateDiffuse(vec3 normal,vec3 ambient)
 {
-	float amount = max(dot(normal,vec3(normalize(-mainLight.direction))),0.0);
-	return amount * vec3(mainLight.color);
+	vec3 norm = normalize(normal);
+	float amount = max(dot(norm,vec3(-mainLight.direction)),0.0);
+	return ambient + (amount * vec3(mainLight.color) * 5);
 
 }
 

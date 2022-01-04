@@ -130,12 +130,11 @@ class Renderer
 	{
 	
 		cull(CullFace.FRONT);
-		lightSpaceCamera.yaw = mainDirLight.transform.rotation.y;
-		lightSpaceCamera.pitch = mainDirLight.transform.rotation.x;
+
 		
 		//lightSpaceCamera.update();
 		
-		mat4 view = mat4.look_at(lightSpaceCamera.front,vec3(0,0,0),vec3(0,1,0));
+		mat4 view = mat4.look_at(mainDirLight.transform.front,vec3(0,0,0),vec3(0,1,0));
 		mat4 lightSpaceMatrix = lightSpaceCamera.projection * view;
 		lightSpaceMatrix.transpose();
 		globalData.vp[0..$] = lightSpaceMatrix.value_ptr[0..16].dup;
@@ -166,8 +165,8 @@ class Renderer
 	{
 		//mainDirLight = light;
 		mainDirLight.transform.updateTransformation();
-		mat4 modelMatrix = mainDirLight.transform.transformation;
-		vec4 direction = vec4(mainDirLight.transform.front,1.0);
+		//mat4 modelMatrix = mainDirLight.transform.transformation;
+		vec4 direction = vec4(mainDirLight.transform.front,0.0);
 		globalData.mainLightDirection[0..$] = direction.value_ptr[0..4].dup;
 		globalData.mainLightColor[0..$] = vec4(mainDirLight.color,0.0).value_ptr[0..4].dup;
 		

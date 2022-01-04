@@ -23,15 +23,15 @@ out vec4 FragColor;
 vec4 fragment();
 layout(location = 2) uniform sampler2D shadowMap;
 
-vec2 calcShadowMapCoordinates(vec4 lightSpace)
+
+
+float shadowMapSample(vec4 lightSpace)
 {
 	vec3 projCoords = lightSpace.xyz/lightSpace.w;
-	projCoords *0.5 + 0.5;
-	
-	return vec2(projCoords.xy);
+	projCoords = projCoords * 0.5 + 0.5;
+	float closest= texture(shadowMap,projCoords.xy).r;
+	return closest;
 }
-
-
 
 float calculateShadow(vec4 lightSpace,float bias)
 {
@@ -39,8 +39,18 @@ float calculateShadow(vec4 lightSpace,float bias)
 	projCoords = projCoords * 0.5 + 0.5;
 	float closest= texture(shadowMap,projCoords.xy).r;
 	float currentDepth = projCoords.z;
-	float shadow = currentDepth - bias > closest ? 1.0 : 0.0;
-	return shadow;
+	float shadow = 0.0;
+	vec2 texelSize = 1.0/textureSize(shadowMap,0);
+	for(int x = -1; x <= 1; ++x)
+	{
+		for(int y = -1; y <= 1; ++y)
+		{
+			float fragmentDepth = texture(shadowMap,projCoords.xy + vec2(x,y) * texelSize).r;
+			shadow += currentDepth - bias > fragmentDepth ? 1.0 : 0.0;
+		}
+	}
+	
+	return shadow / 9;
 }
 
 void main()

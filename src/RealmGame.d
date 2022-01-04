@@ -39,12 +39,11 @@ class RealmGame : RealmApp
 		player = new Player(&cam);
 		world = new World;
 		mainLight.transform = new Transform;
-		mainLight.transform.rotateEuler(vec3(90,0,0));
+		mainLight.transform.rotation = vec3(0,-90,0);
 		writeln(mainLight.transform.front);
 		mainLight.color = vec3(1.0,1.0,1.0);
 		//renderer.mainLight(mainLight);
 		renderer.mainLight(&mainLight);
-		world.getComponent!(Transform).eulerRotation = vec3(90,0,0);
 	}
 	
 	
@@ -62,8 +61,9 @@ class RealmGame : RealmApp
 
 	override void update()
 	{
-		double time = glfwGetTime() ;
-		
+		double time = glfwGetTime() *0.5 ;
+		mainLight.transform.rotation = vec3(-2,sin(time) * 90,0);
+		//world.getComponent!(Transform).rotation = vec3(0,sin(time),0);
 		player.update();
 		world.update();
 		world.draw(renderer);

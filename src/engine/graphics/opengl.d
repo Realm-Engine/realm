@@ -428,7 +428,7 @@ struct GFrameBufferAttachment
     {
         texture.create();
         TextureDesc desc;
-        desc.wrap = GTextureWrapFunc.CLAMP_TO_EDGE;
+        desc.wrap = GTextureWrapFunc.CLAMP_TO_BORDER;
         desc.filter = GTextureFilterFunc.LINEAR;
         if(type == GFrameBufferAttachmentType.COLOR_ATTACHMENT)
         {
