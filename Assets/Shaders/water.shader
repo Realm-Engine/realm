@@ -69,9 +69,9 @@ vec3 calculateNormal()
 {
 	float t = getObjectData(time) / getObjectData(scrollSpeed);
 	vec2 scroll = t * vec2(1,0);
-	vec3 distortion = calculateDistortion(scroll);
-	vec2 noise1uv = samplerUV(getObjectData(noise1), RESurfaceDataIn.texCoord) + distortion.xy;
-	vec2 noise2uv = samplerUV(getObjectData(noise2), RESurfaceDataIn.texCoord)  + distortion.xy;
+	
+	vec2 noise1uv = samplerUV(getObjectData(noise1), RESurfaceDataIn.texCoord) + (t * vec2(1,0));
+	vec2 noise2uv = samplerUV(getObjectData(noise2), RESurfaceDataIn.texCoord)  + (t * vec2(1, 0));
 	noise1uv.x = mod(noise1uv.x, getObjectData(noise1).z);
 	noise2uv.x = mod(noise2uv.x, getObjectData(noise2).z);
 
