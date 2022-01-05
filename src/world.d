@@ -44,7 +44,7 @@ class World
 		transform.scale = vec3(5,1,3.5);
 		shaderProgram = loadShaderProgram("./Assets/Shaders/world.shader","World");
 		material = new WorldMaterial;
-		material.heightStrength = 0.55;
+		material.heightStrength = 0.5;
 		material.oceanLevel = 0.225;
 		material.setShaderProgram(shaderProgram);
 		material.textures.heightMap = new Texture2D(&heightImg,TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER));

@@ -25,6 +25,14 @@ class Logger
 	{
 		writeln("[Error] %s(%d): %s".format(file,line,fmt.format(t)) );
 	}
+
+	static void LogError(int line = __LINE__,string file = __FILE__,T...)(bool cond, string fmt,T t )
+	{
+		if(!cond)
+		{
+			LogError!(line,file)(fmt.format(t));
+		}
+	}
 	
 	static void Assert(int line = __LINE__,string file = __FILE__,T...)(bool cond,string fmt, T t)
 	{

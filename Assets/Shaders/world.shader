@@ -60,7 +60,7 @@ vec4 fragment()
 
 	//outColor = vec4(height,1-height,0,1.0);
 	vec3 normal = grayToNormal(objectTexture,samplerUV(getObjectData(heightMap),RESurfaceDataIn.texCoord),0.0071358);
-    normal = normal * 2.0;
+	normal = normal * 0.8;
 	normal = normalize(RESurfaceDataIn.TBN * normal);
 	
 	float bias = max(0.05 * (1.0 - dot(normal, -mainLight.direction.xyz)), 0.005);

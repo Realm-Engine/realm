@@ -97,6 +97,7 @@ class Transform
 	}
 }
 
+
 struct Mesh
 {
 	vec3[] positions;

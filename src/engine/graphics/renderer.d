@@ -13,8 +13,6 @@ import std.range;
 import std.typecons;
 import std.meta;
 import std.algorithm;
-alias ScreenMaterialLayout = Alias!(["screenTexture" : UserDataVarTypes.SCREENTEXTURE]);
-alias ScreenMaterial = Alias!(Material!(ScreenMaterialLayout));
 alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "cameraNear" : UserDataVarTypes.FLOAT]);
 alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
 
@@ -73,9 +71,9 @@ class Renderer
 		enable(State.Blend);
 		blendFunc(BlendFuncType.SRC_ALPHA,BlendFuncType.ONE_MINUS_SRC_ALPHA);
 		
-		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(7.5,7.5),1,7.5,0);
+		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(10,10),1,7.5,0);
 		lightSpaceBatch = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,lightSpaceShaderProgram,0);
-		lightSpaceBatch.initialize(vertex3DAttributes, 4096);
+		lightSpaceBatch.initialize(vertex3DAttributes, 4096,4096* 3);
 		lightSpaceBatch.reserve(4);
 		lightSpaceBatch.setShaderStorageCallback(&(LightSpaceMaterial.bindShaderStorage));
 
@@ -115,8 +113,8 @@ class Renderer
 
 			batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
 			batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
-			batches[materialId].initialize(vertex3DAttributes,2048);
-			batches[materialId].reserve(4);
+			batches[materialId].initialize(vertex3DAttributes,cast(uint)vertexData.length,cast(uint)mesh.faces.length);
+			batches[materialId].reserve(2);
 			batches[materialId].submitVertices!(Mat)(vertexData,mesh.faces,mat);
 		}
 		//lightSpaceBatch.submitVertices!(LightSpaceMaterial)(vertexData,mesh.faces,lightSpaceMaterial);

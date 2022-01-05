@@ -32,9 +32,6 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
                 {
                     mixin("%s %s;".format("vec4", uniform));
                 }
-                
-
-                //mixin("%s %s;".format("vec3",uniform));
             }
         }
 
@@ -48,14 +45,7 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
 
                     mixin("@(\"Texture\") %s %s;".format("Texture2D", uniform));
                 }
-                static if(uniforms[uniform] == UserDataVarTypes.DEPTHTEXTURE)
-                {
-                    mixin("@(\"DepthTexture\") %s %s;".format("FrameBuffer*", uniform));
-                }
-                static if(uniforms[uniform] == UserDataVarTypes.SCREENTEXTURE)
-                {
-                    mixin("@(\"ScreenTexture\") %s %s;".format("FrameBuffer*", uniform));
-                }
+
             }
         }
 
@@ -68,9 +58,6 @@ enum bool isMaterial(T) = (__traits(hasMember, T, "shaderStorageBuffer") == true
 enum texturesMembers(T) = (__traits(allMembers, T.Textures));
 enum texturesAttributes(T, alias Member) = (__traits(getAttributes, __traits(getMember, T.Textures, Member)));
 enum isTexture(alias T) = (T == "Texture");
-enum isFrameBuffer(alias T) = (T == "FrameBuffer");
-enum isDepthTexture(alias T) = (T == "DepthTexture");
-enum isScreenTexture(alias T) = (T == "ScreenTexture");
 class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
 {
     import std.format;
@@ -172,105 +159,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
         
 
     }
-
-    bool hasDepthTexture()
-    {
-        bool result = false;
-        static foreach(member; texturesMembers!(UniformLayout))
-        {
-            static foreach(attribute; texturesAttributes!(UniformLayout,member))
-            {
-                static if(isDepthTexture!(attribute))
-                {
-                    result = true;
-                }
-                
-            }
-        }
-        return result;
         
-    }
-    bool hasScreenTexture()
-    {
-        bool result = false;
-        static foreach(member; texturesMembers!(UniformLayout))
-        {
-            static foreach(attribute; texturesAttributes!(UniformLayout,member))
-            {
-                static if(isScreenTexture!(attribute))
-                {
-                    result = true;
-                }
-                
-            }
-        }
-        return result;
-    }
-
-    SamplerObject!(TextureType.TEXTURE2D) getDepthTexture()
-    {
-        Logger.Assert(hasDepthTexture() == true, "Material does not have depth texture");
-        SamplerObject!(TextureType.TEXTURE2D) texture;
-        static foreach(member; texturesMembers!(UniformLayout))
-        {
-            static foreach(attribute; texturesAttributes!(UniformLayout,member))
-            {
-                static if(isDepthTexture!(attribute))
-                {
-                    texture =  __traits(getMember, this.textures, member).fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture;
-                }
-            }
-        }
-        return texture;
-    }
-
-    SamplerObject!(TextureType.TEXTURE2D) getScreenTexture()
-    {
-        Logger.Assert(hasScreenTexture() == true, "Material does not have screen texture");
-        SamplerObject!(TextureType.TEXTURE2D) texture;
-        static foreach(member; texturesMembers!(UniformLayout))
-        {
-            static foreach(attribute; texturesAttributes!(UniformLayout,member))
-            {
-                static if(isScreenTexture!(attribute))
-                {
-                    texture =  __traits(getMember, this.textures, member).fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture;
-                }
-            }
-        }
-        return texture;
-    }
-
-    
-
-
-    void activateTextures()
-	{
-        program.setUniformInt(program.uniformLocation("atlasTextures[%d]".format(materialIndex)),textureAtlas.slot);
-        /*textureAtlas.setActive();
-        */
-        
-        /*static foreach(member; texturesMembers!(UniformLayout))
-        {
-            static foreach(attribute; texturesAttributes!(UniformLayout,member))
-            {
-                static if(isDepthTexture!(attribute))
-                {
-                    __traits(getMember, this.textures, member).fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture.setActive(1);
-                    program.setUniformInt(1,1);
-                   
-                }
-                static if(isScreenTexture!(attribute))
-                {
-                    __traits(getMember, this.textures, member).fbAttachments[FrameBufferAttachmentType.COLOR_ATTACHMENT].texture.setActive(0);
-                    program.setUniformInt(0,0);
-                }
-            }
-        }*/
-	}
-
-    
-    
     void packTextureAtlas()
 	{
         textureAtlas.setActive();
@@ -331,12 +220,7 @@ WriteImage:
                 tilingOffsets[index].z = cast(float)rowWidth / textureAtlas.width;
                 tilingOffsets[index].w = cast(float)totalHeight/textureAtlas.height;
                 textureAtlas.uploadSubImage(0,rowWidth,totalHeight,texture.w,texture.h,texture.buf8.ptr);
-                
-                
-                //updateAtlas(texture,*tilingOffsets[index]);
 
-               
-                
 				if(cast(int)texture.h > rowHeight)
 				{
                     rowHeight = texture.h;

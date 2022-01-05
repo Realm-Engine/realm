@@ -1,8 +1,7 @@
 #shader shared
 struct ObjectData
 {
-    float cameraFar;
-    float cameraNear;
+	vec4 color;
 };
 #shader vertex simpleVertex
 vec4 vertex(REVertexData IN)
@@ -22,6 +21,6 @@ vec4 vertex(REVertexData IN)
 
 vec4 fragment()
 {
-    float dist = RESurfaceDataIn.posWS.z / RESurfaceDataIn.objectData.cameraFar;
-    return vec4(dist,dist,dist,1.0);
+	vec3 lighting = calculateDiffuse(RESurfaceDataIn.normal, vec3(0.25));
+	return getObjectData(color) * lighting;
 }

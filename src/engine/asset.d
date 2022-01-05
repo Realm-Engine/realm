@@ -15,6 +15,11 @@ private
 	import realm.engine.graphics.material;
 	import std.algorithm.comparison : equal;
 	import realm.engine.logging;
+	import realm.engine.core : Mesh;
+	import std.conv;
+	import std.range;
+	import std.algorithm;
+	
 }
 
 static this()
@@ -68,6 +73,144 @@ Image readImage(string path)
 }
 
 
+
+private Mesh loadObj(string path)
+{
+	import gl3n.linalg;
+	auto file = File(path);
+	Mesh result;
+	vec3[] vertices;
+	vec3[] normals;
+	vec2[] texCoords;
+	
+	foreach(index,line ; enumerate(file.byLine,0))
+	{
+		char[][] values = line.strip().split(" ").map!(s => s.strip()).array;
+		if(values.length <= 0)
+		{
+			continue;
+		}
+		switch(values[0])
+		{
+			case "v":
+				auto vals = values.drop(1).map!(s => parse!float(s)).takeExactly(3);
+				vec3 vertex;
+				vertex.vector = vals.array;
+				vertices ~= vertex;
+				
+				break;
+			case "vn" :
+				auto vals = values.drop(1).map!(s => parse!float(s)).takeExactly(3);
+				vec3 normal;
+				normal.vector = vals.array;
+				normals ~= normal;
+				break;
+			case "vt":
+				auto vals = values.drop(1).map!(s => parse!float(s)).takeExactly(2);
+				vec2 texCoord;
+				texCoord.vector = vals.array;
+				texCoords ~= texCoord;
+				break;
+			case "f" :
+				uint faceBase = cast(uint)result.positions.length;
+				foreach(face ; values.drop(1))
+				{
+					if(face == "")
+					{
+						break;
+					}
+					string token = "/";
+					bool hasTexCoord = true;
+					if(line.indexOf("//") >= 0)
+					{
+						hasTexCoord = false;
+						token = "//";
+					}
+					auto indices = face.split(token).map!(s => parse!uint(s));
+					uint vIdx = indices[0];
+					uint vnIdx;
+					uint vtIdx;
+					if(!hasTexCoord)
+					{
+						vnIdx = indices[1];
+					}
+					else
+					{
+						vnIdx = indices[2];
+						vtIdx = indices[1];
+					}
+					 
+					result.positions ~= vertices[vIdx - 1 ];
+					result.normals ~= normals[vnIdx - 1];
+					if(!hasTexCoord)
+					{
+						result.textureCoordinates ~= vec2(1,1);
+					}
+					else
+					{
+						result.textureCoordinates ~= texCoords[vtIdx - 1];
+					}
+					
+					
+				}
+				ulong numFaces = values.drop(1).array.length;
+				int start = cast(int)result.faces.length;
+				int end = start + cast(int)numFaces;
+				auto tris = iota(start, end).slide!(No.withPartial)(3,3);
+				
+				foreach(t ; tris)
+				{
+					
+					uint[] triangle;
+					foreach(i; t)
+					{
+						triangle ~= cast(uint)i;
+					}
+					ulong missingFaces = 3 - triangle.length;
+					/*if(missingFaces > 0)
+					{
+						for(int i = 0; i < missingFaces; i++)
+						{
+							triangle ~= ((3 + i) % 3) ;
+						}
+					}*/
+					
+					result.faces ~= triangle;
+				}
+				
+
+				break;
+
+			default:
+				break;
+		}
+	}
+	
+	
+	result.calculateTangents();
+	return result;
+}
+
+Mesh loadMesh(string path)
+{
+	
+	long fmtIndix = lastIndexOf(path,'.');
+	string fmt = path[fmtIndix+1..path.length];
+	Mesh result;
+	switch(fmt)
+	{
+		case "obj":
+			result = loadObj(path);
+			break;
+		default:
+			Logger.LogError("%s unknown file extension",fmt);
+			break;
+	}
+	return result;
+
+
+}
+
 ShaderProgram loadShaderProgram(string path,string name)
 {
 
@@ -81,6 +224,11 @@ ShaderProgram loadShaderProgram(string path,string name)
 
 	ShaderProgram program;
 	//string shader = readText(path);
+	if(!exists(path))
+	{
+		Logger.LogError("Could not find path: %s", path);
+		return program;
+	}
 	auto file = File(path);
 	auto range = file.byLine();
 

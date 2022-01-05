@@ -47,12 +47,6 @@ enum UserDataVarTypes : int
 	MATRIX = 0x4101,
 	FLOAT = VertexType.FLOAT,
 	TEXTURE2D = 0x101D,
-	DEPTHTEXTURE = 0x101E,
-	SCREENTEXTURE = 0x101F
-
-
-	
-
 }
 
 enum AttributeSlot

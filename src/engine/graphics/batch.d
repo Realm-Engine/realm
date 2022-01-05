@@ -74,7 +74,7 @@ class Batch(T)
 	}
 
 
-	void initialize(VertexAttribute[] attributes,uint initialElements)
+	void initialize(VertexAttribute[] attributes,uint initialElements,uint numFaces)
 	{
 		this.capacity = initialElements;
 		vao.bind();
@@ -88,7 +88,7 @@ class Batch(T)
 			
 			bindAttribute(attribute,stride);
 		}
-		allocateBuffers(initialElements);
+		allocateBuffers(initialElements,numFaces);
 		vertexBuffer.unbind();
 		elementBuffer.unbind();
 
@@ -108,10 +108,10 @@ class Batch(T)
 		cmdBuffer.unbind();
 	}
 		
-	void allocateBuffers(uint numElements)
+	void allocateBuffers(uint numElements,uint numFaces)
 	{
 		vertexBuffer.store(numElements);
-		elementBuffer.store(numElements * topology);
+		elementBuffer.store(numFaces);
 		this.capacity = numElements;
 
 		
@@ -134,8 +134,6 @@ class Batch(T)
 		numVerticesInFrame+=vertices.length;
 		numIndicesInFrame+=faces.length;
 		material.writeUniformData();
-		//material.activateTextures();
-		
 		textureAtlases~=material.getTextureAtlas();
 		
 

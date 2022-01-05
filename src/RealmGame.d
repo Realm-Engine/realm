@@ -13,7 +13,7 @@ import std.math.constants : PI;
 import realm.world;
 import glfw3.api;
 import gl3n.math;
-
+import realm.gameentity;
 //import realm.engine.graphics.core;
 class RealmGame : RealmApp
 {
@@ -25,7 +25,7 @@ class RealmGame : RealmApp
 	Player player;
 	World world;	
 	DirectionalLight mainLight;
-
+	GameEntity teapot;
 
 	this(int width, int height, const char* title)
 	{
@@ -44,6 +44,8 @@ class RealmGame : RealmApp
 		mainLight.color = vec3(1.0,1.0,1.0);
 		//renderer.mainLight(mainLight);
 		renderer.mainLight(&mainLight);
+		teapot = new GameEntity("./Assets/Models/box.obj");
+		
 	}
 	
 	
@@ -61,12 +63,14 @@ class RealmGame : RealmApp
 
 	override void update()
 	{
-		double time = glfwGetTime() *0.5 ;
-		mainLight.transform.rotation = vec3(0,sin(time) * 90,0);
+		double time = glfwGetTime() *radians(100) ;
+		mainLight.transform.rotation = vec3(0,time * 5,0);
 		//world.getComponent!(Transform).rotation = vec3(0,sin(time),0);
 		player.update();
-		world.update();
-		world.draw(renderer);
+		teapot.update();
+		teapot.draw(renderer);
+		/*world.update();
+		world.draw(renderer);*/
 		renderer.update();
 		
 
