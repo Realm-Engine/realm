@@ -4,7 +4,8 @@ import realm.engine.graphics.core;
 import realm.engine.graphics.material;
 import realm.engine.graphics.renderer;
 
-alias SimpleMaterial = Alias!(Material!(["color" : UserDataVarTypes.VECTOR]));
+alias SimpleMaterial = Alias!(Material!(["color" : UserDataVarTypes.VECTOR,
+										 "specularPower" : UserDataVarTypes.FLOAT]));
 
 class GameEntity
 {
@@ -24,7 +25,7 @@ class GameEntity
 		shader = loadShaderProgram("./src/engine/Assets/Shaders/simpleShaded.shader","Simple shaded");
 		material.setShaderProgram(shader);
 		material.color = vec4(1.0);
-		
+		material.specularPower = 1.0f;
 		material.packTextureAtlas();
 
 		

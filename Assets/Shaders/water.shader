@@ -59,6 +59,6 @@ vec4 fragment()
 	vec3 shallowColor = vec3(6,184,207).rgb;
 	
 	vec3 color = smoothstep(normalize(deepColor), normalize(shallowColor), vec3(height));
-	vec3 lighting = calculateDiffuse(normal, vec3(0.25) ) * color;
+	vec3 lighting = calculateDiffuse(normal) * color;
 	return vec4(color,height );
 }

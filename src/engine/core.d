@@ -77,11 +77,11 @@ class Transform
 		mat4 M = mat4.identity;
 		
 		M = M.scale(scale.x,scale.y,scale.z);
+
+		M = M.translate(position.x,position.y,position.z).matrix;
 		M.rotate(rotation.x,vec3(1,0,0));
 		M.rotate(rotation.y,vec3(0,1,0));
 		M.rotate(rotation.z,vec3(0,0,1));
-		M = M.translate(position.x,position.y,position.z).matrix;
-
 
 		transformMat = M;
 	}

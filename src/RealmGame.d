@@ -40,7 +40,7 @@ class RealmGame : RealmApp
 		player = new Player(&cam);
 		world = new World;
 		mainLight.transform = new Transform;
-		//mainLight.transform.rotation = vec3(,0,0);
+		mainLight.transform.rotation = vec3(-90,0,0);
 		writeln(mainLight.transform.front);
 		mainLight.color = vec3(1.0,1.0,1.0);
 		//renderer.mainLight(mainLight);
@@ -53,7 +53,7 @@ class RealmGame : RealmApp
 		crate.getComponent!(Transform).scale = vec3(0.01,0.01,0.01);
 		crate.getComponent!(Transform).position = vec3(0,0.5,-0.7);
 		crate.color = vec4(0.7,0.2,0.3,1.0);
-		
+		plane.color = vec4(0.1,0.5,0.2,1.0);
 		
 		
 		
@@ -76,7 +76,7 @@ class RealmGame : RealmApp
 	override void update()
 	{
 		double time = glfwGetTime() *radians(150) ;
-		mainLight.transform.rotation = vec3(-80,time,0);
+		
 		//world.getComponent!(Transform).rotation = vec3(0,sin(time),0);
 		player.update();
 		crate.update();

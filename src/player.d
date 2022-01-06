@@ -20,7 +20,9 @@ class Player
         lastY = float.max;
 
         this.camera = cam;
-        camera.position = vec3(0, 0, -5);
+        camera.position = vec3(1, 1, -5);
+        camera.rotation = vec3(0,-90,0);
+        camera.update();
         transform = new Transform();
         arcballcamera = new ArcballCamera(cam.position, cam.position + vec3(0,
                 0, 1), vec3(0, 1, 0));
@@ -49,18 +51,39 @@ class Player
         }
         vec2 mouse = transformMouse(vec2(x, y));
         vec2 prevMouse = vec2(lastX, lastY);
-
+        vec3 movementVector = vec3(0);
+        if(InputManager.getKey(RealmKey.W) == KeyState.Press)
+		{
+            movementVector += 0.05 * camera.front;
+		}
+		else if(InputManager.getKey(RealmKey.S) == KeyState.Press)
+		{
+            movementVector -= 0.05 * camera.front;
+		}
+		if(InputManager.getKey(RealmKey.A) == KeyState.Press)
+		{
+            movementVector -= camera.front.cross(vec3(0,1,0)).normalized() * 0.05;
+		}
+		else if(InputManager.getKey(RealmKey.D) == KeyState.Press)
+		{
+            movementVector += camera.front.cross(vec3(0,1,0)).normalized() * 0.05;
+		}
+        camera.position += movementVector;
+        float xOffset = x - lastX;
+        float yOffset = lastY - y;
+        xOffset *= 0.1;
+        yOffset*= 0.1;
         if (InputManager.getMouseButton(RealmMouseButton.ButtonLeft) == KeyState.Press )
         {
 
-//           camera.turn(vec2(-1,0));
-           getComponent!(ArcballCamera)().rotate(prevMouse,mouse);
+            camera.turn(vec2(xOffset,yOffset));
+           //getComponent!(ArcballCamera)().rotate(prevMouse,mouse);
         }
         if (InputManager.getKey(RealmKey.Right) == KeyState.Press)
         {
 
-            camera.turn(vec2(1,0));
-            getComponent!(ArcballCamera)().rotate(prevMouse,mouse);
+            //camera.turn(vec2(1,0));
+            //getComponent!(ArcballCamera)().rotate(prevMouse,mouse);
         }
         else if (InputManager.getMouseButton(RealmMouseButton.ButtonRight) == KeyState.Press)
         {
@@ -80,8 +103,8 @@ class Player
 		}
 
 
-        lastX = mouse.x;
-        lastY = mouse.y;
+        lastX = x;
+        lastY =y;
         vec3 moveVector = vec3(0, 0, 0);
         
 
@@ -95,8 +118,8 @@ class Player
         processInput();
 
         updateComponents();
-        //camera.update();
-        camera.view = getComponent!(ArcballCamera).camera;
+        camera.update();
+        //camera.view = getComponent!(ArcballCamera).camera;
     }
 
     

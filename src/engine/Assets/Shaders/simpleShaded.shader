@@ -2,6 +2,8 @@
 struct ObjectData
 {
 	vec4 color;
+	float specularPower;
+	float padding;
 };
 #shader vertex simpleVertex
 vec4 vertex(REVertexData IN)
@@ -22,11 +24,14 @@ vec4 vertex(REVertexData IN)
 
 vec4 fragment()
 {
-	vec3 ambient = vec3(0.25);
-	vec3 lighting =  calculateDiffuse(RESurfaceDataIn.normal, ambient) * 0.3 ;
+
+	vec3 ambient = vec3(0.1);
+	vec3 diffuse = calculateDiffuse(RESurfaceDataIn.normal) * 0.3;
+	vec3 specular = calculateSpecular(RESurfaceDataIn.normal, RESurfaceDataIn.posWS, getObjectData(specularPower));
+	vec3 lighting =  diffuse + specular + ambient ;
 	float bias = max(0.05 * (1.0 - dot(RESurfaceDataIn.normal, mainLight.direction.xyz)), 0.005);
 	float shadow = calculateShadow(RESurfaceDataIn.lightSpacePosition, 0.005);
 	vec3 color = getObjectData(color).rgb;
-	vec3 frag = (ambient + (1.0 - shadow)) * (color * lighting);
+	vec3 frag = (ambient + (1.0 - shadow)) *  (color * lighting);
 	return vec4(frag, 1.0);
 }

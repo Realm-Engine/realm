@@ -24,11 +24,22 @@ layout(std140, binding = 0) uniform _reGloblaData
 };
 
 
-vec3 calculateDiffuse(vec3 normal,vec3 ambient)
+vec3 calculateDiffuse(vec3 normal)
 {
 	vec3 norm = normalize(normal);
 	float amount = max(dot(norm,vec3(-mainLight.direction)),0.0);
-	return ambient + (amount * vec3(mainLight.color) * 5);
+	
+	return (amount * vec3(mainLight.color) * 5);
+
+}
+
+vec3 calculateSpecular(vec3 normal, vec3 fragPosition, float specularPower)
+{
+	vec3 viewDirection = normalize(camera.position.xyz - fragPosition);
+	vec3 reflectDirection = reflect(mainLight.direction.xyz, normalize(normal));
+	float specularFactor = pow(max(dot(viewDirection,reflectDirection),0.0),32);
+	vec3 specular = specularPower * specularFactor * mainLight.color.rgb;
+	return vec3(specularFactor);
 
 }
 
