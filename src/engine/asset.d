@@ -82,7 +82,7 @@ private Mesh loadObj(string path)
 	vec3[] vertices;
 	vec3[] normals;
 	vec2[] texCoords;
-	
+	Logger.LogInfo("Loading model: %s", path);
 	foreach(index,line ; enumerate(file.byLine,0))
 	{
 		char[][] values = line.strip().split(" ").map!(s => s.strip()).array;

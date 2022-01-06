@@ -83,6 +83,11 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
         return order;
     }
 
+    static uint getNumMaterialInstances()
+	{
+        return numMaterials;
+	}
+
     this()
     {
         //writeln(numMaterials);
@@ -192,7 +197,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
         
         int textureAtlasWidth = cast(int)(sumWidth * 1.5);
         int textureAtlasHeight = cast(int)(sumHeight * 1.5);
-        Logger.LogInfo("Createing atlas texture size (%d,%d)",textureAtlasWidth,textureAtlasHeight);
+        Logger.LogInfo("Creating atlas texture size (%d,%d)",textureAtlasWidth,textureAtlasHeight);
         auto sortedTextures = textures.sort!((t1, t2) => (t1.w * t1.h) > (t2.w * t2.h));
     
         int totalWidth = 0;

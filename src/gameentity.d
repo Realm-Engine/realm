@@ -16,17 +16,22 @@ class GameEntity
 	this(string modelPath)
 	{
 		transform = new Transform;
+		
+		
 		mesh = loadMesh(modelPath);
-		SimpleMaterial.initialze();
-		SimpleMaterial.reserve(1);
+
 		material = new SimpleMaterial;
 		shader = loadShaderProgram("./src/engine/Assets/Shaders/simpleShaded.shader","Simple shaded");
 		material.setShaderProgram(shader);
-		material.color = vec4(0.5);
+		material.color = vec4(1.0);
 		
 		material.packTextureAtlas();
 
 		
+	}
+	@property color(vec4 color)
+	{
+		material.color = color;
 	}
 
 	void update()

@@ -367,7 +367,7 @@ class GShaderProgram
         {
             
             result = cast(ubyte[])read(fileName);
-            Logger.LogInfo("Binary for program %s found in %s",name, fileName);
+            Logger.LogInfo("Binary for program %s found",name);
         }
         
         return result;

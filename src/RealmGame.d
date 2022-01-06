@@ -25,7 +25,8 @@ class RealmGame : RealmApp
 	Player player;
 	World world;	
 	DirectionalLight mainLight;
-	GameEntity teapot;
+	GameEntity crate;
+	GameEntity plane;
 
 	this(int width, int height, const char* title)
 	{
@@ -33,18 +34,28 @@ class RealmGame : RealmApp
 
 		super(width,height,title);
 		renderer = new Renderer;
-		
+
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),0.1,200,45);
 		renderer.activeCamera = &cam;
 		player = new Player(&cam);
 		world = new World;
 		mainLight.transform = new Transform;
-		mainLight.transform.rotation = vec3(0,-90,0);
+		//mainLight.transform.rotation = vec3(,0,0);
 		writeln(mainLight.transform.front);
 		mainLight.color = vec3(1.0,1.0,1.0);
 		//renderer.mainLight(mainLight);
+		SimpleMaterial.initialze();
+		SimpleMaterial.reserve(2);
 		renderer.mainLight(&mainLight);
-		teapot = new GameEntity("./Assets/Models/Bull.obj");
+		crate = new GameEntity("./Assets/Models/wooden_box_obj.obj");
+		plane = new GameEntity("./Assets/Models/plane.obj");
+		
+		crate.getComponent!(Transform).scale = vec3(0.01,0.01,0.01);
+		crate.getComponent!(Transform).position = vec3(0,0.5,-0.7);
+		crate.color = vec4(0.7,0.2,0.3,1.0);
+		
+		
+		
 		
 		
 	}
@@ -64,14 +75,18 @@ class RealmGame : RealmApp
 
 	override void update()
 	{
-		double time = glfwGetTime() *radians(100) ;
-		mainLight.transform.rotation = vec3(0,time * 5,0);
+		double time = glfwGetTime() *radians(150) ;
+		mainLight.transform.rotation = vec3(-80,time,0);
 		//world.getComponent!(Transform).rotation = vec3(0,sin(time),0);
 		player.update();
-		teapot.update();
-		teapot.draw(renderer);
-		/*world.update();
-		world.draw(renderer);*/
+		crate.update();
+		plane.update();
+		//world.update();
+		crate.draw(renderer);
+		plane.draw(renderer);
+		
+		
+		//world.draw(renderer);
 		renderer.update();
 		
 

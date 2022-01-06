@@ -36,8 +36,6 @@ class Renderer
 	@property activeCamera(Camera* cam)
 	{
 		camera = cam;
-		lightSpaceMaterial.cameraFar = cam.farPlane;
-		lightSpaceMaterial.cameraNear = cam.nearPlane;
                 
 	}
 
@@ -61,17 +59,11 @@ class Renderer
 		vertex3DAttributes ~= tangent;
 		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
 		mainFrameBuffer.create!([FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT])(windowSize[0],windowSize[1]);
-		LightSpaceMaterial.initialze();
-		LightSpaceMaterial.reserve(2);
-		lightSpaceMaterial = new LightSpaceMaterial;
-
-		lightSpaceShaderProgram = loadShaderProgram("./src/engine/Assets/Shaders/simpleShaded.shader","Simple shaded");
-		lightSpaceMaterial.setShaderProgram(lightSpaceShaderProgram);
-		lightSpaceMaterial.recieveShadows = false;
+		
 		enable(State.Blend);
 		blendFunc(BlendFuncType.SRC_ALPHA,BlendFuncType.ONE_MINUS_SRC_ALPHA);
 		
-		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(10,10),1,7.5,0);
+		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(10,10),-10,10,0);
 		lightSpaceBatch = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,lightSpaceShaderProgram,0);
 		lightSpaceBatch.initialize(vertex3DAttributes, 4096,4096* 3);
 		lightSpaceBatch.reserve(4);
@@ -113,7 +105,7 @@ class Renderer
 
 			batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
 			batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
-			batches[materialId].initialize(vertex3DAttributes,cast(uint)vertexData.length,cast(uint)mesh.faces.length);
+			batches[materialId].initialize(vertex3DAttributes,4096,4096 * 3);
 			batches[materialId].reserve(2);
 			batches[materialId].submitVertices!(Mat)(vertexData,mesh.faces,mat);
 		}
@@ -133,7 +125,7 @@ class Renderer
 		cull(CullFace.FRONT);
 		//lightSpaceCamera.update();
 		
-		mat4 view = mat4.look_at(mainDirLight.transform.front,vec3(0,0,0),vec3(0,1,0));
+		mat4 view = mat4.look_at(-mainDirLight.transform.front,vec3(0,0,0),vec3(0,1,0));
 		mat4 lightSpaceMatrix = lightSpaceCamera.projection * view;
 		lightSpaceMatrix.transpose();
 		globalData.vp[0..$] = lightSpaceMatrix.value_ptr[0..16].dup;
