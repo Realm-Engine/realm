@@ -14,7 +14,8 @@
 	"extraDependencyFiles": [
 		"./Assets/Shaders/*.shader",
 		"./src/engine/Assets/Shaders/*.shader",
-		"./src/engine/Assets/Shaders/*.glsl"
+		"./src/engine/Assets/Shaders/*.glsl",
+		"./Assets/Models/*.obj"
 	],
 	"license": "proprietary",
 	"name": "realm"

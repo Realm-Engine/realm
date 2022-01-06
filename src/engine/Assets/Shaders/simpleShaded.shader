@@ -2,6 +2,7 @@
 struct ObjectData
 {
 	vec4 color;
+	vec4 diffuse;
 };
 #shader vertex simpleVertex
 vec4 vertex(REVertexData IN)
@@ -21,6 +22,7 @@ vec4 vertex(REVertexData IN)
 
 vec4 fragment()
 {
-	vec3 lighting = calculateDiffuse(RESurfaceDataIn.normal, vec3(0.25));
-	return getObjectData(color) * lighting;
+	vec3 lighting =  calculateDiffuse(RESurfaceDataIn.normal, vec3(0.25)) * 0.3 ;
+	vec3 color = getObjectData(color).rgb;
+	return vec4(color * lighting,1.0);
 }

@@ -12,6 +12,7 @@ class GameEntity
 	mixin RealmEntity!(Transform,Mesh);
 	private SimpleMaterial material;
 	private ShaderProgram shader;
+	private static IFImage diffuse;
 	this(string modelPath)
 	{
 		transform = new Transform;
@@ -21,7 +22,8 @@ class GameEntity
 		material = new SimpleMaterial;
 		shader = loadShaderProgram("./src/engine/Assets/Shaders/simpleShaded.shader","Simple shaded");
 		material.setShaderProgram(shader);
-		material.color = vec4(1.0,1.0,1.0,1.0);
+		material.color = vec4(0.5);
+		
 		material.packTextureAtlas();
 
 		
@@ -33,6 +35,7 @@ class GameEntity
 
 
 	}
+
 
 	void draw(Renderer renderer)
 	{

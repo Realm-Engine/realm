@@ -154,9 +154,14 @@ private Mesh loadObj(string path)
 					
 				}
 				ulong numFaces = values.drop(1).array.length;
-				int start = cast(int)result.faces.length;
+				int start = 0;
+				if(result.faces.length > 0)
+				{
+					start = result.faces.maxElement() + 1;
+				}
+				//cast(int)result.faces.length;
 				int end = start + cast(int)numFaces;
-				auto tris = iota(start, end).slide!(No.withPartial)(3,3);
+				auto tris = iota(start, end).slide!(Yes.withPartial)(3,3);
 				
 				foreach(t ; tris)
 				{
@@ -166,17 +171,22 @@ private Mesh loadObj(string path)
 					{
 						triangle ~= cast(uint)i;
 					}
-					ulong missingFaces = 3 - triangle.length;
-					/*if(missingFaces > 0)
+					int missingFaces = 3 - cast(int)triangle.length;
+					if(missingFaces > 0)
 					{
 						for(int i = 0; i < missingFaces; i++)
 						{
-							triangle ~= ((3 + i) % 3) ;
+							triangle ~= ((3 + i) % 3) + ((end-4) + i) ;
 						}
-					}*/
+					}
+					else if(missingFaces < 0)
+					{
+						Logger.LogError("Bad face");
+					}
 					
 					result.faces ~= triangle;
 				}
+				
 				
 
 				break;

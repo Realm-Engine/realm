@@ -44,7 +44,8 @@ class RealmGame : RealmApp
 		mainLight.color = vec3(1.0,1.0,1.0);
 		//renderer.mainLight(mainLight);
 		renderer.mainLight(&mainLight);
-		teapot = new GameEntity("./Assets/Models/box.obj");
+		teapot = new GameEntity("./Assets/Models/Bull.obj");
+		
 		
 	}
 	
