@@ -4,6 +4,7 @@ import std.stdio;
 import realm.engine.app;
 public
 {
+	import gl3n.aabb;
 	import gl3n.linalg;
 	import gl3n.math;
 	import std.file : read;
@@ -77,11 +78,11 @@ class Transform
 		mat4 M = mat4.identity;
 		
 		M = M.scale(scale.x,scale.y,scale.z);
-
-		M = M.translate(position.x,position.y,position.z).matrix;
 		M.rotate(rotation.x,vec3(1,0,0));
 		M.rotate(rotation.y,vec3(0,1,0));
 		M.rotate(rotation.z,vec3(0,0,1));
+		M = M.translate(position.x,position.y,position.z).matrix;
+
 
 		transformMat = M;
 	}
@@ -99,6 +100,49 @@ class Transform
 }
 
 
+struct BoundingBox
+{
+	private AABB boundingBox;
+	private Transform* transform;
+	void initialize(vec3[] vertices, Transform* transform)
+	{
+		this.transform = transform;
+		boundingBox = AABB.from_points(vertices);
+	}
+	const vec3 extents(bool scaled = true)()
+	{
+		Logger.Assert(boundingBox.vertices.length > 0, "Bounding box not constructed");
+		if(scaled)
+		{
+			Logger.Assert(transform !is null,"Transform for bounding box not set");
+			vec3 extents = boundingBox.extent();
+			return vec3(extents.x*transform.scale.x,extents.y*transform.scale.y,extents.z*transform.scale.z);
+		}
+		else
+		{
+			return boundingBox.extent();
+		}
+	}
+	const vec3 center(bool translated = true)()
+	{
+		Logger.Assert(boundingBox.vertices.length > 0, "Bounding box not constructed");
+		static if(translated)
+		{
+			Logger.Assert(transform !is null,"Transform for bounding box not set");
+			return boundingBox.center + transform.position;
+		}
+		static if(!translated)
+		{
+			
+			return boundingBox.center;
+		}
+	}
+
+
+
+
+}
+
 struct Mesh
 {
 	vec3[] positions;
@@ -106,6 +150,7 @@ struct Mesh
 	vec3[] normals;
 	vec3[] tangents;
 	uint[] faces;
+
 	void calculateNormals()
 	{
 		normals.length = positions.length;
@@ -126,6 +171,8 @@ struct Mesh
 			normals[triangleFace[2]] = normal;
 		}
 	}
+
+	
 
 	void calculateTangents()
 	{
@@ -157,6 +204,7 @@ struct Mesh
 
 		}
 	}
+
 
 	
 }

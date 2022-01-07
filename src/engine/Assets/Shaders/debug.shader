@@ -22,6 +22,6 @@ vec4 vertex(REVertexData IN)
 #shader fragment debugFragment
 vec4 fragment()
 {
-	return getObjectData(color);
+	return vec4(getObjectData(color).rgb,1.0);
 
 }

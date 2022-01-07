@@ -107,7 +107,10 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
         shadows = true;
 		
     }
-
+    static void resetInstanceCount()
+	{
+        numMaterials = 0;
+	}
     @property recieveShadows()
     {
         return shadows;

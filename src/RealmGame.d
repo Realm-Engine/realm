@@ -76,8 +76,10 @@ class RealmGame : RealmApp
 	override void update()
 	{
 
-		Debug.drawBox(vec3(0,2,0),1,1,1);
-		double time = glfwGetTime() *radians(150) ;
+		double time = glfwGetTime();
+		double radians = glfwGetTime() *radians(150);
+		double sinT =  sin(time) ;
+		
 		mainLight.transform.rotation =  vec3(-15,time,0);
 		//world.getComponent!(Transform).rotation = vec3(-2,sin(time),0);
 		player.update();
@@ -86,9 +88,11 @@ class RealmGame : RealmApp
 		world.update();
 		crate.draw(renderer);
 		plane.draw(renderer);
-		
-		
 		world.draw(renderer);
+	
+		crate.debugDraw();
+		plane.debugDraw();
+		//Debug.drawBox(vec3(cos(radians),2,sin(radians)),0.5,0.5,0.5,vec3(radians,radians,0));
 		renderer.update();
 		
 

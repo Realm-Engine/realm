@@ -6,6 +6,7 @@ import realm.engine.core;
 import realm.engine.app;
 import realm.engine.asset;
 import realm.engine.graphics.material;
+import gl3n.linalg;
 import std.range;
 static class Debug
 {
@@ -13,8 +14,8 @@ static class Debug
 	private static ShaderProgram debugProgram;
 	alias DebugMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR]);
 	alias DebugMaterial = Alias!(Material!(DebugMaterialLayout));
-	private static DebugMaterial debugMaterial;
 	private static VertexAttribute[] vertex3DAttributes;
+
 	static void initialze()
 	{
 		
@@ -32,13 +33,10 @@ static class Debug
 		DebugMaterial.initialze();
 		DebugMaterial.reserve(16);
 		DebugMaterial.allocate(1024,1024);
-		debugMaterial = new DebugMaterial;
-		debugMaterial.setShaderProgram(debugProgram);
-		debugMaterial.packTextureAtlas();
 		debugBatch = new Batch!(RealmVertex)(MeshTopology.LINES,debugProgram,10);
 		debugBatch.setShaderStorageCallback(&(DebugMaterial.bindShaderStorage));
 		debugBatch.initialize(vertex3DAttributes,DebugMaterial.allocatedVertices(),DebugMaterial.allocatedElements());
-		debugMaterial.color = vec4(1,0,0,1);
+		
 		debugBatch.reserve(16);
 		
 
@@ -56,27 +54,35 @@ static class Debug
 		endVertex.texCoord = vec2(0,0);
 		endVertex.normal =vec3(0,1,0);
 		endVertex.tangent = vec3(0,0,1);
+		DebugMaterial debugMaterial = new DebugMaterial;
+
+		debugMaterial.setShaderProgram(debugProgram);
+		debugMaterial.color = vec4(1,0,0,1);
 		debugBatch.submitVertices!(DebugMaterial)([startVertex,endVertex],[0,1],debugMaterial);
 	}
 
 	
+	static void drawBox(vec3 origin, vec3 extent, vec3 rotation)
+	{
+		drawBox(origin,extent.x,extent.y,extent.z,rotation);
+	}
 
-	static void drawBox(vec3 origin,float width, float height,float length)
+	static void drawBox(vec3 origin,float width, float height,float length,vec3 rotation)
 	{
 
 		//Bottom face
 		RealmVertex[] vertices;
 		vertices.length = 8;
 
-		vertices[0].position = vec3(origin.x - width/2,origin.y - height/2,origin.z - length/2);
-		vertices[1].position = vec3(origin.x - width/2,origin.y - height/2,origin.z + length/2);
-		vertices[2].position = vec3(origin.x + width/2, origin.y - height/2,origin.z + length/2);
-		vertices[3].position = vec3(origin.x + width/2,origin.y - height/2,origin.z - length/2);
+		vertices[0].position = vec3(-0.5,-0.5,-0.5);
+		vertices[1].position = vec3(-0.5,-0.5,0.5);
+		vertices[2].position = vec3(0.5,-0.5,0.5);
+		vertices[3].position = vec3(0.5,-0.5,-0.5);
 
-		vertices[4].position = vec3(origin.x - width/2,origin.y + height/2,origin.z - length/2);
-		vertices[5].position = vec3(origin.x - width/2,origin.y + height/2,origin.z + length/2);
-		vertices[6].position = vec3(origin.x + width/2, origin.y + height/2,origin.z + length/2);
-		vertices[7].position = vec3(origin.x + width/2,origin.y + height/2,origin.z - length/2);
+		vertices[4].position = vec3(-0.5,0.5,-0.5);
+		vertices[5].position = vec3(-0.5,0.5,0.5);
+		vertices[6].position = vec3(0.5,0.5,0.5);
+		vertices[7].position = vec3(0.5,0.5,-0.5);
 
 
 		uint[] bottom = [0,1,1,2,2,3,3,0];
@@ -85,13 +91,23 @@ static class Debug
 		uint[] right = [3,7,7,6,6,2,2,3];
 		uint[] back = [0,4,4,7,7,3,3,0];
 		uint[] top =[4,5,5,6,6,7,7,4];
-
+		mat4 rotationMatrix = quat.euler_rotation(rotation.x,rotation.y,rotation.z).to_matrix!(4,4);
+		mat4 M = mat4.identity;
+		M = M.scale(width,height,length);
+		M *=rotationMatrix;
+		M = M.translate(origin);
 		foreach(i,v;vertices.enumerate(0))
 		{
 			vertices[i].normal = vec3(0,-1,0);
 			vertices[i].texCoord = vec2(0,0);
 			vertices[i].tangent = vec3(0,0,-1);
+			vertices[i].position = vec3(M *vec4(v.position,1.0) );
+			
 		}
+		DebugMaterial debugMaterial = new DebugMaterial;
+				
+		debugMaterial.setShaderProgram(debugProgram);
+		debugMaterial.color = vec4(1,0,0,1);
 		debugBatch.submitVertices!(DebugMaterial)(vertices,bottom ~ front ~ left ~ right ~ back ~ top,debugMaterial);
 
 
@@ -102,6 +118,7 @@ static class Debug
 		
 		debugBatch.drawBatch!(false,PrimitiveShape.LINES)();
 		debugBatch.resetBatch();
+		DebugMaterial.resetInstanceCount();
 	}
 	
 
