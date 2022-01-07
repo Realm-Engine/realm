@@ -26,6 +26,7 @@ alias DrawBufferTarget = GDrawBufferTarget;
 alias FrameMask = GFrameMask;
 alias BlendFuncType = GBlendFuncType;
 alias CullFace = GCullFace;
+alias PrimitiveShape = GPrimitiveShape;
 alias blendFunc = gBlendFunc;
 alias blendFuncSeperate = gBlendFuncSeperate;
 alias enable =gEnable;
@@ -60,7 +61,8 @@ enum AttributeSlot
 
 enum MeshTopology : int
 {
-	TRIANGLE = 3
+	TRIANGLE = 3,
+	LINES = 2
 }
 
 

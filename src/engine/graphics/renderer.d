@@ -13,6 +13,7 @@ import std.range;
 import std.typecons;
 import std.meta;
 import std.algorithm;
+import realm.engine.debugdraw;
 alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "cameraNear" : UserDataVarTypes.FLOAT]);
 alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
 
@@ -24,7 +25,7 @@ class Renderer
 	
 	private Batch!(RealmVertex)[ulong] batches;
 	private Batch!(RealmVertex) lightSpaceBatch;
-	VertexAttribute[] vertex3DAttributes;
+	private static VertexAttribute[] vertex3DAttributes;
 	private RealmGlobalData globalData;
 	private Camera* camera;
 	private static FrameBuffer mainFrameBuffer;
@@ -64,10 +65,8 @@ class Renderer
 		blendFunc(BlendFuncType.SRC_ALPHA,BlendFuncType.ONE_MINUS_SRC_ALPHA);
 		
 		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(10,10),-10,10,0);
-		lightSpaceBatch = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,lightSpaceShaderProgram,0);
-		lightSpaceBatch.initialize(vertex3DAttributes, 4096,4096* 3);
-		lightSpaceBatch.reserve(4);
-		lightSpaceBatch.setShaderStorageCallback(&(LightSpaceMaterial.bindShaderStorage));
+		Debug.initialze();
+
 
 	}
 	static FrameBuffer* getMainFrameBuffer()
@@ -105,8 +104,8 @@ class Renderer
 
 			batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
 			batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
-			batches[materialId].initialize(vertex3DAttributes,4096,4096 * 3);
-			batches[materialId].reserve(2);
+			batches[materialId].initialize(vertex3DAttributes,Mat.allocatedVertices(),Mat.allocatedElements());
+			batches[materialId].reserve(Mat.getNumMaterialInstances());
 			batches[materialId].submitVertices!(Mat)(vertexData,mesh.faces,mat);
 		}
 		//lightSpaceBatch.submitVertices!(LightSpaceMaterial)(vertexData,mesh.faces,lightSpaceMaterial);
@@ -202,6 +201,7 @@ class Renderer
 		{
 			batch.drawBatch!(true)();
 		}
+		Debug.flush();
 		
 		mainFrameBuffer.unbind(FrameBufferTarget.DRAW );
 		mainFrameBuffer.blitToScreen(FrameMask.COLOR );

@@ -141,7 +141,7 @@ class Batch(T)
 
 	}
 
-	void drawBatch(bool renderShadows = true)()
+	void drawBatch(bool renderShadows = true,PrimitiveShape shape = PrimitiveShape.TRIANGLE)()
 	{
 	
 		program.use();
@@ -176,7 +176,7 @@ class Batch(T)
 		
 		
 		//writeln(offset);
-		GraphicsSubsystem.drawMultiElementsIndirect(offset, numElementsInFrame);
+		GraphicsSubsystem.drawMultiElementsIndirect!(shape)(offset, numElementsInFrame);
 		unbindBuffers();
 
 		

@@ -4,6 +4,7 @@ import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.opengl;
 import std.stdio;
 import std.algorithm.sorting;
+import std.algorithm;
 import std.range;
 import gl3n.linalg;
 import gl3n.math;
@@ -77,6 +78,9 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
     private SamplerObject!(TextureType.TEXTURE2D) textureAtlas;
     private static ShaderProgram program;
     private static Mesh*[] meshes;
+    private static uint reservedVertices;
+    private static uint reservedElements;
+    
     private bool shadows;
     static int getOrder()
     {
@@ -87,6 +91,8 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
 	{
         return numMaterials;
 	}
+
+   
 
     this()
     {
@@ -110,6 +116,16 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
     {
         this.shadows = shadows;
     }
+
+    static uint allocatedVertices()
+	{
+        return reservedVertices;
+	}
+    static uint allocatedElements()
+	{
+        return reservedElements;
+	}
+
     SamplerObject!(TextureType.TEXTURE2D) getTextureAtlas()
 	{
         return this.textureAtlas;
@@ -128,7 +144,20 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
     static void reserve(size_t numItems)
     {
         shaderStorageBuffer.store(numItems);
+
     }
+    static void allocate(Mesh* mesh)
+	{
+        
+        reservedVertices += cast(uint)mesh.positions.length;
+        reservedElements += cast(uint)mesh.faces.length;
+	}
+	static void allocate(uint numVertices, uint numElements)
+	{
+
+        reservedVertices += numVertices;
+        reservedElements += numElements;
+	}
 
     static void initialze()
     {

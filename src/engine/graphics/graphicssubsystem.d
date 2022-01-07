@@ -61,14 +61,14 @@ class GraphicsSubsystem
 		globalDataBuffer.unbind();
 	}
 	
-	static void drawMultiElementsIndirect(DrawElementsIndirectCommand* commands,int count)
+	static void drawMultiElementsIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(DrawElementsIndirectCommand* commands,int count)
 	{
-		glMultiDrawElementsIndirect(GL_TRIANGLES,GL_UNSIGNED_INT,commands,count,0);
+		glMultiDrawElementsIndirect(shape,GL_UNSIGNED_INT,commands,count,0);
 	}
 
-	static void drawMultiElementsIndirect(int offset, int count)
+	static void drawMultiElementsIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(int offset, int count)
 	{
-		glMultiDrawElementsIndirect(GL_TRIANGLES,GL_UNSIGNED_INT,cast(void*)offset,count,0);
+		glMultiDrawElementsIndirect(shape,GL_UNSIGNED_INT,cast(void*)offset,count,0);
 	}
 	
 	static void clearScreen()

@@ -816,6 +816,13 @@ enum GBlendFuncType : GLenum
     ONE_MINUS_CONSTANT_ALPHA = GL_ONE_MINUS_CONSTANT_ALPHA
 }
 
+enum GPrimitiveShape
+{
+    TRIANGLE = GL_TRIANGLES,
+    LINES = GL_LINES,
+    LINES_ADJANCENCY = GL_LINES_ADJACENCY
+}
+
 enum GCullFace : GLenum
 {
     FRONT = GL_FRONT,
@@ -896,19 +903,19 @@ void bindAttribute(VertexAttribute attr, uint stride = 0)
             GL_FALSE, stride, cast(void*) attr.offset);
 }
 
-void drawIndirect()
+void drawIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)()
 {
     glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, cast(void*) 0);
 }
 
-void drawMultiIndirect(int count)
+void drawMultiIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(int count)
 {
-    glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, null, count, 0);
+    glMultiDrawElementsIndirect(shape, GL_UNSIGNED_INT, null, count, 0);
 }
 
-void drawElements(uint count)
+void drawElements(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(uint count)
 {
-    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, null);
+    glDrawElements(shape, count, GL_UNSIGNED_INT, null);
 }
 
 

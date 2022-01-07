@@ -20,7 +20,7 @@ class GameEntity
 		
 		
 		mesh = loadMesh(modelPath);
-
+		SimpleMaterial.allocate(&mesh);
 		material = new SimpleMaterial;
 		shader = loadShaderProgram("./src/engine/Assets/Shaders/simpleShaded.shader","Simple shaded");
 		material.setShaderProgram(shader);

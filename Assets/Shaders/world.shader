@@ -68,8 +68,9 @@ vec4 fragment()
 	vec3 ambient = vec3(0.1);
 	
 	
+	vec3 diffuse = calculateDiffuse(normal) *0.3;
 	
-	vec3 lighting = (ambient + (1.0 - shadow)) *  ((calculateDiffuse(normal) + ambient) * terrainColor);
+	vec3 lighting = (ambient + (1.0 - shadow)) *  (( diffuse  + ambient) * terrainColor);
 	return vec4(lighting,1.0);
 	//return vec4(vec3(lighting), 1.0);
 	

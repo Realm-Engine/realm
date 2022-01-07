@@ -37,9 +37,10 @@ class World
 		//mesh.calculateNormals();
 		WorldMaterial.initialze();
 		WorldMaterial.reserve(1);
+
 		//generateCube(8);
 		meshData = generateFace(vec3(0,1,0),24);
-		
+		WorldMaterial.allocate(&meshData);
 		transform.position = vec3(0,-2,0);
 		transform.scale = vec3(5,1,3.5);
 		shaderProgram = loadShaderProgram("./Assets/Shaders/world.shader","World");

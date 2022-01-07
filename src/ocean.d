@@ -27,7 +27,7 @@ class Ocean
 		transform = new Transform;
 		WaterMaterial.initialze();
 		WaterMaterial.reserve(1);
-
+		
 		
 		shaderProgram = loadShaderProgram("Assets/Shaders/water.shader","Water");
 		
@@ -44,7 +44,7 @@ class Ocean
 		material.packTextureAtlas();
 		
 		mesh = generateFace(vec3(0,-1,0),10);
-
+		WaterMaterial.allocate(&mesh);
 		
 
 	}
