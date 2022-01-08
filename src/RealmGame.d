@@ -26,9 +26,8 @@ class RealmGame : RealmApp
 	Player player;
 	World world;	
 	DirectionalLight mainLight;
-	GameEntity crate;
 	GameEntity plane;
-
+	GameEntity crate;
 	this(int width, int height, const char* title)
 	{
 		
@@ -41,23 +40,28 @@ class RealmGame : RealmApp
 		player = new Player(&cam);
 		world = new World;
 		mainLight.transform = new Transform;
-		//mainLight.transform.rotation = vec3(-90,0,0);
+
 		writeln(mainLight.transform.front);
 		mainLight.color = vec3(1.0,1.0,1.0);
-		//renderer.mainLight(mainLight);
+
 		SimpleMaterial.initialze();
 		SimpleMaterial.reserve(2);
 		renderer.mainLight(&mainLight);
 		crate = new GameEntity("./Assets/Models/wooden_box_obj.obj");
 		plane = new GameEntity("./Assets/Models/plane.obj");
+		plane.getMaterial().color = vec4(1.0,0,0,1.0);
+		crate.getMaterial().color = vec4(0,1.0,0,1.0);
 		
 		crate.getComponent!(Transform).scale = vec3(0.01,0.01,0.01);
-		crate.getComponent!(Transform).position = vec3(0,0.5,0);
-		crate.color = vec4(0.7,0.2,0.3,1.0);
-		plane.color = vec4(0.1,0.5,0.2,1.0);
+		crate.getComponent!(Transform).position = vec3(0,0.5,-0.5);
 		
 		
 		
+	}
+
+	static this()
+	{
+	
 	}
 	
 	
@@ -81,18 +85,15 @@ class RealmGame : RealmApp
 		double sinT =  sin(time) ;
 		
 		mainLight.transform.rotation =  vec3(-15,time,0);
-		//world.getComponent!(Transform).rotation = vec3(-2,sin(time),0);
 		player.update();
+		world.update();
 		crate.update();
 		plane.update();
-		world.update();
+		
+		world.draw(renderer);
 		crate.draw(renderer);
 		plane.draw(renderer);
-		world.draw(renderer);
-	
-		crate.debugDraw();
-		plane.debugDraw();
-		//Debug.drawBox(vec3(cos(radians),2,sin(radians)),0.5,0.5,0.5,vec3(radians,radians,0));
+
 		renderer.update();
 		
 

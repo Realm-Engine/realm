@@ -23,10 +23,12 @@ static class Debug
 		VertexAttribute texCoord = {VertexType.FLOAT2,12,1};
 		VertexAttribute normal = {VertexType.FLOAT3,20,2};
 		VertexAttribute tangent = {VertexType.FLOAT3,32,3};
+		VertexAttribute materialId = {VertexType.INTEGER,44,4};
 		vertex3DAttributes ~= position;
 		vertex3DAttributes ~= texCoord;
 		vertex3DAttributes ~= normal;
 		vertex3DAttributes ~= tangent;
+		vertex3DAttributes ~= materialId;
 
 		debugProgram = loadShaderProgram("./src/engine/Assets/Shaders/debug.shader","Debug");
 		
@@ -44,6 +46,7 @@ static class Debug
 
 	static void drawLine(vec3 start, vec3 end)
 	{
+		DebugMaterial debugMaterial = new DebugMaterial;
 		RealmVertex startVertex;
 		RealmVertex endVertex;
 		startVertex.position = start;
@@ -54,7 +57,9 @@ static class Debug
 		endVertex.texCoord = vec2(0,0);
 		endVertex.normal =vec3(0,1,0);
 		endVertex.tangent = vec3(0,0,1);
-		DebugMaterial debugMaterial = new DebugMaterial;
+		startVertex.materialId = debugMaterial.instanceId;
+		endVertex.materialId = debugMaterial.instanceId;
+
 
 		debugMaterial.setShaderProgram(debugProgram);
 		debugMaterial.color = vec4(1,0,0,1);
@@ -62,12 +67,12 @@ static class Debug
 	}
 
 	
-	static void drawBox(vec3 origin, vec3 extent, vec3 rotation)
+	static void drawBox(vec3 origin, vec3 extent, vec3 rotation,vec3 color = vec3(1,0,0))
 	{
-		drawBox(origin,extent.x,extent.y,extent.z,rotation);
+		drawBox(origin,extent.x,extent.y,extent.z,rotation,color);
 	}
 
-	static void drawBox(vec3 origin,float width, float height,float length,vec3 rotation)
+	static void drawBox(vec3 origin,float width, float height,float length,vec3 rotation,vec3 color = vec3(1,0,0))
 	{
 
 		//Bottom face
@@ -96,18 +101,20 @@ static class Debug
 		M = M.scale(width,height,length);
 		M *=rotationMatrix;
 		M = M.translate(origin);
+		DebugMaterial debugMaterial = new DebugMaterial;
 		foreach(i,v;vertices.enumerate(0))
 		{
 			vertices[i].normal = vec3(0,-1,0);
 			vertices[i].texCoord = vec2(0,0);
 			vertices[i].tangent = vec3(0,0,-1);
 			vertices[i].position = vec3(M *vec4(v.position,1.0) );
+			vertices[i].materialId = debugMaterial.instanceId;
 			
 		}
-		DebugMaterial debugMaterial = new DebugMaterial;
-				
+		
+		debugMaterial.color = vec4(color,1.0);
 		debugMaterial.setShaderProgram(debugProgram);
-		debugMaterial.color = vec4(1,0,0,1);
+		
 		debugBatch.submitVertices!(DebugMaterial)(vertices,bottom ~ front ~ left ~ right ~ back ~ top,debugMaterial);
 
 

@@ -3,7 +3,7 @@ layout(location = 0) in vec3 v_Position;
 layout(location = 1) in vec2 v_TexCoord;
 layout(location =2) in vec3 v_Normal;
 layout(location =3) in vec3 v_Tangent;
-
+layout(location =4) in int v_MaterialID;
 
 layout (std430,binding = 1) buffer _perObjectData
 {
@@ -46,7 +46,7 @@ mat3 calculateTBN()
 	return mat3(T,B,N);
 }
 
-#define objectTexture atlasTextures[gl_DrawID]
+#define objectTexture atlasTextures[v_MaterialID]
 #define getObjectData(v) IN.objectData.v
 
 void main()
@@ -56,8 +56,8 @@ void main()
 	vertexData.position = v_Position;
 	vertexData.texCoord = v_TexCoord;
 	vertexData.normal = v_Normal;
-	vertexData.objectData = data[gl_DrawID];
-	vertexData.objectId = gl_DrawID;
+	vertexData.objectData = data[v_MaterialID];
+	vertexData.objectId = v_MaterialID;
 	
 	gl_Position = vertex(vertexData);
 	

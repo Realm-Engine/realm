@@ -6,30 +6,35 @@ import realm.engine.graphics.renderer;
 import realm.engine.debugdraw;
 import std.stdio;
 alias SimpleMaterial = Alias!(Material!(["color" : UserDataVarTypes.VECTOR,
-										 "specularPower" : UserDataVarTypes.FLOAT]));
+										 "specularPower" : UserDataVarTypes.FLOAT,
+										 "shinyness" : UserDataVarTypes.FLOAT],2));
 
 class GameEntity
 {
 	
-	mixin RealmEntity!(Transform,Mesh,BoundingBox);
+	mixin RealmEntity!(Transform,Mesh);
 	private SimpleMaterial material;
-	private ShaderProgram shader;
+	private static ShaderProgram shader;
 	private static IFImage diffuse;
 	
 	this(string modelPath)
 	{
 		transform = new Transform;
 		
-		
+		if(shader is null)
+		{
+			shader = loadShaderProgram("./src/engine/Assets/Shaders/simpleShaded.shader","Simple shaded");
+		}
 		mesh = loadMesh(modelPath);
 		SimpleMaterial.allocate(&mesh);
 		material = new SimpleMaterial;
-		shader = loadShaderProgram("./src/engine/Assets/Shaders/simpleShaded.shader","Simple shaded");
+		material.specularPower = 1.0;
+		material.shinyness = 32;
 		material.setShaderProgram(shader);
-		material.color = vec4(1.0);
-		material.specularPower = 1.0f;
-		material.packTextureAtlas();
-		boundingbox.initialize(mesh.positions,&transform);
+		material.color = vec4(1.0,1.0,1.0,1.0);
+	}
+	static this()
+	{
 		
 	}
 	@property color(vec4 color)
@@ -44,6 +49,11 @@ class GameEntity
 
 	}
 
+	SimpleMaterial* getMaterial()
+	{
+		return &material;
+	}
+
 
 	void draw(Renderer renderer)
 	{
@@ -53,7 +63,7 @@ class GameEntity
 	void debugDraw()
 	{
 		
-		Debug.drawBox(getComponent!(BoundingBox).center(),getComponent!(BoundingBox).extents(),vec3(0));
+		//Debug.drawBox(getComponent!(BoundingBox).center(),getComponent!(BoundingBox).extents(),vec3(0));
 	}
 
 

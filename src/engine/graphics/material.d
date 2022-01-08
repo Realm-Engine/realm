@@ -96,95 +96,21 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
 
     this()
     {
-        //writeln(numMaterials);
+        
         storageBufferPtr = &shaderStorageBuffer.ptr[numMaterials];
         materialIndex = numMaterials;
         numMaterials++;
-        
-        textureAtlas.create();
+        if(texturesMembers!(UniformLayout).length >1)
+		{
+            textureAtlas.create();
+		}
+
         
         textureAtlas.slot = materialIndex + 3;
         shadows = true;
 		
     }
-    static void resetInstanceCount()
-	{
-        numMaterials = 0;
-	}
-    @property recieveShadows()
-    {
-        return shadows;
-    }
-    @property recieveShadows(bool shadows)
-    {
-        this.shadows = shadows;
-    }
 
-    static uint allocatedVertices()
-	{
-        return reservedVertices;
-	}
-    static uint allocatedElements()
-	{
-        return reservedElements;
-	}
-
-    SamplerObject!(TextureType.TEXTURE2D) getTextureAtlas()
-	{
-        return this.textureAtlas;
-	}
-
-    static void setShaderProgram(ShaderProgram sp)
-	{
-        program = sp;
-	}
-
-    static ShaderProgram getShaderProgram()
-	{
-        return program;
-	}
-
-    static void reserve(size_t numItems)
-    {
-        shaderStorageBuffer.store(numItems);
-
-    }
-    static void allocate(Mesh* mesh)
-	{
-        
-        reservedVertices += cast(uint)mesh.positions.length;
-        reservedElements += cast(uint)mesh.faces.length;
-	}
-	static void allocate(uint numVertices, uint numElements)
-	{
-
-        reservedVertices += numVertices;
-        reservedElements += numElements;
-	}
-
-    static void initialze()
-    {
-        shaderStorageBuffer.create();
-        shaderStorageBuffer.bindBase(1);
-
-       
-
-    }
-
-    static void bindShaderStorage()
-	{
-        shaderStorageBuffer.bindBase(1);
-	}
-
-    static void addMesh(Mesh* mesh)
-	{
-        meshes~= mesh;
-	}
-
-    static void useShaderProgram()
-	{
-        program.use();
-	}
 
     void writeUniformData()
     {
@@ -196,6 +122,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
         
 
     }
+
         
     void packTextureAtlas()
 	{
@@ -289,10 +216,93 @@ WriteImage:
         
     }
    
+    @property uint instanceId()
+	{
+        return materialIndex;
+	}
 
     static ulong materialId()
     {
         return (typeid(UniformLayout).toHash());
     }
+
+	static void resetInstanceCount()
+	{
+        numMaterials = 0;
+	}
+    @property recieveShadows()
+    {
+        return shadows;
+    }
+    @property recieveShadows(bool shadows)
+    {
+        this.shadows = shadows;
+    }
+
+    static uint allocatedVertices()
+	{
+        return reservedVertices;
+	}
+    static uint allocatedElements()
+	{
+        return reservedElements;
+	}
+
+    SamplerObject!(TextureType.TEXTURE2D) getTextureAtlas()
+	{
+        return this.textureAtlas;
+	}
+
+    static void setShaderProgram(ShaderProgram sp)
+	{
+        program = sp;
+	}
+
+    static ShaderProgram getShaderProgram()
+	{
+        return program;
+	}
+
+    static void reserve(size_t numItems)
+    {
+        shaderStorageBuffer.store(numItems);
+
+    }
+    static void allocate(Mesh* mesh)
+	{
+
+        reservedVertices += cast(uint)mesh.positions.length;
+        reservedElements += cast(uint)mesh.faces.length;
+	}
+	static void allocate(uint numVertices, uint numElements)
+	{
+
+        reservedVertices += numVertices;
+        reservedElements += numElements;
+	}
+
+    static void initialze()
+    {
+        shaderStorageBuffer.create();
+        shaderStorageBuffer.bindBase(1);
+
+
+
+    }
+
+    static void bindShaderStorage()
+	{
+        shaderStorageBuffer.bindBase(1);
+	}
+
+    static void addMesh(Mesh* mesh)
+	{
+        meshes~= mesh;
+	}
+
+    static void useShaderProgram()
+	{
+        program.use();
+	}
 
 }

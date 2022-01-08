@@ -119,8 +119,8 @@ class Batch(T)
 	void submitVertices(Mat)(T[] vertices, uint[] faces, Mat material)
 	{
 		static assert(isMaterial!(Mat));
-		uint elementOffset = cmdBufferBase * (capacity * topology) + numIndicesInFrame;
-		uint offset = cmdBufferBase * capacity + numVerticesInFrame;
+		uint elementOffset = ( cmdBufferBase) * (capacity * topology) + numIndicesInFrame;
+		uint offset = ( cmdBufferBase) * capacity + numVerticesInFrame;
 		vertexBuffer.ptr[offset.. offset + vertices.length] = vertices;
 		elementBuffer.ptr[elementOffset .. elementOffset + faces.length] = faces;
 		DrawElementsIndirectCommand cmd;
@@ -129,7 +129,8 @@ class Batch(T)
 		cmd.firstIndex = numIndicesInFrame;
 		cmd.baseVertex = numVerticesInFrame;
 		cmd.baseInstance = 0;
-		cmdBuffer.ptr[cmdBufferBase * maxElementsInFrame  + numElementsInFrame] = cmd;
+		cmdBuffer.ptr[( cmdBufferBase) * (maxElementsInFrame )  + numElementsInFrame] = cmd;
+		
 		numElementsInFrame++;
 		numVerticesInFrame+=vertices.length;
 		numIndicesInFrame+=faces.length;

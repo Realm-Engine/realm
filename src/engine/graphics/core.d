@@ -39,7 +39,8 @@ enum VertexType : int
 	FLOAT = 0x4011,
 	FLOAT2 = 0x4021,
 	FLOAT3 = 0x4031,
-	FLOAT4 = 0x4041
+	FLOAT4 = 0x4041,
+	INTEGER = 0x4012
 }
 
 enum UserDataVarTypes : int
@@ -48,6 +49,7 @@ enum UserDataVarTypes : int
 	MATRIX = 0x4101,
 	FLOAT = VertexType.FLOAT,
 	TEXTURE2D = 0x101D,
+	
 }
 
 enum AttributeSlot
@@ -79,6 +81,7 @@ struct RealmVertex
 	vec2 texCoord;
 	vec3 normal;
 	vec3 tangent;
+	int materialId;
 	/*
 	vec3 normal;
 	vec2 uv;

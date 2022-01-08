@@ -14,6 +14,7 @@ import std.typecons;
 import std.meta;
 import std.algorithm;
 import realm.engine.debugdraw;
+import gl3n.frustum;
 alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "cameraNear" : UserDataVarTypes.FLOAT]);
 alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
 
@@ -34,6 +35,8 @@ class Renderer
 	private DirectionalLight* mainDirLight;
 	private Camera lightSpaceCamera;
 	private static mat4 shadowBias = mat4(vec4(0.5,0,0,0),vec4(0,0.5,0,0),vec4(0,0,0.5,0),vec4(0.5,0.5,0.5,1.0));
+	
+
 	@property activeCamera(Camera* cam)
 	{
 		camera = cam;
@@ -54,10 +57,12 @@ class Renderer
 		VertexAttribute texCoord = {VertexType.FLOAT2,12,1};
 		VertexAttribute normal = {VertexType.FLOAT3,20,2};
 		VertexAttribute tangent = {VertexType.FLOAT3,32,3};
+		VertexAttribute materialId = {VertexType.INTEGER,44,4};
 		vertex3DAttributes ~= position;
 		vertex3DAttributes ~= texCoord;
 		vertex3DAttributes ~= normal;
 		vertex3DAttributes ~= tangent;
+		vertex3DAttributes ~= materialId;
 		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
 		mainFrameBuffer.create!([FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT])(windowSize[0],windowSize[1]);
 		
@@ -66,6 +71,7 @@ class Renderer
 		
 		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(10,10),-10,10,0);
 		Debug.initialze();
+		
 
 
 	}
@@ -77,12 +83,15 @@ class Renderer
 
 	void submitMesh(Mat)(Mesh mesh,Transform transform,Mat mat)
 	{
+		
+
 		static assert(isMaterial!(Mat));
 		
 		RealmVertex[] vertexData;
 		vertexData.length = mesh.positions.length;
 		mat4 modelMatrix = transform.transformation;
 		mat4 transInv = modelMatrix.inverse().transposed();
+		vec3[] aabbPoints;
 		for(int i = 0; i < mesh.positions.length;i++)
 		{
 			RealmVertex vertex;
@@ -92,22 +101,43 @@ class Renderer
 			vertex.texCoord = mesh.textureCoordinates[i];
 			vertex.normal =  vec3(transInv * vec4(mesh.normals[i],1.0));
 			vertex.tangent = vec3(modelMatrix * vec4(mesh.tangents[i],1.0));
+			vertex.materialId = mat.instanceId;
+			aabbPoints ~= vertex.position;
 			vertexData[i] = vertex;
+			
 		}
+		AABB boundingBox = AABB.from_points(aabbPoints);
+		Frustum frustum = Frustum((camera.projection * camera.view) );
+		
+		int intersection = frustum.intersects(boundingBox);
 		ulong materialId = Mat.materialId();
-		if(auto batch = materialId in batches)
+		if(materialId !in batches)
 		{
-			batch.submitVertices!(Mat)(vertexData,mesh.faces,mat);
-		}
-		else
-		{
-
 			batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
 			batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
 			batches[materialId].initialize(vertex3DAttributes,Mat.allocatedVertices(),Mat.allocatedElements());
 			batches[materialId].reserve(Mat.getNumMaterialInstances());
-			batches[materialId].submitVertices!(Mat)(vertexData,mesh.faces,mat);
 		}
+		auto batch = materialId in batches;
+		if(intersection == INSIDE)
+		{
+			
+			
+			batch.submitVertices!(Mat)(vertexData,mesh.faces,mat);
+			Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(0,1,0));
+		}
+		else if(intersection == INTERSECT)
+		{
+			batch.submitVertices!(Mat)(vertexData,mesh.faces,mat);
+			Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(0,0,1));
+		}
+		else
+		{
+			Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(1,0,0));
+			Logger.LogInfo("Culling mesh");
+		}
+		
+
 		//lightSpaceBatch.submitVertices!(LightSpaceMaterial)(vertexData,mesh.faces,lightSpaceMaterial);
 		
 		

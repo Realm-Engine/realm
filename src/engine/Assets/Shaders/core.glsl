@@ -33,11 +33,11 @@ vec3 calculateDiffuse(vec3 normal)
 
 }
 
-vec3 calculateSpecular(vec3 normal, vec3 fragPosition, float specularPower)
+vec3 calculateSpecular(vec3 normal, vec3 fragPosition, float specularPower,float shinyness)
 {
 	vec3 viewDirection = normalize(camera.position.xyz - fragPosition);
 	vec3 reflectDirection = reflect(mainLight.direction.xyz, normalize(normal));
-	float specularFactor = pow(max(dot(viewDirection,reflectDirection),0.0),32);
+	float specularFactor = pow(max(dot(viewDirection,reflectDirection),0.0),shinyness);
 	vec3 specular = specularPower * specularFactor * mainLight.color.rgb;
 	return vec3(specularFactor);
 
