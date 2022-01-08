@@ -111,46 +111,52 @@ class Renderer
 		
 		int intersection = frustum.intersects(boundingBox);
 		ulong materialId = Mat.materialId();
-		if(materialId !in batches)
-		{
-			batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
-			batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
-			batches[materialId].initialize(vertex3DAttributes,Mat.allocatedVertices(),Mat.allocatedElements());
-			batches[materialId].reserve(Mat.getNumMaterialInstances());
-		}
-		auto batch = materialId in batches;
+		
+		
 		if(intersection == INSIDE)
 		{
 			
-			
+			if(materialId !in batches)
+			{
+				batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
+				batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
+				batches[materialId].initialize(vertex3DAttributes,Mat.allocatedVertices(),Mat.allocatedElements());
+				batches[materialId].reserve(Mat.getNumMaterialInstances());
+			}
+			auto batch = materialId in batches;
 			batch.submitVertices!(Mat)(vertexData,mesh.faces,mat);
 			Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(0,1,0));
 		}
 		else if(intersection == INTERSECT)
 		{
+			if(materialId !in batches)
+			{
+				batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
+				batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
+				batches[materialId].initialize(vertex3DAttributes,Mat.allocatedVertices(),Mat.allocatedElements());
+				batches[materialId].reserve(Mat.getNumMaterialInstances());
+			}
+			auto batch = materialId in batches;
 			batch.submitVertices!(Mat)(vertexData,mesh.faces,mat);
 			Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(0,0,1));
 		}
 		else
 		{
 			Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(1,0,0));
-			Logger.LogInfo("Culling mesh");
 		}
-		
-
-		//lightSpaceBatch.submitVertices!(LightSpaceMaterial)(vertexData,mesh.faces,lightSpaceMaterial);
-		
-		
-		
-		
 	}
 
-	void renderLightSpace()
+	void renderLightSpace() 
 	{
 	
 		
-		FrameBuffer shadowFramebuffer = mainDirLight.shadowFrameBuffer;
+		FrameBuffer* shadowFramebuffer = &mainDirLight.shadowFrameBuffer;
 		setViewport(0,0,shadowFramebuffer.width, shadowFramebuffer.height);
+		mainDirLight.shadowFrameBuffer.bind(FrameBufferTarget.FRAMEBUFFER);
+
+		//mainDirLight.shadowFrameBuffer.refresh();
+		GraphicsSubsystem.clearScreen();
+
 		cull(CullFace.FRONT);
 		//lightSpaceCamera.update();
 		
@@ -160,17 +166,15 @@ class Renderer
 		globalData.vp[0..$] = lightSpaceMatrix.value_ptr[0..16].dup;
 		globalData.lightSpaceMatrix[0..$] =  lightSpaceMatrix.value_ptr[0..16].dup;
 		GraphicsSubsystem.updateGlobalData(&globalData);
-		mainDirLight.shadowFrameBuffer.refresh();
-		mainDirLight.shadowFrameBuffer.bind(FrameBufferTarget.FRAMEBUFFER);
-		GraphicsSubsystem.clearScreen();
+
 		
 		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
+		
 		foreach(batch; orderedBatches)
 		{
 			batch.drawBatch!(false)();
 		}
 		mainDirLight.shadowFrameBuffer.unbind(FrameBufferTarget.FRAMEBUFFER);
-		//mainDirLight.shadowFrameBuffer.blitToScreen(FrameMask.COLOR );
 		GraphicsSubsystem.setShadowMap(mainDirLight.shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture);
 		cull(CullFace.BACK);
 	}
@@ -178,7 +182,7 @@ class Renderer
 	@property void mainLight(DirectionalLight* light)
 	{
 		mainDirLight = light;
-		mainDirLight.createFrameBuffer(2048,2048);
+		mainDirLight.createFrameBuffer(1024,1024);
 	}
 
 	void updateMainLight()
@@ -200,14 +204,18 @@ class Renderer
 
 	void update()
 	{
+		
 		if(mainDirLight !is null)
 		{
 			updateMainLight();
 		}
+
 		renderLightSpace();
+		
+
 		setViewport(0,0,mainFrameBuffer.width,mainFrameBuffer.height);
 		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
-		mainFrameBuffer.refresh();
+		//mainFrameBuffer.refresh();
 		mainFrameBuffer.bind(FrameBufferTarget.DRAW);
 		
 		drawBuffers([DrawBufferTarget.COLOR]);

@@ -4,6 +4,7 @@ import realm.engine.graphics.core;
 import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.material;
 import realm.engine.graphics.renderer;
+import realm.engine.logging;
 import std.range;
 import std.format;
 class Batch(T)
@@ -145,41 +146,43 @@ class Batch(T)
 	void drawBatch(bool renderShadows = true,PrimitiveShape shape = PrimitiveShape.TRIANGLE)()
 	{
 	
-		program.use();
-		int cmdTypeSize = cast(int)DrawElementsIndirectCommand.sizeof;
-		bindBuffers();
-		uint offset = cmdBufferBase * (maxElementsInFrame * cmdTypeSize);
-		foreach(i,texture; textureAtlases.enumerate(0))
+		if(numVerticesInFrame > 0)
 		{
-			texture.setActive();
-			program.setUniformInt(program.uniformLocation("atlasTextures[%d]".format(i)),texture.slot);
-			
-		}
-		SamplerObject!(TextureType.TEXTURE2D) cameraDepth;
-		SamplerObject!(TextureType.TEXTURE2D) cameraScreen;
-		cameraDepth =Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture;
-		cameraDepth.setActive(0);
-		program.setUniformInt(0,0);
-		cameraScreen = Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.COLOR_ATTACHMENT].texture;
-		cameraScreen.setActive(1);
-		program.setUniformInt(1,1);
-		if(renderShadows)
-		{
-			GraphicsSubsystem.getShadowMap().setActive(2);
-			
-		
-			program.setUniformInt(2,2);
-		}
-		if(bindShaderStorage !is null)
-		{
-			bindShaderStorage();
-		}
-		
-		
-		//writeln(offset);
-		GraphicsSubsystem.drawMultiElementsIndirect!(shape)(offset, numElementsInFrame);
-		unbindBuffers();
+			program.use();
+			int cmdTypeSize = cast(int)DrawElementsIndirectCommand.sizeof;
+			bindBuffers();
+			uint offset = cmdBufferBase * (maxElementsInFrame * cmdTypeSize);
+			foreach(i,texture; textureAtlases.enumerate(0))
+			{
+				texture.setActive();
+				program.setUniformInt(program.uniformLocation("atlasTextures[%d]".format(i)),texture.slot);
 
+			}
+			SamplerObject!(TextureType.TEXTURE2D) cameraDepth;
+			SamplerObject!(TextureType.TEXTURE2D) cameraScreen;
+			cameraDepth =Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture;
+			cameraDepth.setActive(0);
+			program.setUniformInt(0,0);
+			cameraScreen = Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.COLOR_ATTACHMENT].texture;
+			cameraScreen.setActive(1);
+			program.setUniformInt(1,1);
+			if(renderShadows)
+			{
+				GraphicsSubsystem.getShadowMap().setActive(2);
+
+
+				program.setUniformInt(2,2);
+			}
+			if(bindShaderStorage !is null)
+			{
+				bindShaderStorage();
+			}
+
+
+			//writeln(offset);
+			GraphicsSubsystem.drawMultiElementsIndirect!(shape)(offset, numElementsInFrame);
+			unbindBuffers();
+		}
 		
 	}
 	void resetBatch()

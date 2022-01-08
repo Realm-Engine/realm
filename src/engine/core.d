@@ -333,7 +333,7 @@ struct DirectionalLight
 	void createFrameBuffer(int width, int height)
 	{
 
-		shadowFrameBuffer.create!([FrameBufferAttachmentType.COLOR_ATTACHMENT,FrameBufferAttachmentType.DEPTH_ATTACHMENT])(width,height);
+		shadowFrameBuffer.create!([FrameBufferAttachmentType.DEPTH_ATTACHMENT])(width,height);
 
 	}
 

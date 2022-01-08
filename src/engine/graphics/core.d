@@ -34,6 +34,7 @@ alias disable =gDisable;
 alias clear = gClear;
 alias cull = gCull;
 alias setViewport = gSetViewport;
+alias readBuffer = gReadBuffer;
 enum VertexType : int
 {
 	FLOAT = 0x4011,

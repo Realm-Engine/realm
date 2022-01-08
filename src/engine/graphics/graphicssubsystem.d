@@ -71,6 +71,11 @@ class GraphicsSubsystem
 		glMultiDrawElementsIndirect(shape,GL_UNSIGNED_INT,cast(void*)offset,count,0);
 	}
 	
+	static void clearScreen(FrameMask mask)
+	{
+		clear(mask);
+	}
+
 	static void clearScreen()
 	{
 		if(depthTest  == State.DepthTest)

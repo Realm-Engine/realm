@@ -466,6 +466,7 @@ struct GFrameBuffer
     }
     void create(GFrameBufferAttachmentType[] attachmentTypes)(int width, int height)
     {
+        import std.algorithm.searching :find;
         this.fbWidth = width;
         this.fbHeight = height;
         glGenFramebuffers(1, &id);
@@ -477,6 +478,11 @@ struct GFrameBuffer
             fbAttachments[type]= attachment;
             attachment.texture.bind();
             glFramebufferTexture2D(GL_FRAMEBUFFER,type,GL_TEXTURE_2D,attachment.texture.ID(),0);
+            if(attachmentTypes.find(GFrameBufferAttachmentType.COLOR_ATTACHMENT).empty)
+			{
+                glDrawBuffer(GL_NONE);
+                glReadBuffer(GL_NONE);
+			}
             attachment.texture.unbind();
         }
         Logger.Assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE,"Framebuffer %d not complete error: %d",id, glCheckFramebufferStatus(GL_FRAMEBUFFER));
@@ -752,7 +758,8 @@ enum GFrameBufferTarget : GLenum
 {
     FRAMEBUFFER = GL_FRAMEBUFFER,
     DRAW = GL_DRAW_FRAMEBUFFER,
-    READ = GL_READ_FRAMEBUFFER
+    READ = GL_READ_FRAMEBUFFER,
+    NONE = GL_NONE
 }
 
 enum GTextureWrapFunc : GLenum
@@ -931,6 +938,11 @@ void gDisable(GState state)
 static void gDrawBuffers(GDrawBufferTarget[] targets)
 {
     glDrawBuffers(cast(int)targets.length,cast(const(GLenum)*)targets.ptr);
+}
+
+static void gReadBuffer(GFrameBufferTarget target)
+{
+    glReadBuffer(target);
 }
 
 static void gBlendFunc(GBlendFuncType sfactor, GBlendFuncType dfactor)

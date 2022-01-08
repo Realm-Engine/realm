@@ -54,6 +54,8 @@ class RealmGame : RealmApp
 		
 		crate.getComponent!(Transform).scale = vec3(0.01,0.01,0.01);
 		crate.getComponent!(Transform).position = vec3(0,0.5,-0.5);
+		plane.getMaterial().packTextureAtlas();
+		crate.getMaterial().packTextureAtlas();
 		
 		
 		
