@@ -190,7 +190,7 @@ class Renderer
 		//mainDirLight = light;
 		mainDirLight.transform.updateTransformation();
 		//mat4 modelMatrix = mainDirLight.transform.transformation;
-		vec4 direction = vec4(mainDirLight.transform.front,0.0);
+		vec4 direction = vec4(mainDirLight.transform.front.normalized(),1.0);
 		globalData.mainLightDirection[0..$] = direction.value_ptr[0..4].dup;
 		globalData.mainLightColor[0..$] = vec4(mainDirLight.color,0.0).value_ptr[0..4].dup;
 		

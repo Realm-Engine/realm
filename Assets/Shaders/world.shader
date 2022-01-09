@@ -60,19 +60,19 @@ vec4 fragment()
 
 	//outColor = vec4(height,1-height,0,1.0);
 	vec3 normal = grayToNormal(objectTexture,samplerUV(getObjectData(heightMap),RESurfaceDataIn.texCoord),0.0071358);
-	normal = normal * 0.8;
+	normal = normal * 2;
 	normal = normalize(RESurfaceDataIn.TBN * normal);
-	
-	float bias = max(0.05 * (1.0 - dot(normal, -mainLight.direction.xyz)), 0.005);
+
+	float bias = max(0.05 * (1.0 - dot(normal, mainLight.direction.xyz)), 0.005);
 	float shadow = calculateShadow(RESurfaceDataIn.lightSpacePosition,bias);
 	vec3 ambient = vec3(0.1);
 	
 	
-	vec3 diffuse = calculateDiffuse(normal) *0.3;
+	vec3 diffuse = calculateDiffuse(normal);
 	
 	vec3 lighting = (ambient + (1.0 - shadow)) *  (( diffuse  + ambient) * terrainColor);
-	return vec4(lighting,1.0);
-	//return vec4(vec3(lighting), 1.0);
+	return vec4(lighting, 1.0);
+	
 	
 
 

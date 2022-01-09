@@ -126,6 +126,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
         
     void packTextureAtlas()
 	{
+        import std.math;
         textureAtlas.setActive();
         textureAtlas.textureDesc = textures.settings;
         Texture2D[] textures;
@@ -153,11 +154,39 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
 				}
 			}
 		}
-        
-        int textureAtlasWidth = cast(int)(sumWidth * 1.5);
-        int textureAtlasHeight = cast(int)(sumHeight * 1.5);
-        Logger.LogInfo("Creating atlas texture size (%d,%d)",textureAtlasWidth,textureAtlasHeight);
         auto sortedTextures = textures.sort!((t1, t2) => (t1.w * t1.h) > (t2.w * t2.h));
+        /*if(sortedTextures.length == 1)
+		{
+            Texture2D texture = sortedTextures[0];
+            textureAtlas.uploadSubImage(0,0,0,texture.w,texture.h,texture.buf8.ptr);
+			tilingOffsets[0].x = 1;
+			tilingOffsets[0].y = 1;
+			tilingOffsets[0].z = 0;
+			tilingOffsets[0].w = 0;
+            return;
+		}*/
+        int nextMultiple(int num, int multiple)
+		{
+           
+            if(multiple == 0)
+			{
+                return num;
+			}
+            int remainder = abs(num) % multiple;
+            if(remainder == 0)
+			{
+                return num;
+			}
+            if(num < 0)
+			{
+                return -(abs(num) - remainder);
+			}
+            return num + multiple - remainder;
+		}
+        int textureAtlasWidth = nextMultiple(sumWidth,1024);
+        int textureAtlasHeight = nextMultiple(sumHeight,1024);
+        Logger.LogInfo("Creating atlas texture size (%d,%d)",textureAtlasWidth,textureAtlasHeight);
+        
     
         int totalWidth = 0;
         int totalHeight = 0;
@@ -173,10 +202,12 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
             tilingOffset.w = cast(float)totalHeight / textureAtlas.height;
             return tilingOffset;
         }
+       
+
         foreach(index,texture; sortedTextures.enumerate(0))
 		{
 WriteImage:
-            if(texture.w + rowWidth < cast(int)textureAtlas.width)
+            if(texture.w + rowWidth <= cast(int)textureAtlas.width)
 			{
                 
                 tilingOffsets[index].x = cast(float)texture.w / textureAtlas.width;

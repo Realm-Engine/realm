@@ -37,6 +37,14 @@ float shadowMapSample(vec4 lightSpace)
 	return closest;
 }
 
+
+vec3 transformNormal(vec3 normal)
+{
+	normal = normal * 2 - 1;
+	return normalize(RESurfaceDataIn.TBN * normal);
+
+}
+
 float calculateShadow(vec4 lightSpace,float bias)
 {
 	vec3 projCoords = lightSpace.xyz/lightSpace.w;

@@ -26,17 +26,17 @@ layout(std140, binding = 0) uniform _reGloblaData
 
 vec3 calculateDiffuse(vec3 normal)
 {
-	vec3 norm = normalize(normal);
-	float amount = max(dot(norm,vec3(-mainLight.direction)),0.0);
+
+	float amount = max(dot(normal,vec3(-mainLight.direction)),0.0);
 	
-	return (amount * vec3(mainLight.color) * 5);
+	return (amount * mainLight.color.rgb);
 
 }
 
 vec3 calculateSpecular(vec3 normal, vec3 fragPosition, float specularPower,float shinyness)
 {
 	vec3 viewDirection = normalize(camera.position.xyz - fragPosition);
-	vec3 reflectDirection = reflect(mainLight.direction.xyz, normalize(normal));
+	vec3 reflectDirection = reflect(-mainLight.direction.xyz, normalize(normal));
 	float specularFactor = pow(max(dot(viewDirection,reflectDirection),0.0),shinyness);
 	vec3 specular = specularPower * specularFactor * mainLight.color.rgb;
 	return vec3(specularFactor);
@@ -46,8 +46,9 @@ vec3 calculateSpecular(vec3 normal, vec3 fragPosition, float specularPower,float
 
 vec2 samplerUV(vec4 to,vec2 texCoord)
 {
-	return (texCoord * vec2(to.x,to.y)) + vec2(to.z,to.w);
+	return (vec2( texCoord.x,1-texCoord.y) *  vec2(to.x,to.y)) + vec2(to.z,to.w);
 }
+
 
 float linearDepth(float depth)
 {
@@ -63,3 +64,5 @@ float linearDepth(float depth)
 
 uniform sampler2D atlasTextures[16];
 
+
+#define SAMPLE_TEXTURE(t,texCoord) texture(objectTexture, samplerUV(getObjectData( t ), texCoord ))

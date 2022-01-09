@@ -6,6 +6,8 @@ import realm.engine.graphics.renderer;
 import realm.engine.debugdraw;
 import std.stdio;
 alias SimpleMaterial = Alias!(Material!(["color" : UserDataVarTypes.VECTOR,
+										 "diffuse" : UserDataVarTypes.TEXTURE2D,
+										 "normal" : UserDataVarTypes.TEXTURE2D,
 										 "specularPower" : UserDataVarTypes.FLOAT,
 										 "shinyness" : UserDataVarTypes.FLOAT],2));
 

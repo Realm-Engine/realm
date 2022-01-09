@@ -28,6 +28,9 @@ class RealmGame : RealmApp
 	DirectionalLight mainLight;
 	GameEntity plane;
 	GameEntity crate;
+	static IFImage crateDiffuse;
+	static IFImage planeDiffuse;
+	static IFImage crateNormal;
 	this(int width, int height, const char* title)
 	{
 		
@@ -47,15 +50,28 @@ class RealmGame : RealmApp
 		SimpleMaterial.initialze();
 		SimpleMaterial.reserve(2);
 		renderer.mainLight(&mainLight);
-		crate = new GameEntity("./Assets/Models/wooden_box_obj.obj");
-		plane = new GameEntity("./Assets/Models/plane.obj");
-		plane.getMaterial().color = vec4(1.0,0,0,1.0);
-		crate.getMaterial().color = vec4(0,1.0,0,1.0);
+		crate = new GameEntity("./Assets/Models/wooden crate.obj");
+		//plane = new GameEntity("./Assets/Models/plane_textured.obj");
+		//plane.getMaterial().color = vec4(1.0,1,1,1.0);
+		crate.getMaterial().color = vec4(1,1,1,1.0);
 		
-		crate.getComponent!(Transform).scale = vec3(0.01,0.01,0.01);
+
 		crate.getComponent!(Transform).position = vec3(0,0.5,-0.5);
-		plane.getMaterial().packTextureAtlas();
+		crate.getComponent!(Transform).scale = vec3(0.25,0.25,0.25);
+		crate.getMaterial().textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+		crate.getMaterial().textures.diffuse= new Texture2D(&crateDiffuse,crate.getMaterial().textures.settings);
+		crate.getMaterial().textures.normal= new Texture2D(&crateNormal,crate.getMaterial().textures.settings);
 		crate.getMaterial().packTextureAtlas();
+		//
+		//plane.getMaterial().textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+		//plane.getMaterial().textures.diffuse= new Texture2D(&planeDiffuse,crate.getMaterial().textures.settings);
+		//plane.getMaterial().packTextureAtlas();
+		scope(exit)
+		{
+			crateDiffuse.free();
+			planeDiffuse.free();
+			crateNormal.free();
+		}
 		
 		
 		
@@ -63,7 +79,9 @@ class RealmGame : RealmApp
 
 	static this()
 	{
-	
+		crateDiffuse = readImageBytes("./Assets/Images/crate/crate_BaseColor.png");
+		//planeDiffuse = readImageBytes("./Assets/Images/texture_0.png");
+		crateNormal = readImageBytes("./Assets/Images/crate/crate_Normal.png");
 	}
 	
 	
@@ -86,15 +104,15 @@ class RealmGame : RealmApp
 		double radians = glfwGetTime() *radians(150);
 		double sinT =  sin(time) ;
 		
-		mainLight.transform.rotation =  vec3(-15,time,0);
+		mainLight.transform.rotation =  vec3(-15,radians,0);
 		player.update();
 		world.update();
 		crate.update();
-		plane.update();
+		//plane.update();
 		
 		world.draw(renderer);
 		crate.draw(renderer);
-		plane.draw(renderer);
+		//plane.draw(renderer);
 
 		renderer.update();
 		

@@ -42,7 +42,9 @@ mat3 calculateTBN()
 {
 	vec3 T = normalize(v_Tangent);
 	vec3 N = normalize(v_Normal);
-	vec3 B = normalize(cross(N,T));
+	T = normalize(T - dot(T,N) * N);
+
+	vec3 B = cross(N,T);
 	return mat3(T,B,N);
 }
 
