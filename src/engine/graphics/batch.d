@@ -28,7 +28,7 @@ class Batch(T)
 	private uint cmdBufferBase;
 	private uint bufferAmount;
 	private uint maxElementsInFrame;
-	private SamplerObject!(TextureType.TEXTURE2D)[] textureAtlases;
+	private SamplerObject!(TextureType.TEXTURE2D)*[] textureAtlases;
 	alias BindShaderStorageCallback = void function();
 	private BindShaderStorageCallback bindShaderStorage;
 	private int order;
@@ -67,32 +67,49 @@ class Batch(T)
 		this.maxElementsInFrame = cast(uint)amount;
 		cmdBuffer.bind();
 		cmdBuffer.store(amount * bufferAmount);
-		//cmdBufferMap = cmdBuffer.ptr; 
 		cmdBuffer.unbind();
-		/*perObjectData.bind();
-		perObjectData.store(amount * bufferAmount);
-		perObjectData.unbind();*/
+
 	}
 
 
-	void initialize(VertexAttribute[] attributes,uint initialElements,uint numFaces)
+	void initialize(uint initialElements,uint numFaces)
 	{
 		this.capacity = initialElements;
 		vao.bind();
 		vertexBuffer.bind();
 		elementBuffer.bind();
 
-		uint stride = attributes.map!((a) => shaderVarElements( a.type) * shaderVarBytes(a.type)).fold!((a,b) => a+b);
-		
-		foreach(attribute; attributes)
-		{
-			
-			bindAttribute(attribute,stride);
-		}
+		//uint stride = attributes.map!((a) => shaderVarElements( a.type) * shaderVarBytes(a.type)).fold!((a,b) => a+b);
+		bindAttributes();
+		//foreach(attribute; attributes)
+		//{
+		//
+		//    bindAttribute(attribute,stride);
+		//}
 		allocateBuffers(initialElements,numFaces);
 		vertexBuffer.unbind();
 		elementBuffer.unbind();
 
+	}
+
+	void bindAttributes()
+	{
+		
+		import std.meta;
+		T vertex;
+		uint stride = 0;
+		
+		stride += T.sizeof;
+		
+		int offset = 0;
+		int index = 0;
+		static foreach(member; __traits(allMembers,T))
+		{
+			
+			bindAttribute!(Alias!(typeof(__traits(getMember,vertex,member))))(index,offset,stride);
+			index += 1;
+			offset += (typeof(__traits(getMember,vertex,member))).sizeof;
+		}
 	}
 
 	void bindBuffers()
@@ -111,17 +128,18 @@ class Batch(T)
 		
 	void allocateBuffers(uint numElements,uint numFaces)
 	{
-		vertexBuffer.store(numElements);
-		elementBuffer.store(numFaces);
+		vertexBuffer.store(numElements * bufferAmount);
+		elementBuffer.store(numFaces * bufferAmount);
 		this.capacity = numElements;
 
 		
 	}
 	void submitVertices(Mat)(T[] vertices, uint[] faces, Mat material)
 	{
+		
 		static assert(isMaterial!(Mat));
-		uint elementOffset = ( cmdBufferBase) * (capacity * topology) + numIndicesInFrame;
-		uint offset = ( cmdBufferBase) * capacity + numVerticesInFrame;
+		uint elementOffset = ( cmdBufferBase * (capacity * topology)) + numIndicesInFrame;
+		uint offset = ( cmdBufferBase * capacity) + numVerticesInFrame;
 		vertexBuffer.ptr[offset.. offset + vertices.length] = vertices;
 		elementBuffer.ptr[elementOffset .. elementOffset + faces.length] = faces;
 		DrawElementsIndirectCommand cmd;
@@ -145,12 +163,16 @@ class Batch(T)
 
 	void drawBatch(bool renderShadows = true,PrimitiveShape shape = PrimitiveShape.TRIANGLE)()
 	{
+		
 	
 		if(numVerticesInFrame > 0)
 		{
-			program.use();
+			
+			
 			int cmdTypeSize = cast(int)DrawElementsIndirectCommand.sizeof;
 			bindBuffers();
+			bindAttributes();
+			program.use();
 			uint offset = cmdBufferBase * (maxElementsInFrame * cmdTypeSize);
 			foreach(i,texture; textureAtlases.enumerate(0))
 			{
@@ -158,12 +180,12 @@ class Batch(T)
 				program.setUniformInt(program.uniformLocation("atlasTextures[%d]".format(i)),texture.slot);
 
 			}
-			SamplerObject!(TextureType.TEXTURE2D) cameraDepth;
-			SamplerObject!(TextureType.TEXTURE2D) cameraScreen;
-			cameraDepth =Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture;
+			SamplerObject!(TextureType.TEXTURE2D)* cameraDepth;
+			SamplerObject!(TextureType.TEXTURE2D)* cameraScreen;
+			cameraDepth =&Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture;
 			cameraDepth.setActive(0);
 			program.setUniformInt(0,0);
-			cameraScreen = Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.COLOR_ATTACHMENT].texture;
+			cameraScreen = &Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.COLOR_ATTACHMENT].texture;
 			cameraScreen.setActive(1);
 			program.setUniformInt(1,1);
 			if(renderShadows)
@@ -192,6 +214,7 @@ class Batch(T)
 		numVerticesInFrame = 0;
 		numIndicesInFrame = 0;
 		textureAtlases.length = 0;
+		
 	}
 
 }

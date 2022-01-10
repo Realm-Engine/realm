@@ -9,7 +9,7 @@ class Player
 {
     private Camera* camera;
 
-    mixin RealmEntity!(Transform, ArcballCamera);
+    mixin RealmEntity!(Transform);
     float lastX;
     float lastY;
     float lastScrollX;
@@ -20,12 +20,12 @@ class Player
         lastY = float.max;
 
         this.camera = cam;
-        camera.position = vec3(1, 1, -5);
-        camera.rotation = vec3(0,-90,0);
-        camera.update();
+        camera.position = vec3(-2, 4, -8);
+        
+        camera.turn(vec2(90,-45));
+        //camera.update();
         transform = new Transform();
-        arcballcamera = new ArcballCamera(cam.position, cam.position + vec3(0,
-                0, 1), vec3(0, 1, 0));
+        
 
     }
 
@@ -85,18 +85,13 @@ class Player
             //camera.turn(vec2(1,0));
             //getComponent!(ArcballCamera)().rotate(prevMouse,mouse);
         }
-        else if (InputManager.getMouseButton(RealmMouseButton.ButtonRight) == KeyState.Press)
-        {
-            getComponent!(ArcballCamera)().pan(mouse-prevMouse);
-        }
-
         if(InputManager.getKey(RealmKey.Space) == KeyState.Press)
 		{
 
 			double zoom = InputManager.getMouseScroll(ScrollOffset.Y);
             if(zoom != lastScrollY)
 			{
-                getComponent!(ArcballCamera).zoom(zoom );
+              
                 lastScrollY = zoom;
 			}
 			
@@ -116,7 +111,7 @@ class Player
     {
 
         processInput();
-
+        
         updateComponents();
         camera.update();
         //camera.view = getComponent!(ArcballCamera).camera;

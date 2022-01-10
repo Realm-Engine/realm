@@ -1,7 +1,9 @@
-#shader shared 
-struct Material
-{
+#shader shared
+struct Material {
 	vec4 color;
+	vec4 baseTexture;
+
+
 };
 
 
@@ -22,6 +24,11 @@ vec4 vertex(REVertexData IN)
 #shader fragment debugFragment
 vec4 fragment()
 {
-	return vec4(getObjectData(color).rgb,1.0);
+	vec4 color = vec4(normalize(getObjectData(color).rgb), getObjectData(color).a);
+	vec4 color = color * SAMPLE_TEXTURE(baseTexture, RESurfaceDataIn.texCoord);
+	return color;
 
 }
+
+
+

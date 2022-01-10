@@ -54,7 +54,7 @@ class World
 		
 		ocean = new Ocean(material.oceanLevel,material.textures.heightMap,material.heightStrength);
 		//ocean.getComponent!(Transform).position = vec3(0,0.15,0);
-		ocean.getComponent!(Transform).scale = vec3(5,1,3.5);
+		ocean.getComponent!(Transform).scale = transform.scale;
 		//material.color = vec4(1.0,1.0,1.0,1.0);
 		
 

@@ -15,6 +15,7 @@ import glfw3.api;
 import gl3n.math;
 import realm.gameentity;
 import realm.engine.debugdraw;
+import realm.engine.ui;
 //import realm.engine.graphics.core;
 class RealmGame : RealmApp
 {
@@ -22,7 +23,7 @@ class RealmGame : RealmApp
 	ShaderProgram program;
 
 	Camera cam;
-	Renderer renderer;
+	//Renderer renderer;
 	Player player;
 	World world;	
 	DirectionalLight mainLight;
@@ -36,10 +37,10 @@ class RealmGame : RealmApp
 		
 
 		super(width,height,title);
-		renderer = new Renderer;
+		
 		
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),0.1,200,45);
-		renderer.activeCamera = &cam;
+		Renderer.get.activeCamera = &cam;
 		player = new Player(&cam);
 		world = new World;
 		mainLight.transform = new Transform;
@@ -49,7 +50,7 @@ class RealmGame : RealmApp
 
 		SimpleMaterial.initialze();
 		SimpleMaterial.reserve(2);
-		renderer.mainLight(&mainLight);
+		Renderer.get.mainLight(&mainLight);
 		crate = new GameEntity("./Assets/Models/wooden crate.obj");
 		//plane = new GameEntity("./Assets/Models/plane_textured.obj");
 		//plane.getMaterial().color = vec4(1.0,1,1,1.0);
@@ -88,7 +89,7 @@ class RealmGame : RealmApp
 
 	override void start()
 	{
-		
+		RealmUI.panel(vec3(-1200,680,0),vec3(100,100,100),vec3(0,0,0),vec4(5,42,59,0.5));
 		
 		
 		
@@ -104,17 +105,17 @@ class RealmGame : RealmApp
 		double radians = glfwGetTime() *radians(150);
 		double sinT =  sin(time) ;
 		
-		mainLight.transform.rotation =  vec3(-15,radians,0);
+		mainLight.transform.rotation =  vec3(-20,radians,0);
 		player.update();
 		world.update();
 		crate.update();
 		//plane.update();
 		
-		world.draw(renderer);
-		crate.draw(renderer);
+		world.draw(Renderer.get);
+		crate.draw(Renderer.get);
 		//plane.draw(renderer);
 
-		renderer.update();
+		Renderer.get.update();
 		
 
 	}

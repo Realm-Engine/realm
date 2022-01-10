@@ -311,9 +311,9 @@ class Camera
 		translation.matrix[3] = vec4(-transform.position.x,-transform.position.y,-transform.position.z,1.0).vector;
 		cameraTransformation = lookMat;
 	}
-	void cameraLookAt(vec3 x, vec3 y, vec3 z)
+	void cameraLookAt(float x,float y, float z)
 	{
-		mat4 lookMat = mat4(mat4.look_at( x,y,z));
+		mat4 lookMat = mat4(mat4.look_at( transform.position,transform.position + vec3(x,y,z),vec3(0,1,0)));
 		lookMat.matrix[3] = vec4(0,0,0,1).vector;
 		mat4 translation = mat4.identity;
 		translation.matrix[3] = vec4(-transform.position.x,-transform.position.y,-transform.position.z,1.0).vector;

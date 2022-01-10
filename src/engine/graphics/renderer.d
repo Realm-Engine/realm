@@ -14,6 +14,7 @@ import std.typecons;
 import std.meta;
 import std.algorithm;
 import realm.engine.debugdraw;
+import realm.engine.ui;
 import gl3n.frustum;
 alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "cameraNear" : UserDataVarTypes.FLOAT]);
 alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
@@ -27,7 +28,7 @@ class Renderer
 	private Batch!(RealmVertex)[ulong] batches;
 	private Batch!(RealmVertex) lightSpaceBatch;
 	private static VertexAttribute[] vertex3DAttributes;
-	private RealmGlobalData globalData;
+	private RealmGlobalData _globalData;
 	private Camera* camera;
 	private static FrameBuffer mainFrameBuffer;
 	private ShaderProgram lightSpaceShaderProgram;
@@ -36,12 +37,35 @@ class Renderer
 	private Camera lightSpaceCamera;
 	private static mat4 shadowBias = mat4(vec4(0.5,0,0,0),vec4(0,0.5,0,0),vec4(0,0,0.5,0),vec4(0.5,0.5,0.5,1.0));
 	
+	private static bool _instantiated;
+	private __gshared Renderer _instance;
+	static Renderer get()
+	{
+		if(!_instantiated)
+		{
+			synchronized(Renderer.classinfo)
+			{
+				if(!_instance)
+				{
+					_instance = new Renderer;
+				}
+				_instantiated = true;
+			}
+		}
+		return _instance;
+	}
 
 	@property activeCamera(Camera* cam)
 	{
 		camera = cam;
                 
 	}
+
+	@property RealmGlobalData* globalData()
+	{
+		return &_globalData;
+	}
+	
 
 
 	this()
@@ -50,9 +74,9 @@ class Renderer
 		GraphicsSubsystem.initialze();
 		GraphicsSubsystem.setClearColor(126,32,32,true);
 		GraphicsSubsystem.enableDepthTest();
-		globalData.vp = mat4.identity.value_ptr[0..16].dup;
+		_globalData.vp = mat4.identity.value_ptr[0..16].dup;
                 
-		GraphicsSubsystem.updateGlobalData(&globalData);
+		GraphicsSubsystem.updateGlobalData(&_globalData);
 		VertexAttribute position = {VertexType.FLOAT3,0,0};
 		VertexAttribute texCoord = {VertexType.FLOAT2,12,1};
 		VertexAttribute normal = {VertexType.FLOAT3,20,2};
@@ -71,6 +95,8 @@ class Renderer
 		
 		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(10,10),-10,10,0);
 		Debug.initialze();
+
+		RealmUI.initialize();
 		
 
 
@@ -120,7 +146,7 @@ class Renderer
 			{
 				batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
 				batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
-				batches[materialId].initialize(vertex3DAttributes,Mat.allocatedVertices(),Mat.allocatedElements());
+				batches[materialId].initialize(Mat.allocatedVertices(),Mat.allocatedElements());
 				batches[materialId].reserve(Mat.getNumMaterialInstances());
 			}
 			auto batch = materialId in batches;
@@ -133,7 +159,7 @@ class Renderer
 			{
 				batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
 				batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
-				batches[materialId].initialize(vertex3DAttributes,Mat.allocatedVertices(),Mat.allocatedElements());
+				batches[materialId].initialize(Mat.allocatedVertices(),Mat.allocatedElements());
 				batches[materialId].reserve(Mat.getNumMaterialInstances());
 			}
 			auto batch = materialId in batches;
@@ -163,9 +189,9 @@ class Renderer
 		mat4 view = mat4.look_at(-mainDirLight.transform.front,vec3(0,0,0),vec3(0,1,0));
 		mat4 lightSpaceMatrix = lightSpaceCamera.projection * view;
 		lightSpaceMatrix.transpose();
-		globalData.vp[0..$] = lightSpaceMatrix.value_ptr[0..16].dup;
-		globalData.lightSpaceMatrix[0..$] =  lightSpaceMatrix.value_ptr[0..16].dup;
-		GraphicsSubsystem.updateGlobalData(&globalData);
+		_globalData.vp[0..$] = lightSpaceMatrix.value_ptr[0..16].dup;
+		_globalData.lightSpaceMatrix[0..$] =  lightSpaceMatrix.value_ptr[0..16].dup;
+		GraphicsSubsystem.updateGlobalData(&_globalData);
 
 		
 		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
@@ -191,8 +217,8 @@ class Renderer
 		mainDirLight.transform.updateTransformation();
 		//mat4 modelMatrix = mainDirLight.transform.transformation;
 		vec4 direction = vec4(mainDirLight.transform.front.normalized(),1.0);
-		globalData.mainLightDirection[0..$] = direction.value_ptr[0..4].dup;
-		globalData.mainLightColor[0..$] = vec4(mainDirLight.color,0.0).value_ptr[0..4].dup;
+		_globalData.mainLightDirection[0..$] = direction.value_ptr[0..4].dup;
+		_globalData.mainLightColor[0..$] = vec4(mainDirLight.color,0.0).value_ptr[0..4].dup;
 		
 
 	}
@@ -201,6 +227,8 @@ class Renderer
 	{
 		
 	}
+
+
 
 	void update()
 	{
@@ -225,22 +253,22 @@ class Renderer
 			//camera.updateViewProjection();
 			mat4 vp = camera.projection * camera.view;
 			vp.transpose();
-			globalData.vp[0..$] = vp.value_ptr[0..16].dup;
-			globalData.camPosition[0..$] = camera.transform.position.value_ptr[0..4].dup;
-			globalData.camDirection[0..$] = camera.transform.front.value_ptr[0..4].dup;
-			globalData.nearPlane = camera.nearPlane;
-			globalData.farPlane = camera.farPlane;
-			globalData.size[0..$] = camera.size.value_ptr[0..2].dup;
+			_globalData.vp[0..$] = vp.value_ptr[0..16].dup;
+			_globalData.camPosition[0..$] = camera.transform.position.value_ptr[0..4].dup;
+			_globalData.camDirection[0..$] = camera.transform.front.value_ptr[0..4].dup;
+			_globalData.nearPlane = camera.nearPlane;
+			_globalData.farPlane = camera.farPlane;
+			_globalData.size[0..$] = camera.size.value_ptr[0..2].dup;
 		}
 
-		GraphicsSubsystem.updateGlobalData(&globalData);
+		GraphicsSubsystem.updateGlobalData(&_globalData);
 		
 		foreach(batch; orderedBatches)
 		{
 			batch.drawBatch!(true)();
 		}
 		Debug.flush();
-		
+		RealmUI.flush();
 		mainFrameBuffer.unbind(FrameBufferTarget.DRAW );
 		mainFrameBuffer.blitToScreen(FrameMask.COLOR );
 		

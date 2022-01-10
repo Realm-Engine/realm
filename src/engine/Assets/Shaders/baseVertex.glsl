@@ -7,7 +7,7 @@ layout(location =4) in int v_MaterialID;
 
 layout (std430,binding = 1) buffer _perObjectData
 {
-	ObjectData data[];
+	Material data[];
 };
 
 
@@ -17,7 +17,7 @@ out RESurfaceData
 	vec4 posCS;
 	vec2 texCoord;
 	flat int objectId;
-	ObjectData objectData;
+	Material material;
 	vec3 normal;
 	mat3 TBN;
 	vec4 lightSpacePosition;
@@ -29,7 +29,7 @@ struct REVertexData
 	vec3 position;
 	vec2 texCoord;
 	vec3 normal;
-	ObjectData objectData;
+	Material material;
 	int objectId;
 	vec3 tangent;
 
@@ -49,7 +49,7 @@ mat3 calculateTBN()
 }
 
 #define objectTexture atlasTextures[v_MaterialID]
-#define getObjectData(v) IN.objectData.v
+#define getObjectData(v) IN.material.v
 
 void main()
 {
@@ -58,7 +58,7 @@ void main()
 	vertexData.position = v_Position;
 	vertexData.texCoord = v_TexCoord;
 	vertexData.normal = v_Normal;
-	vertexData.objectData = data[v_MaterialID];
+	vertexData.material = data[v_MaterialID];
 	vertexData.objectId = v_MaterialID;
 	
 	gl_Position = vertex(vertexData);

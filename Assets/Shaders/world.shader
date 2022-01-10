@@ -1,6 +1,6 @@
 #shader shared
 
-struct ObjectData
+struct Material
 {
 	vec4 heightMap;
 	float heightStrength;
@@ -13,13 +13,13 @@ struct ObjectData
 vec4 vertex(REVertexData IN)
 {
 	
-	vec4 heightSample =texture(objectTexture,samplerUV(IN.objectData.heightMap,IN.texCoord));
+	vec4 heightSample =texture(objectTexture,samplerUV(IN.material.heightMap,IN.texCoord));
 	float height = (heightSample.x);
-	height = height * IN.objectData.heightStrength;
+	height = height * IN.material.heightStrength;
 	
 	vec3 position = v_Position + vec3(0,height,0);
 	RESurfaceDataOut.TBN = calculateTBN();
-	RESurfaceDataOut.objectData = IN.objectData;
+	RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
 	RESurfaceDataOut.posCS = u_vp * vec4(position, 1.0);
 	RESurfaceDataOut.posWS = position;
@@ -53,7 +53,7 @@ vec3 grayToNormal(sampler2D grayTexture,vec2 uv,float delta)
 
 vec4 fragment()
 {
-	float height = texture(objectTexture,samplerUV(getObjectData(heightMap), RESurfaceDataIn.texCoord)).x;
+	float height = SAMPLE_TEXTURE(heightMap,RESurfaceDataIn.texCoord).x;
 	
 	float difference = abs(height - getObjectData(oceanLevel));
 	vec3 terrainColor= vec3(1 - difference,1.0,0.1);

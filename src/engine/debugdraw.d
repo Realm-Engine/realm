@@ -18,17 +18,7 @@ static class Debug
 
 	static void initialze()
 	{
-		
-		VertexAttribute position = {VertexType.FLOAT3,0,0};
-		VertexAttribute texCoord = {VertexType.FLOAT2,12,1};
-		VertexAttribute normal = {VertexType.FLOAT3,20,2};
-		VertexAttribute tangent = {VertexType.FLOAT3,32,3};
-		VertexAttribute materialId = {VertexType.INTEGER,44,4};
-		vertex3DAttributes ~= position;
-		vertex3DAttributes ~= texCoord;
-		vertex3DAttributes ~= normal;
-		vertex3DAttributes ~= tangent;
-		vertex3DAttributes ~= materialId;
+	
 
 		debugProgram = loadShaderProgram("./src/engine/Assets/Shaders/debug.shader","Debug");
 		
@@ -37,7 +27,7 @@ static class Debug
 		DebugMaterial.allocate(1024,1024);
 		debugBatch = new Batch!(RealmVertex)(MeshTopology.LINES,debugProgram,10);
 		debugBatch.setShaderStorageCallback(&(DebugMaterial.bindShaderStorage));
-		debugBatch.initialize(vertex3DAttributes,DebugMaterial.allocatedVertices(),DebugMaterial.allocatedElements());
+		debugBatch.initialize(DebugMaterial.allocatedVertices(),DebugMaterial.allocatedElements());
 		
 		debugBatch.reserve(16);
 		
@@ -127,6 +117,8 @@ static class Debug
 		debugBatch.resetBatch();
 		DebugMaterial.resetInstanceCount();
 	}
+
+
 	
 
 

@@ -260,6 +260,8 @@ WriteImage:
 	static void resetInstanceCount()
 	{
         numMaterials = 0;
+        
+        
 	}
     @property recieveShadows()
     {
@@ -279,9 +281,9 @@ WriteImage:
         return reservedElements;
 	}
 
-    SamplerObject!(TextureType.TEXTURE2D) getTextureAtlas()
+    SamplerObject!(TextureType.TEXTURE2D)* getTextureAtlas()
 	{
-        return this.textureAtlas;
+        return &this.textureAtlas;
 	}
 
     static void setShaderProgram(ShaderProgram sp)
@@ -321,19 +323,19 @@ WriteImage:
 
     }
 
+   
+
     static void bindShaderStorage()
 	{
         shaderStorageBuffer.bindBase(1);
 	}
 
-    static void addMesh(Mesh* mesh)
-	{
-        meshes~= mesh;
-	}
 
     static void useShaderProgram()
 	{
         program.use();
 	}
+
+
 
 }

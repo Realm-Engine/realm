@@ -586,6 +586,7 @@ struct GSamplerObject(GTextureType target)
     private int texSlot;
     int width;
     int height;
+    bool destroyed;
     
     invariant()
 	{
@@ -627,6 +628,7 @@ struct GSamplerObject(GTextureType target)
     void create()
     {
         glGenTextures(1, &id);
+        destroyed = false;
 
     }
 
@@ -709,6 +711,23 @@ struct GSamplerObject(GTextureType target)
     {
 
     }
+
+    void free()
+	{
+        glDeleteTextures(1,&id);
+        destroyed = true;
+	}
+
+    void freeTextures(GSamplerObject!(target)*[]textures)
+	{
+        uint[] ids;
+        foreach(texture;textures)
+		{
+            texture.destroyed = true;
+            ids ~= texture.ID;
+		}
+        glDeleteTextures(cast(int)textures.length,cast(const uint*)ids.ptr);
+	}
 
 }
 
@@ -883,7 +902,7 @@ GLenum imageFormatToGLDataType(GImageFormat fmt)
     }
 }
 
-void bindAttribute(VertexAttribute attr, uint stride = 0)
+void gBindAttribute(VertexAttribute attr, uint stride = 0)
 {
 
     GLenum vertexTypeToGLenum(VertexType type)
@@ -908,6 +927,34 @@ void bindAttribute(VertexAttribute attr, uint stride = 0)
     GLenum type = vertexTypeToGLenum(attr.type);
     glVertexAttribPointer(attr.index, shaderVarElements(attr.type), type,
             GL_FALSE, stride, cast(void*) attr.offset);
+}
+
+void bindAttribute(alias T)(int index,int offset,int stride )
+{
+    import gl3n.linalg;
+    import gl3n.util;
+    import std.traits : isFloatingPoint, isIntegral;
+    GLenum type;
+    static if(is_vector!(T))
+	{
+        type = GL_FLOAT;
+	}
+    static if(isFloatingPoint!(T))
+	{
+        type = GL_FLOAT;
+	}
+    static if(isIntegral!(T))
+	{
+        type = GL_INT;
+	}
+    glEnableVertexAttribArray(index);
+
+    int elements = T.sizeof / 4;
+    glVertexAttribPointer(index,elements, type,GL_FALSE,stride,cast(void*)offset);
+    
+    
+    
+	
 }
 
 void drawIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)()

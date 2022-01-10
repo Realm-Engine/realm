@@ -1,6 +1,6 @@
 #shader shared
 #define OBJECT_DATA
-struct ObjectData
+struct Material
 {
 	vec4 color;
 	vec4 heightMap;
@@ -16,11 +16,11 @@ struct ObjectData
 #shader vertex waterVertex
 vec4 vertex(REVertexData IN)
 {
-	float oceanLevel = IN.objectData.oceanLevel;
+	float oceanLevel = IN.material.oceanLevel;
 	vec3 position = IN.position + vec3(0,oceanLevel,0);
 
 	RESurfaceDataOut.TBN = calculateTBN();
-	RESurfaceDataOut.objectData = IN.objectData;
+	RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
 	RESurfaceDataOut.posCS = u_vp * vec4(position, 1.0);
 	RESurfaceDataOut.posWS = v_Position;

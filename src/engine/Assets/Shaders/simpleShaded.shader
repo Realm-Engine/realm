@@ -1,5 +1,5 @@
 #shader shared
-struct ObjectData
+struct Material
 {
 	vec4 color;
 	vec4 diffuse;
@@ -9,11 +9,13 @@ struct ObjectData
 	float shinyness;
 	float padding2;
 };
+
+
 #shader vertex simpleVertex
 vec4 vertex(REVertexData IN)
 {
     RESurfaceDataOut.TBN = calculateTBN();
-	RESurfaceDataOut.objectData = IN.objectData;
+	RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
 	RESurfaceDataOut.posCS = u_vp * vec4(IN.position, 1.0);
 	RESurfaceDataOut.posWS = IN.position;
