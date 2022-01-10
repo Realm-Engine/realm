@@ -935,22 +935,24 @@ void bindAttribute(alias T)(int index,int offset,int stride )
     import gl3n.util;
     import std.traits : isFloatingPoint, isIntegral;
     GLenum type;
+    int elements = T.sizeof / 4;
+    glEnableVertexAttribArray(index);
     static if(is_vector!(T))
 	{
         type = GL_FLOAT;
+        glVertexAttribPointer(index,elements, type,GL_FALSE,stride,cast(void*)offset);
 	}
     static if(isFloatingPoint!(T))
 	{
         type = GL_FLOAT;
+        glVertexAttribPointer(index,elements, type,GL_FALSE,stride,cast(void*)offset);
 	}
     static if(isIntegral!(T))
 	{
         type = GL_INT;
+        glVertexAttribIPointer(index,elements, type,stride,cast(void*)offset);
 	}
-    glEnableVertexAttribArray(index);
 
-    int elements = T.sizeof / 4;
-    glVertexAttribPointer(index,elements, type,GL_FALSE,stride,cast(void*)offset);
     
     
     
