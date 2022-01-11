@@ -33,6 +33,7 @@ class World
 
 	this()
 	{
+		heightImg = readImageBytes("$Assets/Images/noiseTexture.png");
 		setComponent!(Transform)(new Transform);
 		transform = getComponent!(Transform);
 		
@@ -46,7 +47,7 @@ class World
 		WorldMaterial.allocate(&meshData);
 		transform.position = vec3(0,-2,0);
 		transform.scale = vec3(5,1,3.5);
-		shaderProgram = loadShaderProgram("./Assets/Shaders/world.shader","World");
+		shaderProgram = loadShaderProgram("$Assets/Shaders/world.shader","World");
 		material = new WorldMaterial;
 		material.heightStrength = 0.5;
 		material.oceanLevel = 0.225;
@@ -74,7 +75,7 @@ class World
 		squarePositions = [vec3(-0.5f,-0.5f,0),vec3(0.5,-0.5f,0),vec3(0.5,0.5f,0),vec3(-0.5,0.5f,0.0f)];
 		squareUV = [vec2(0,0),vec2(1,0),vec2(1,1),vec2(0,1)];
 		//faces = [0,1,2,2,3,0];
-		heightImg = readImageBytes("./Assets/Images/noiseTexture.png");
+		
 
 	}
 

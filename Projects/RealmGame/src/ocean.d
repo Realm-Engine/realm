@@ -36,7 +36,7 @@ class Ocean
 		WaterMaterial.reserve(1);
 		
 		
-		shaderProgram = loadShaderProgram("Assets/Shaders/water.shader","Water");
+		shaderProgram = loadShaderProgram("$Assets/Shaders/water.shader","Water");
 		
 		material = new WaterMaterial;
 		material.color = vec4(0,0,0.7,1.0);

@@ -42,10 +42,10 @@ static class RealmUI
 		Logger.LogError(ret != FTSupport.badLibrary,"Failed to load freetype");
 		
 
-		panelImage = readImageBytes("./src/engine/Assets/Images/ui-panel.png");
-		panelMesh = loadMesh("./src/engine/Assets/Models/ui-panel.obj");
+		panelImage = readImageBytes("$EngineAssets/Images/ui-panel.png");
+		panelMesh = loadMesh("$EngineAssets/Models/ui-panel.obj");
 		panelMesh.calculateTangents();
-		uiProgram = loadShaderProgram("./src/engine/Assets/Shaders/ui.shader","UI");
+		uiProgram = loadShaderProgram("$EngineAssets/Shaders/ui.shader","UI");
 		UIMaterial.initialze();
 		UIMaterial.reserve(16);
 		UIMaterial.allocate(512,512);

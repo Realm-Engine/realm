@@ -1,0 +1,266 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "fa093e01-403c-44a7-aac8-c25a963b278a": {
+      "ProjectGuid": "fa093e01-403c-44a7-aac8-c25a963b278a",
+      "DisplayName": "realmgame",
+      "ColorIndex": 0
+    },
+    "1ba13cff-5a19-424e-aebb-b5cb5769a758": {
+      "ProjectGuid": "1ba13cff-5a19-424e-aebb-b5cb5769a758",
+      "DisplayName": "realm",
+      "ColorIndex": 1
+    },
+    "668171b8-5586-4f54-8c4f-6afda0aa2c61": {
+      "ProjectGuid": "668171b8-5586-4f54-8c4f-6afda0aa2c61",
+      "DisplayName": "realm",
+      "ColorIndex": 2
+    },
+    "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3": {
+      "ProjectGuid": "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3",
+      "DisplayName": "Miscellaneous Files",
+      "ColorIndex": -1
+    },
+    "0eb13a1b-ed39-4e65-bf0c-432f8d820272": {
+      "ProjectGuid": "0eb13a1b-ed39-4e65-bf0c-432f8d820272",
+      "DisplayName": "realmgame",
+      "ColorIndex": 3
+    },
+    "4109130c-286d-4c9b-be6d-51af2ac8b8a0": {
+      "ProjectGuid": "4109130c-286d-4c9b-be6d-51af2ac8b8a0",
+      "DisplayName": "realm",
+      "ColorIndex": 4
+    },
+    "ff810561-a4d9-4360-8b22-9c234360b9e6": {
+      "ProjectGuid": "ff810561-a4d9-4360-8b22-9c234360b9e6",
+      "DisplayName": "realmgame",
+      "ColorIndex": 5
+    },
+    "6f9ec1dd-d98b-4ec8-aa3b-a78c0abef68e": {
+      "ProjectGuid": "6f9ec1dd-d98b-4ec8-aa3b-a78c0abef68e",
+      "DisplayName": "realm",
+      "ColorIndex": 6
+    },
+    "216c5f7c-1231-4e08-bbe5-09ff8ac21af7": {
+      "ProjectGuid": "216c5f7c-1231-4e08-bbe5-09ff8ac21af7",
+      "DisplayName": "realmgame",
+      "ColorIndex": 7
+    },
+    "6c0eef7e-b107-4525-8b59-3b234a05aa38": {
+      "ProjectGuid": "6c0eef7e-b107-4525-8b59-3b234a05aa38",
+      "DisplayName": "glfw-d",
+      "ColorIndex": 8
+    },
+    "148eaea3-b006-4e81-aca4-a05bb5565581": {
+      "ProjectGuid": "148eaea3-b006-4e81-aca4-a05bb5565581",
+      "DisplayName": "dimage",
+      "ColorIndex": 9
+    },
+    "88025e55-fd4d-4d11-aad2-47fea898ca25": {
+      "ProjectGuid": "88025e55-fd4d-4d11-aad2-47fea898ca25",
+      "DisplayName": "dimage",
+      "ColorIndex": 10
+    },
+    "b8a9f898-64e4-4f20-a387-3a31eb4eaf54": {
+      "ProjectGuid": "b8a9f898-64e4-4f20-a387-3a31eb4eaf54",
+      "DisplayName": "glfw-d",
+      "ColorIndex": 11
+    },
+    "94d11351-1aa9-4cfb-a351-8108945cc96c": {
+      "ProjectGuid": "94d11351-1aa9-4cfb-a351-8108945cc96c",
+      "DisplayName": "realm",
+      "ColorIndex": 12
+    },
+    "8e7014af-d0e6-4a52-bc28-63ac71d2861c": {
+      "ProjectGuid": "8e7014af-d0e6-4a52-bc28-63ac71d2861c",
+      "DisplayName": "realmgame",
+      "ColorIndex": 13
+    },
+    "1604fe52-b411-4d92-8528-a9f1f7019382": {
+      "ProjectGuid": "1604fe52-b411-4d92-8528-a9f1f7019382",
+      "DisplayName": "dimage",
+      "ColorIndex": 14
+    },
+    "9728ce25-510d-4efd-8c1a-06eb41599e37": {
+      "ProjectGuid": "9728ce25-510d-4efd-8c1a-06eb41599e37",
+      "DisplayName": "glfw-d",
+      "ColorIndex": 15
+    },
+    "c03b8b39-1e41-497d-bdfc-af71acc69314": {
+      "ProjectGuid": "c03b8b39-1e41-497d-bdfc-af71acc69314",
+      "DisplayName": "realm",
+      "ColorIndex": 0
+    },
+    "7b7205a1-5a3d-4171-9ea3-9655acaca706": {
+      "ProjectGuid": "7b7205a1-5a3d-4171-9ea3-9655acaca706",
+      "DisplayName": "realmgame",
+      "ColorIndex": 1
+    },
+    "616d429b-62ec-4589-90d1-3f4e22de44ef": {
+      "ProjectGuid": "616d429b-62ec-4589-90d1-3f4e22de44ef",
+      "DisplayName": "dimage",
+      "ColorIndex": 2
+    },
+    "6a330a55-c62c-4466-a52e-e54ccd542004": {
+      "ProjectGuid": "6a330a55-c62c-4466-a52e-e54ccd542004",
+      "DisplayName": "glfw-d",
+      "ColorIndex": 3
+    },
+    "faa688ff-f846-4b0c-bb71-db7a6ac8de7d": {
+      "ProjectGuid": "faa688ff-f846-4b0c-bb71-db7a6ac8de7d",
+      "DisplayName": "realm",
+      "ColorIndex": 4
+    },
+    "647e7cdf-0fee-4d47-b16f-b84b0bc9cfc9": {
+      "ProjectGuid": "647e7cdf-0fee-4d47-b16f-b84b0bc9cfc9",
+      "DisplayName": "realmgame",
+      "ColorIndex": 5
+    },
+    "337c2e4b-b644-408c-8516-2fe28aa27080": {
+      "ProjectGuid": "337c2e4b-b644-408c-8516-2fe28aa27080",
+      "DisplayName": "dimage",
+      "ColorIndex": 6
+    },
+    "9ebc41d3-95e2-4cae-8251-4456935176d3": {
+      "ProjectGuid": "9ebc41d3-95e2-4cae-8251-4456935176d3",
+      "DisplayName": "glfw-d",
+      "ColorIndex": 7
+    },
+    "c62ee273-859b-4f6f-8e0f-aa99a089b69e": {
+      "ProjectGuid": "c62ee273-859b-4f6f-8e0f-aa99a089b69e",
+      "DisplayName": "realm",
+      "ColorIndex": 8
+    },
+    "f2eea6a8-1ae5-4fce-a09d-4ef010513b0c": {
+      "ProjectGuid": "f2eea6a8-1ae5-4fce-a09d-4ef010513b0c",
+      "DisplayName": "realmgame",
+      "ColorIndex": 9
+    },
+    "7697a1ef-09e8-4282-a090-c7312edce89a": {
+      "ProjectGuid": "7697a1ef-09e8-4282-a090-c7312edce89a",
+      "DisplayName": "realmgame",
+      "ColorIndex": 10
+    },
+    "6ad24752-57a9-46bc-b736-0dcc752ab720": {
+      "ProjectGuid": "6ad24752-57a9-46bc-b736-0dcc752ab720",
+      "DisplayName": "dimage",
+      "ColorIndex": 11
+    },
+    "1984420a-4cdd-47d1-b6af-08a525518f9f": {
+      "ProjectGuid": "1984420a-4cdd-47d1-b6af-08a525518f9f",
+      "DisplayName": "glfw-d",
+      "ColorIndex": 12
+    },
+    "4c471241-8b49-45cf-a4de-420315a3b129": {
+      "ProjectGuid": "4c471241-8b49-45cf-a4de-420315a3b129",
+      "DisplayName": "realm",
+      "ColorIndex": 13
+    },
+    "5067cb2b-1ef5-489a-bc1e-cdcf61d71fd4": {
+      "ProjectGuid": "5067cb2b-1ef5-489a-bc1e-cdcf61d71fd4",
+      "DisplayName": "bindbc-freetype",
+      "ColorIndex": 14
+    },
+    "faf0fcf9-8e8f-4375-9a14-d6648e9d71d4": {
+      "ProjectGuid": "faf0fcf9-8e8f-4375-9a14-d6648e9d71d4",
+      "DisplayName": "realm",
+      "ColorIndex": 15
+    },
+    "09aebf61-41ba-4a26-8b49-aba8b8072710": {
+      "ProjectGuid": "09aebf61-41ba-4a26-8b49-aba8b8072710",
+      "DisplayName": "bindbc-freetype",
+      "ColorIndex": 0
+    },
+    "8a472ee3-2a86-41b4-bc1a-23dedf286c30": {
+      "ProjectGuid": "8a472ee3-2a86-41b4-bc1a-23dedf286c30",
+      "DisplayName": "realmgame",
+      "ColorIndex": 1
+    },
+    "aef6f71d-02d5-495a-aa49-780531e5a9ae": {
+      "ProjectGuid": "aef6f71d-02d5-495a-aa49-780531e5a9ae",
+      "DisplayName": "dimage",
+      "ColorIndex": 2
+    },
+    "7e47b514-f423-49fb-a6eb-673ebdd6c6e3": {
+      "ProjectGuid": "7e47b514-f423-49fb-a6eb-673ebdd6c6e3",
+      "DisplayName": "glfw-d",
+      "ColorIndex": 3
+    },
+    "ef0eb6ff-bc6e-4934-a5fd-3168bae5539f": {
+      "ProjectGuid": "ef0eb6ff-bc6e-4934-a5fd-3168bae5539f",
+      "DisplayName": "realm",
+      "ColorIndex": 4
+    },
+    "da32cc59-e13d-4e03-aff6-fe78db0e0808": {
+      "ProjectGuid": "da32cc59-e13d-4e03-aff6-fe78db0e0808",
+      "DisplayName": "bindbc-freetype",
+      "ColorIndex": 5
+    },
+    "339f8963-a024-497f-a78f-b382fe33ba77": {
+      "ProjectGuid": "339f8963-a024-497f-a78f-b382fe33ba77",
+      "DisplayName": "realmgame",
+      "ColorIndex": 6
+    },
+    "b078b3c2-9f9b-4521-babc-68f582573138": {
+      "ProjectGuid": "b078b3c2-9f9b-4521-babc-68f582573138",
+      "DisplayName": "dimage",
+      "ColorIndex": 7
+    },
+    "feb3605a-598d-47df-9524-e1f1d5629bdb": {
+      "ProjectGuid": "feb3605a-598d-47df-9524-e1f1d5629bdb",
+      "DisplayName": "glfw-d",
+      "ColorIndex": 8
+    },
+    "30e102ec-9c84-4fbb-baf9-4d461f3673fe": {
+      "ProjectGuid": "30e102ec-9c84-4fbb-baf9-4d461f3673fe",
+      "DisplayName": "realm",
+      "ColorIndex": 9
+    },
+    "347b0edf-4a23-4193-84ae-ad7b571aee2f": {
+      "ProjectGuid": "347b0edf-4a23-4193-84ae-ad7b571aee2f",
+      "DisplayName": "bindbc-freetype",
+      "ColorIndex": 10
+    },
+    "9e0f23de-73f5-45b0-a8ea-b6b864069391": {
+      "ProjectGuid": "9e0f23de-73f5-45b0-a8ea-b6b864069391",
+      "DisplayName": "realmgame",
+      "ColorIndex": 11
+    },
+    "afbe3f4e-0c27-4c82-ab5e-a7b3eada5f4e": {
+      "ProjectGuid": "afbe3f4e-0c27-4c82-ab5e-a7b3eada5f4e",
+      "DisplayName": "dimage",
+      "ColorIndex": 12
+    },
+    "011522a8-e116-433d-b26e-112307e68792": {
+      "ProjectGuid": "011522a8-e116-433d-b26e-112307e68792",
+      "DisplayName": "glfw-d",
+      "ColorIndex": 13
+    },
+    "845616c4-19a1-4d9d-b4fe-b0adbaa38a39": {
+      "ProjectGuid": "845616c4-19a1-4d9d-b4fe-b0adbaa38a39",
+      "DisplayName": "realmgame",
+      "ColorIndex": 14
+    },
+    "a8045996-85cc-4dea-bf2f-6220ac0f7903": {
+      "ProjectGuid": "a8045996-85cc-4dea-bf2f-6220ac0f7903",
+      "DisplayName": "realm",
+      "ColorIndex": 15
+    },
+    "8c5e823d-08ee-4f92-890a-fd0487aa42d0": {
+      "ProjectGuid": "8c5e823d-08ee-4f92-890a-fd0487aa42d0",
+      "DisplayName": "bindbc-freetype",
+      "ColorIndex": 0
+    },
+    "9d13a186-6901-4195-8817-9e5291f2e178": {
+      "ProjectGuid": "9d13a186-6901-4195-8817-9e5291f2e178",
+      "DisplayName": "dimage",
+      "ColorIndex": 1
+    },
+    "fbe469a8-0f21-4d9b-8477-8e3f88cbaab1": {
+      "ProjectGuid": "fbe469a8-0f21-4d9b-8477-8e3f88cbaab1",
+      "DisplayName": "glfw-d",
+      "ColorIndex": 2
+    }
+  },
+  "NextColorIndex": 3
+}

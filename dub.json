@@ -3,6 +3,7 @@
 		"Nathan"
 	],
 	"copyright": "Copyright © 2021, Nathan",
+	"targetType" :  "library",
 	"dependencies": {
 		"derelict-gl3": "~>1.0.24",
 		"dimage": "~>0.2.2",
@@ -20,5 +21,8 @@
 		"./Assets/Models/*.obj"
 	],
 	"license": "proprietary",
-	"name": "realm"
+	"name": "realm",
+	"importPaths": [ "source/" ],
+	"sorucePaths": [ "source/" ],
+	"targetPath": "./bin"
 }

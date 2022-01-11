@@ -2,7 +2,7 @@ module realm.game;
 import realm.engine.app;
 import std.stdio;
 import realm.engine.core;
-import realm.entity;
+
 import realm.engine.graphics.core;
 import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.renderer;
@@ -58,7 +58,7 @@ class RealmGame : RealmApp
 		SimpleMaterial.reserve(2);
 
 		Renderer.get.mainLight(&mainLight);
-		crate = manager.instantiate!(GameEntity)("./Assets/Models/wooden crate.obj");
+		crate = manager.instantiate!(GameEntity)("$Assets/Models/wooden crate.obj");
 
 		crate.getMaterial().color = vec4(1,1,1,1.0);
 		crate.getComponent!(Transform).position = vec3(0,0.5,-0.5);
@@ -81,9 +81,10 @@ class RealmGame : RealmApp
 
 	static this()
 	{
-		crateDiffuse = readImageBytes("./Assets/Images/crate/crate_BaseColor.png");
+		VirtualFS.registerPath!("Projects/RealmGame/Assets")("Assets");
+		crateDiffuse = readImageBytes("$Assets/Images/crate/crate_BaseColor.png");
 		//planeDiffuse = readImageBytes("./Assets/Images/texture_0.png");
-		crateNormal = readImageBytes("./Assets/Images/crate/crate_Normal.png");
+		crateNormal = readImageBytes("$Assets/Images/crate/crate_Normal.png");
 	}
 	
 	
