@@ -21,13 +21,17 @@ class Ocean
 	mixin RealmEntity!("Ocean",Transform,Mesh);
 	WaterMaterial material;
 	ShaderProgram shaderProgram;
+	private Mesh* mesh;
+	private Transform transform;
 	void start()
 	{
 
 	}
 	this(float oceanLevel,Texture2D worldHeight,float heightStrength)
 	{
-		transform = new Transform;
+		setComponent!(Transform)(new Transform);
+		transform = getComponent!(Transform);
+		mesh = &getComponent!(Mesh)();
 		WaterMaterial.initialze();
 		WaterMaterial.reserve(1);
 		
@@ -46,8 +50,8 @@ class Ocean
 		material.setShaderProgram(shaderProgram);
 		material.packTextureAtlas();
 		
-		mesh = generateFace(vec3(0,-1,0),10);
-		WaterMaterial.allocate(&mesh);
+		setComponent!(Mesh)(generateFace(vec3(0,-1,0),10));
+		WaterMaterial.allocate(mesh);
 		
 
 	}
@@ -59,7 +63,7 @@ class Ocean
 
 	void draw(Renderer renderer)
 	{
-		renderer.submitMesh!(WaterMaterial)(mesh,transform,material);
+		renderer.submitMesh!(WaterMaterial)(*mesh,transform,material);
 	}
 
 	void componentUpdate()

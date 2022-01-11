@@ -78,7 +78,7 @@ enum bool isValidBufferTarget(GLenum T) = (T == GL_ARRAY_BUFFER
 
 mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 {
-    static assert(isValidBufferTarget!(bufferType));
+    static assert(isValidBufferTarget!(bufferType),bufferType.stringof ~ " does not have a valid buffer type");
     mixin OpenGLObject;
 
     private uint ringPtr;

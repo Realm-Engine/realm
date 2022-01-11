@@ -35,7 +35,7 @@ class RealmGame : RealmApp
 	static IFImage planeDiffuse;
 	static IFImage crateNormal;
 	private RealmUI.UIElement panel;
-	mixin EntityRegistry!(World,GameEntity,Ocean);
+	mixin EntityRegistry!(World,GameEntity,Ocean,Player);
 
 	EntityManager manager;
 	this(int width, int height, const char* title)
@@ -47,21 +47,20 @@ class RealmGame : RealmApp
 		manager = new EntityManager;
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),0.1,200,45);
 		Renderer.get.activeCamera = &cam;
-		player = new Player(&cam);
-		world = manager.instantiate!(World);
-		mainLight.transform = new Transform;
+		player = manager.instantiate!(Player)(&cam);
+		world = manager.instantiate!(World)();
 
+		mainLight.transform = new Transform;
 		writeln(mainLight.transform.front);
 		mainLight.color = vec3(1.0,1.0,1.0);
 
 		SimpleMaterial.initialze();
 		SimpleMaterial.reserve(2);
-		Renderer.get.mainLight(&mainLight);
-		
-		crate = new GameEntity("./Assets/Models/wooden crate.obj");
-		crate.getMaterial().color = vec4(1,1,1,1.0);
-		
 
+		Renderer.get.mainLight(&mainLight);
+		crate = manager.instantiate!(GameEntity)("./Assets/Models/wooden crate.obj");
+
+		crate.getMaterial().color = vec4(1,1,1,1.0);
 		crate.getComponent!(Transform).position = vec3(0,0.5,-0.5);
 		crate.getComponent!(Transform).scale = vec3(0.25,0.25,0.25);
 		crate.getMaterial().textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);

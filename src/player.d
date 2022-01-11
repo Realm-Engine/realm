@@ -14,8 +14,10 @@ class Player
     float lastY;
     float lastScrollX;
     float lastScrollY;
+    private Transform transform;
     this(Camera* cam)
     {
+
         lastX = float.max;
         lastY = float.max;
 
@@ -24,7 +26,8 @@ class Player
         
         camera.turn(vec2(90,-45));
         //camera.update();
-        transform = new Transform();
+        setComponent!(Transform)(new Transform);
+        transform = getComponent!(Transform);
         
 
     }

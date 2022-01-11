@@ -26,21 +26,15 @@ class World
 	//static uint[] faces;
 	static IFImage heightImg;
 	WorldMaterial material;
-
+	private Transform transform;
+	private Ocean ocean;
 	ShaderProgram shaderProgram;
-	
+   
 
-
-    this(UUID uuid)
+	this()
 	{
-        this._id = uuid;
-	}
-	
-	
-
-	void start()
-	{
-		transform = new Transform;
+		setComponent!(Transform)(new Transform);
+		transform = getComponent!(Transform);
 		
                 
 		//mesh.calculateNormals();
@@ -61,7 +55,8 @@ class World
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		
-		ocean = new Ocean(material.oceanLevel,material.textures.heightMap,material.heightStrength);
+		setComponent!(Ocean)(new Ocean(material.oceanLevel,material.textures.heightMap,material.heightStrength));
+		ocean = getComponent!(Ocean);
 		//ocean.getComponent!(Transform).position = vec3(0,0.15,0);
 		ocean.getComponent!(Transform).scale = getComponent!(Transform).scale;
 		//material.color = vec4(1.0,1.0,1.0,1.0);
