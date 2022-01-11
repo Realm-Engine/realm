@@ -21,7 +21,7 @@ mixin template EntityRegistry(T...)
     }
     static foreach (Type; T)
     {
-        pragma(msg,"Registering " ~ Type.stringof ~ " entity\nInternal name: "~  toLower(Type.mangleof));
+        pragma(msg,"Registering " ~ Type.stringof ~ " entity\nInternal name: "~  toLower(Type.mangleof) ~ "\n");
         static assert(isEntity!(Type), Type.stringof ~ " is not a valid entity");
         mixin("private %s[UUID] %s;".format(Type.stringof, toLower(Type.mangleof)));
     }
@@ -100,6 +100,10 @@ mixin template RealmEntity(string eName, T...)
         {
             pragma(msg,"Adding " ~ Type.stringof ~ " component to " ~ eName);  
             mixin("private %s %s;".format(Type.stringof, Type.mangleof));
+			static if(!__traits(hasMember,Type,"componentUpdate"))
+			{
+				pragma(msg,"Warning: component " ~ Type.stringof ~ " does not have componentUpdate function and will not update automatically");
+			}
 
         }
 
@@ -115,6 +119,7 @@ mixin template RealmEntity(string eName, T...)
 
                     __traits(getMember, this, componentMember).componentUpdate();
                 }
+
             }
         }
     }
