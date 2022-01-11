@@ -285,7 +285,7 @@ class Renderer
 			batch.resetBatch();
 		}
 		
-
+	}
 	
 
 	void flush()
