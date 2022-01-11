@@ -2,7 +2,6 @@
 *.slo
 *.lo
 *.o
-*.obj
 
 # Compiled Dynamic libraries
 *.so
@@ -23,9 +22,10 @@
 #build
 obj/
 bin/
-
+.dub/
 #Visual studio
 /.vs
+
 
 #Project files
 *.vcxproj
@@ -33,4 +33,8 @@ bin/
 *.sln
 Makefile
 *.Makefile
+
+#realm
+/Cache
+*.log
 

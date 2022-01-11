@@ -1,0 +1,21 @@
+o Default
+v -0.5 -0.5 0
+v 0.5 0.5 0
+v -0.5 0.5 0
+v 0.5 -0.5 0
+vt 0 -0.0625
+vt 1 1
+vt 0 1
+vt 0 0
+vt 1 0
+vt 1 1
+vn 0 0 1
+vn 0 0 1
+vn 0 0 1
+vn 0 0 1
+vn 0 0 1
+vn 0 0 1
+g Object 484
+usemtl material0
+f 1/1/1 2/2/2 3/3/3
+f 1/4/4 4/5/5 2/6/6
