@@ -2,22 +2,20 @@ module realm.game;
 import realm.engine.app;
 import std.stdio;
 import realm.engine.core;
-
+import realm.engine.debugdraw;
+import realm.engine.ui;
 import realm.engine.graphics.core;
 import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.renderer;
 import realm.engine.graphics.material;
-import realm.player;
+
 import std.math.trigonometry;
 import std.math.constants : PI;
-
-import realm.world;
 import glfw3.api;
 import gl3n.math;
-import realm.gameentity;
-import realm.engine.debugdraw;
-import realm.engine.ui;
-import realm.ocean;
+
+import realm.entitymanager;
+
 //import realm.engine.graphics.core;
 class RealmGame : RealmApp
 {
@@ -28,6 +26,7 @@ class RealmGame : RealmApp
 	//Renderer renderer;
 	Player player;
 	World world;	
+	Ocean ocean;
 	DirectionalLight mainLight;
 	GameEntity plane;
 	GameEntity crate;
@@ -35,9 +34,9 @@ class RealmGame : RealmApp
 	static IFImage planeDiffuse;
 	static IFImage crateNormal;
 	private RealmUI.UIElement panel;
-	mixin EntityRegistry!(World,GameEntity,Ocean,Player);
+	private EntityManager manager;
 
-	EntityManager manager;
+
 	this(int width, int height, const char* title)
 	{
 		
@@ -47,8 +46,9 @@ class RealmGame : RealmApp
 		manager = new EntityManager;
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),0.1,200,45);
 		Renderer.get.activeCamera = &cam;
+
 		player = manager.instantiate!(Player)(&cam);
-		world = manager.instantiate!(World)();
+		world = manager.instantiate!(World)(manager);
 
 		mainLight.transform = new Transform;
 		writeln(mainLight.transform.front);
@@ -59,7 +59,6 @@ class RealmGame : RealmApp
 
 		Renderer.get.mainLight(&mainLight);
 		crate = manager.instantiate!(GameEntity)("$Assets/Models/wooden crate.obj");
-
 		crate.getMaterial().color = vec4(1,1,1,1.0);
 		crate.getComponent!(Transform).position = vec3(0,0.5,-0.5);
 		crate.getComponent!(Transform).scale = vec3(0.25,0.25,0.25);
@@ -108,14 +107,10 @@ class RealmGame : RealmApp
 		double sinT =  sin(time) ;
 		
 		mainLight.transform.rotation =  vec3(-20,radians,0);
-		player.update();
-		world.update();
-		crate.update();
-		//plane.update();
+		manager.updateEntities();
 		
 		world.draw(Renderer.get);
 		crate.draw(Renderer.get);
-		//plane.draw(renderer);
 		RealmUI.drawPanel(panel,vec4(53,61,97,0.9));
 		Renderer.get.update();
 		

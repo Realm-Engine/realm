@@ -7,7 +7,7 @@
 	"license": "proprietary",
 	"name": "realmgame",
 	"dependencies": {
-		"realm": "~restructure"
+		"realm": "~main"
 	},
 	"targetPath": "./bin",
 	"workingDirectory" : "../../"

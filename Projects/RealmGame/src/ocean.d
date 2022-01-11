@@ -61,14 +61,13 @@ class Ocean
 
 	}
 
+	void update()
+	{
+		
+	}
+
 	void draw(Renderer renderer)
 	{
 		renderer.submitMesh!(WaterMaterial)(*mesh,transform,material);
-	}
-
-	void componentUpdate()
-	{
-
-		updateComponents();
 	}
 }

@@ -52,7 +52,7 @@ class GameEntity
 
 	void update()
 	{
-		updateComponents();
+		
 		
 
 	}

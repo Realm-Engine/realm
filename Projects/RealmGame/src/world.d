@@ -10,6 +10,7 @@ import gl3n.math : asin, atan2;
 import std.stdio;
 import realm.ocean;
 import realm.util;
+import realm.entitymanager;
 alias WorldMaterialLayout = Alias!(["heightMap" : UserDataVarTypes.TEXTURE2D,
 									"heightStrength" : UserDataVarTypes.FLOAT,
 									"oceanLevel" : UserDataVarTypes.FLOAT]);
@@ -19,7 +20,7 @@ class World
 {
 	private Mesh meshData;
 
-	mixin RealmEntity!("World",Transform,Ocean);
+	mixin RealmEntity!("World",Transform);
 
 	static vec3[] squarePositions;
 	static vec2[] squareUV;
@@ -31,18 +32,17 @@ class World
 	ShaderProgram shaderProgram;
    
 
-	this()
+	this(EntityManager manager)
 	{
 		heightImg = readImageBytes("$Assets/Images/noiseTexture.png");
 		setComponent!(Transform)(new Transform);
 		transform = getComponent!(Transform);
 		
                 
-		//mesh.calculateNormals();
+
 		WorldMaterial.initialze();
 		WorldMaterial.reserve(1);
 
-		//generateCube(8);
 		meshData = generateFace(vec3(0,1,0),24);
 		WorldMaterial.allocate(&meshData);
 		transform.position = vec3(0,-2,0);
@@ -56,11 +56,9 @@ class World
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		
-		setComponent!(Ocean)(new Ocean(material.oceanLevel,material.textures.heightMap,material.heightStrength));
-		ocean = getComponent!(Ocean);
-		//ocean.getComponent!(Transform).position = vec3(0,0.15,0);
+		ocean = manager.instantiate!(Ocean)(material.oceanLevel,material.textures.heightMap,material.heightStrength);
 		ocean.getComponent!(Transform).scale = getComponent!(Transform).scale;
-		//material.color = vec4(1.0,1.0,1.0,1.0);
+
 		
 
 		scope(exit)
@@ -74,7 +72,6 @@ class World
 	{
 		squarePositions = [vec3(-0.5f,-0.5f,0),vec3(0.5,-0.5f,0),vec3(0.5,0.5f,0),vec3(-0.5,0.5f,0.0f)];
 		squareUV = [vec2(0,0),vec2(1,0),vec2(1,1),vec2(0,1)];
-		//faces = [0,1,2,2,3,0];
 		
 
 	}
@@ -83,21 +80,15 @@ class World
 
 	void draw(Renderer renderer)
 	{
-		//vec3[6] faceNormals = [vec3(0,1,0),vec3(0,-1,0),vec3(-1,0,0),vec3(1,0,0),vec3(0,0,1),vec3(0,0,-1)];
-		
-		
-		
 		renderer.submitMesh!(WorldMaterial)(meshData,transform,material);
 		ocean.draw(renderer);
-		//renderer.submitMesh!(WorldMaterial)(mesh,transform,material);
 	}
 
 	void update()
 	{
 		
-		//transform.position += vec3(0,0,0.1);
-		//writeln( transform.rotation);
-		updateComponents();
+
+		
 	}
 }
 
