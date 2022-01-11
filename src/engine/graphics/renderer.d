@@ -21,6 +21,13 @@ alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
 
 class Renderer
 {
+
+	struct RenderInfo
+	{
+		ulong lastRenderTimeStamp;
+		ulong currentFrameRenderTime;
+	}
+
 	import std.container.array;
 	import std.stdio;
 	//private Batch!RealmVertex batch;
@@ -39,6 +46,9 @@ class Renderer
 	
 	private static bool _instantiated;
 	private __gshared Renderer _instance;
+	private QueryObject!() queryDevice;
+	private RenderInfo _info;
+	
 	static Renderer get()
 	{
 		if(!_instantiated)
@@ -97,6 +107,7 @@ class Renderer
 		Debug.initialze();
 
 		RealmUI.initialize();
+		queryDevice.create();
 		
 
 
@@ -232,7 +243,6 @@ class Renderer
 
 	void update()
 	{
-		
 		if(mainDirLight !is null)
 		{
 			updateMainLight();
@@ -269,14 +279,13 @@ class Renderer
 		RealmUI.flush();
 		mainFrameBuffer.unbind(FrameBufferTarget.DRAW );
 		mainFrameBuffer.blitToScreen(FrameMask.COLOR );
-		
+
 		foreach(batch; orderedBatches)
 		{
 			batch.resetBatch();
 		}
-
 		
-	}
+
 	
 
 	void flush()

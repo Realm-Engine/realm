@@ -49,7 +49,8 @@ enum GBufferType : GLenum
     Element =  GL_ELEMENT_ARRAY_BUFFER,
     ShaderStorage = GL_SHADER_STORAGE_BUFFER,
     Uniform = GL_UNIFORM_BUFFER,
-    DrawIndirect = GL_DRAW_INDIRECT_BUFFER
+    DrawIndirect = GL_DRAW_INDIRECT_BUFFER,
+    Query = GL_QUERY_BUFFER
 }
 
 enum GState : GLenum
@@ -59,8 +60,25 @@ enum GState : GLenum
     None
 }
 
+enum bool isValidBufferTarget(GLenum T) = (T == GL_ARRAY_BUFFER 
+												  || T == GL_ATOMIC_COUNTER_BUFFER
+												  || T == GL_COPY_READ_BUFFER
+												  || T == GL_COPY_WRITE_BUFFER
+												  || T == GL_DISPATCH_INDIRECT_BUFFER
+												  || T == GL_DRAW_INDIRECT_BUFFER
+												  || T == GL_ELEMENT_ARRAY_BUFFER
+												  || T == GL_PIXEL_PACK_BUFFER
+											      || T == GL_PIXEL_UNPACK_BUFFER
+											      || T == GL_QUERY_BUFFER
+											      || T == GL_SHADER_STORAGE_BUFFER
+											      || T == GL_TEXTURE_BUFFER
+											      || T ==GL_TRANSFORM_FEEDBACK_BUFFER
+											      || T == GL_UNIFORM_BUFFER);
+
+
 mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 {
+    static assert(isValidBufferTarget!(bufferType));
     mixin OpenGLObject;
 
     private uint ringPtr;
@@ -70,6 +88,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 
     static if (usage == GBufferUsage.MappedWrite)
     {
+
         private T* glPtr;
 
         @property ptr()
@@ -104,9 +123,25 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 
     }
 
-    void store(size_t size)
-    {
+    
 
+    void store(size_t size)
+    in(size > 0, "Buffer size must be positive")
+	out
+	{
+        static if(usage == GBufferUsage.MappedWrite)
+		{
+			GLboolean mapped = getParameter!(GLboolean)(GL_BUFFER_MAPPED);
+			assert(mapped == GL_TRUE,"Could not map buffer");
+		}
+        long bufferSize = getParameter!(long)(GL_BUFFER_SIZE);
+        
+        assert(bufferSize == ringSize,"Buffer storage allocated less than requested");
+
+	}
+    do
+    {
+    
         glBufferStorage(bufferType, size * T.sizeof, null, usage);
         ringPtr = 0;
         ringSize = size * T.sizeof;
@@ -119,7 +154,30 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 
     }
 
+    private T getParameter(T)(GLenum param)
+	{
+        import std.traits;
+        T val;
+        static if(isIntegral!(T))
+		{
+            static if(T.sizeof == 4 || T.sizeof == 1)
+			{
+                glGetNamedBufferParameteriv(id,param,cast(GLint*) &val);
+			}
+            static if(T.sizeof == 8)
+			{
+                glGetNamedBufferParameteri64v(id,param,&val);
+			}
+		}  
+        return val;
+	}
+
     uint bufferData(T* data, size_t length)
+	in
+	{
+        assert(length <= ringSize,"Cant write more data than allocated");
+	}
+    do
     {
         uint dataStart = ringPtr;
         glBufferSubData(bufferType, ringPtr, length * T.sizeof, data);
@@ -734,6 +792,112 @@ struct GSamplerObject(GTextureType target)
         glDeleteTextures(cast(int)textures.length,cast(const uint*)ids.ptr);
 	}
 
+}
+
+enum GQueryTarget : GLenum
+{
+    SamplesPassedDepthTest = GL_SAMPLES_PASSED,
+    AnySamplesPassedDepthTest = GL_ANY_SAMPLES_PASSED,
+    VerticesGenerated = GL_PRIMITIVES_GENERATED,
+    TimeElapsed = GL_TIME_ELAPSED
+}
+
+struct GQueryObject(bool isBuffer = false)
+{
+    private GLenum currentQuery;
+    private bool queryEnded;
+    static if(isBuffer)
+	{
+        mixin OpenGLBuffer!(GBufferType.Query,int,GBufferUsage.Buffered);
+	}
+    static if(!isBuffer)
+	{
+        mixin OpenGLObject;
+
+	}
+
+    
+
+    void begin(GQueryTarget query)
+	in(id > 0,"No query object created")
+	{
+
+        currentQuery = query;
+        static if(isBuffer)
+		{
+            bind();
+		}
+
+        glBeginQuery(query,id);
+        queryEnded = false;
+        
+	}
+    void end()
+	{
+        queryEnded = true;
+        glEndQuery(currentQuery);
+
+	}
+    
+    bool isResultAvailable()
+	{
+        int result;
+        glGetQueryObjectiv(id,GL_QUERY_RESULT_AVAILABLE,&result);
+        return (result == GL_TRUE) ? true : false;
+	}
+
+    bool tryGetResult(T)(T* result)
+
+	in(queryEnded,"Query needs to end before requesting result")
+    in
+	{
+        import std.traits;
+        static assert(isIntegral!(T));
+	}
+    do
+	{
+        
+        if(isResultAvailable())
+		{
+         
+            static if(T.sizeof == 8)
+			{
+                static if(__traits(isUnsigned,T))
+				{
+                    glGetQueryObjectui64v(id,GL_QUERY_RESULT,result);
+				}
+                static if(!__traits(isUnsigned,T))
+				{
+                    glGetQueryObjecti64v(id,GL_QUERY_RESULT,result);
+				}
+                
+			}
+            static if(T.sizeof == 4)
+			{
+                static if(__traits(isUnsigned,T))
+				{
+                    glGetQueryObjectuiv(id,GL_QUERY_RESULT,result);
+				}
+                static if(!__traits(isUnsigned,T))
+				{
+                    glGetQueryObjectiv(id,GL_QUERY_RESULT,result);
+				}
+                
+			}
+
+            return true;
+		}
+        return false;
+
+	}
+
+    
+
+    void create()
+    out(;this.id > 0,"Failed creating query object")
+	{
+        glGenQueries(1,&id);
+	}
 }
 
 struct VertexArrayObject
