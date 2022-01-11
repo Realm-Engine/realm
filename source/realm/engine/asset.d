@@ -19,7 +19,60 @@ private
 	import std.conv;
 	import std.range;
 	import std.algorithm;
+	import std.path;
 	
+}
+
+static class VirtualFS
+{
+	import std.digest.md;
+
+	private static string[string] registeredPaths;
+	static string registerPath(string sysPath)(string prefix)
+	in
+	{
+		
+		pragma(msg, "Registering virtual path at: "  ~ sysPath);
+		static assert(isValidPath(sysPath));
+		assert(!prefix.empty);
+	}
+	out(r)
+	{
+		assert(isValidPath(r),"Generated path not valid: " ~ r);
+		assert(exists(r),"Generated path does not exsist: " ~ r);
+		assert(isDir(r),"Generated path is not a directory: " ~ r);
+	}
+	do
+	{
+		string path = getcwd() ~ "\\"~sysPath;
+		Logger.LogInfo("Registering virtual path %s at %s", prefix, path);
+		registeredPaths[prefix] = path;
+		return path;
+		
+	}
+
+	static string getSystemPath(string virtualPath)
+	{
+		scope(failure)
+		{
+			Logger.LogError("Could not find virtual path: %s", virtualPath);
+		}
+		long prefixStart = virtualPath.indexOf('$');
+		long prefixEnd = virtualPath.indexOf('\\');
+		if(prefixEnd <= 0)
+		{
+			prefixEnd = virtualPath.indexOf('/');
+		}
+		string prefix = virtualPath[prefixStart+1..prefixEnd];
+		string postfix = virtualPath[prefixEnd..$];
+		string sysPath = registeredPaths[prefix] ~ postfix;
+
+		return sysPath;
+	}
+
+
+
+
 }
 
 static this()
@@ -29,20 +82,24 @@ static this()
 		Logger.LogInfo("Creating cache folder");
 		mkdir("Cache");
 	}
+	VirtualFS.registerPath!("Assets")("EngineAssets");
 }
+
+
 
 IFImage readImageBytes(string path)
 {
-	IFImage img = read_image(path,4);
-	long fmtIndix = lastIndexOf(path,'.');
-	string fmt = path[fmtIndix+1..path.length];
+	string sysPath = VirtualFS.getSystemPath(path);
+	IFImage img = read_image(sysPath,4);
+	long fmtIndix = lastIndexOf(sysPath,'.');
+	string fmt = sysPath[fmtIndix+1..sysPath.length];
 	switch(fmt)
 	{
 		case "png":
-			img = read_image(path,4);
+			img = read_image(sysPath,4);
 			break;
 		case "jpg":
-			img = read_image(path,3);
+			img = read_image(sysPath,3);
 			break;
 		default:
 			writeln("Unsupported image format");
@@ -203,14 +260,14 @@ private Mesh loadObj(string path)
 
 Mesh loadMesh(string path)
 {
-	
-	long fmtIndix = lastIndexOf(path,'.');
-	string fmt = path[fmtIndix+1..path.length];
+	string sysPath = VirtualFS.getSystemPath(path);
+	long fmtIndix = lastIndexOf(sysPath,'.');
+	string fmt = sysPath[fmtIndix+1..sysPath.length];
 	Mesh result;
 	switch(fmt)
 	{
 		case "obj":
-			result = loadObj(path);
+			result = loadObj(sysPath);
 			break;
 		default:
 			Logger.LogError("%s unknown file extension",fmt);
@@ -221,9 +278,11 @@ Mesh loadMesh(string path)
 
 }
 
+
+
 ShaderProgram loadShaderProgram(string path,string name)
 {
-
+	string sysPath = VirtualFS.getSystemPath(path);
 	enum CurrentProcess
 	{
 		Shared,
@@ -234,18 +293,18 @@ ShaderProgram loadShaderProgram(string path,string name)
 
 	ShaderProgram program;
 	//string shader = readText(path);
-	if(!exists(path))
+	if(!exists(sysPath))
 	{
 		Logger.LogError("Could not find path: %s", path);
 		return program;
 	}
-	auto file = File(path);
+	auto file = File(sysPath);
 	auto range = file.byLine();
 
 	CurrentProcess current = CurrentProcess.None;
-	string baseVertex = readText("./src/engine/Assets/Shaders/baseVertex.glsl");
-	string baseFragment = readText("./src/engine/Assets/Shaders/baseFragment.glsl");
-	string core = readText("./src/engine/Assets/Shaders/core.glsl");
+	string baseVertex = readText(VirtualFS.getSystemPath("$EngineAssets/Shaders/baseVertex.glsl"));
+	string baseFragment = readText(VirtualFS.getSystemPath("$EngineAssets/Shaders/baseFragment.glsl"));
+	string core = readText(VirtualFS.getSystemPath("$EngineAssets/Shaders/core.glsl"));
 
 	string sharedData ="";
 	string fragmentData = "";

@@ -31,7 +31,7 @@ class GameEntity
 		material = getComponent!(SimpleMaterial);
 		if(shader is null)
 		{
-			shader = loadShaderProgram("./src/engine/Assets/Shaders/simpleShaded.shader","Simple shaded");
+			shader = loadShaderProgram("$EngineAssets/Shaders/simpleShaded.shader","Simple shaded");
 		}
 		setComponent!(Mesh)(loadMesh(modelPath));
 		mesh = &(getComponent!(Mesh)());

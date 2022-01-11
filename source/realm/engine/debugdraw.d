@@ -20,7 +20,7 @@ static class Debug
 	{
 	
 
-		debugProgram = loadShaderProgram("./src/engine/Assets/Shaders/debug.shader","Debug");
+		debugProgram = loadShaderProgram("$EngineAssets/Shaders/debug.shader","Debug");
 		
 		DebugMaterial.initialze();
 		DebugMaterial.reserve(16);
