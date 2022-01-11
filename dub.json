@@ -8,8 +8,10 @@
 		"dimage": "~>0.2.2",
 		"gl3n": "~>1.4.1",
 		"glfw-d": "~>1.1.0",
-		"imagefmt": "~>2.1.2"
+		"imagefmt": "~>2.1.2",
+		"bindbc-freetype": "~>1.0.0"
 	},
+	"versions" :  ["FT_211"],
 	"description": "A minimal D application.",
 	"extraDependencyFiles": [
 		"./Assets/Shaders/*.shader",

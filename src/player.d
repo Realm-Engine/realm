@@ -9,7 +9,7 @@ class Player
 {
     private Camera* camera;
 
-    mixin RealmEntity!(Transform);
+    mixin RealmEntity!("Player",Transform);
     float lastX;
     float lastY;
     float lastScrollX;

@@ -18,10 +18,13 @@ alias WaterMaterial = Alias!(Material!(WaterMaterialLayout, 1));
 class Ocean
 {
 
-	mixin RealmEntity!(Transform,Mesh);
+	mixin RealmEntity!("Ocean",Transform,Mesh);
 	WaterMaterial material;
 	ShaderProgram shaderProgram;
+	void start()
+	{
 
+	}
 	this(float oceanLevel,Texture2D worldHeight,float heightStrength)
 	{
 		transform = new Transform;

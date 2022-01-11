@@ -7,13 +7,21 @@ import realm.engine.app;
 import realm.engine.asset;
 import realm.engine.graphics.material;
 import std.range;
+import std.uuid;
+import bindbc.freetype;
 static class RealmUI
 {
 
+	struct UIElement
+	{
+		UUID id;
+		alias id this; 
+	}
+
 	protected struct UIElements
 	{
-		static UIMaterial[] materials;
-		static Transform[] transforms;
+		static UIMaterial[UUID] materials;
+		static Transform[UUID] transforms;
 	}
 
 	private static Batch!(RealmVertex) uiBatch;
@@ -24,8 +32,16 @@ static class RealmUI
 	private static Camera uiCamera;
 	private static Mesh panelMesh;
 	private static UIMaterial[] materials;
+	
 	static void initialize()
 	{
+		
+		FTSupport ret = loadFreeType();
+		
+		Logger.LogError(ret != FTSupport.noLibrary,"Could not find freetype library");
+		Logger.LogError(ret != FTSupport.badLibrary,"Failed to load freetype");
+		
+
 		panelImage = readImageBytes("./src/engine/Assets/Images/ui-panel.png");
 		panelMesh = loadMesh("./src/engine/Assets/Models/ui-panel.obj");
 		panelMesh.calculateTangents();
@@ -44,27 +60,36 @@ static class RealmUI
 	}
 
 
-	static void panel(vec3 position, vec3 scale, vec3 rotation, vec4 color)
+	static UIElement createElement(vec3 position, vec3 scale, vec3 rotation)
 	{
 
 		UIMaterial material = new UIMaterial;
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.textures.baseTexture = new Texture2D(&panelImage,material.textures.settings);
-		material.color = color;
+		material.color = vec4(1,1,1,1);
 		material.packTextureAtlas();
 		Transform transform = new Transform(position ,rotation,scale);		
-		UIElements.transforms ~= transform;
-		UIElements.materials ~= material;
+		UIElement element = {randomUUID()};
+		UIElements.transforms[element] = transform;
+		UIElements.materials[element] = material;
+		return element;
 
 	}
 
-	static void drawPanel(UIMaterial material, Transform transform)
+	static void drawPanel(UIElement element,vec4 color)
+	{
+		drawPanel(UIElements.materials[element],UIElements.transforms[element],color);
+	}
+
+	static void drawPanel(UIMaterial material, Transform transform,vec4 color)
 	{
 		
+		transform.updateTransformation();
 		mat4 modelMatrix = transform.transformation;
 
 		RealmVertex[] vertices;
 		vertices.length = panelMesh.positions.length;
+		material.color = color;
 		for(int i = 0; i < panelMesh.positions.length;i++)
 		{
 			RealmVertex vertex;
@@ -84,13 +109,6 @@ static class RealmUI
 	static void flush()
 	{
 		import realm.engine.graphics.renderer : Renderer;
-
-		foreach(tup;zip(UIElements.materials,UIElements.transforms))
-		{
-			tup[1].updateTransformation();
-			drawPanel(tup[0],tup[1]);
-		}
-
 		uiCamera.update();
 		mat4 vp = uiCamera.projection;
 		vp.transpose();

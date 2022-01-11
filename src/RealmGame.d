@@ -10,12 +10,14 @@ import realm.engine.graphics.material;
 import realm.player;
 import std.math.trigonometry;
 import std.math.constants : PI;
+
 import realm.world;
 import glfw3.api;
 import gl3n.math;
 import realm.gameentity;
 import realm.engine.debugdraw;
 import realm.engine.ui;
+import realm.ocean;
 //import realm.engine.graphics.core;
 class RealmGame : RealmApp
 {
@@ -32,17 +34,21 @@ class RealmGame : RealmApp
 	static IFImage crateDiffuse;
 	static IFImage planeDiffuse;
 	static IFImage crateNormal;
+	private RealmUI.UIElement panel;
+	mixin EntityRegistry!(World,GameEntity,Ocean);
+
+	EntityManager manager;
 	this(int width, int height, const char* title)
 	{
 		
 
 		super(width,height,title);
 		
-		
+		manager = new EntityManager;
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),0.1,200,45);
 		Renderer.get.activeCamera = &cam;
 		player = new Player(&cam);
-		world = new World;
+		world = manager.instantiate!(World);
 		mainLight.transform = new Transform;
 
 		writeln(mainLight.transform.front);
@@ -51,9 +57,8 @@ class RealmGame : RealmApp
 		SimpleMaterial.initialze();
 		SimpleMaterial.reserve(2);
 		Renderer.get.mainLight(&mainLight);
+		
 		crate = new GameEntity("./Assets/Models/wooden crate.obj");
-		//plane = new GameEntity("./Assets/Models/plane_textured.obj");
-		//plane.getMaterial().color = vec4(1.0,1,1,1.0);
 		crate.getMaterial().color = vec4(1,1,1,1.0);
 		
 
@@ -63,10 +68,7 @@ class RealmGame : RealmApp
 		crate.getMaterial().textures.diffuse= new Texture2D(&crateDiffuse,crate.getMaterial().textures.settings);
 		crate.getMaterial().textures.normal= new Texture2D(&crateNormal,crate.getMaterial().textures.settings);
 		crate.getMaterial().packTextureAtlas();
-		//
-		//plane.getMaterial().textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
-		//plane.getMaterial().textures.diffuse= new Texture2D(&planeDiffuse,crate.getMaterial().textures.settings);
-		//plane.getMaterial().packTextureAtlas();
+
 		scope(exit)
 		{
 			crateDiffuse.free();
@@ -89,7 +91,7 @@ class RealmGame : RealmApp
 
 	override void start()
 	{
-		RealmUI.panel(vec3(-1200,680,0),vec3(100,100,100),vec3(0,0,0),vec4(5,42,59,0.5));
+		panel = RealmUI.createElement(vec3(-1150,0,0),vec3(300,600,1),vec3(0,0,0));
 		
 		
 		
@@ -114,7 +116,7 @@ class RealmGame : RealmApp
 		world.draw(Renderer.get);
 		crate.draw(Renderer.get);
 		//plane.draw(renderer);
-
+		RealmUI.drawPanel(panel,vec4(53,61,97,0.9));
 		Renderer.get.update();
 		
 

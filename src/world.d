@@ -19,7 +19,7 @@ class World
 {
 	private Mesh meshData;
 
-	mixin RealmEntity!(Transform,Ocean);
+	mixin RealmEntity!("World",Transform,Ocean);
 
 	static vec3[] squarePositions;
 	static vec2[] squareUV;
@@ -29,7 +29,16 @@ class World
 
 	ShaderProgram shaderProgram;
 	
-	this()
+
+
+    this(UUID uuid)
+	{
+        this._id = uuid;
+	}
+	
+	
+
+	void start()
 	{
 		transform = new Transform;
 		
@@ -54,7 +63,7 @@ class World
 		
 		ocean = new Ocean(material.oceanLevel,material.textures.heightMap,material.heightStrength);
 		//ocean.getComponent!(Transform).position = vec3(0,0.15,0);
-		ocean.getComponent!(Transform).scale = transform.scale;
+		ocean.getComponent!(Transform).scale = getComponent!(Transform).scale;
 		//material.color = vec4(1.0,1.0,1.0,1.0);
 		
 

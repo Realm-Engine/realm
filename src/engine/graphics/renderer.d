@@ -243,14 +243,12 @@ class Renderer
 
 		setViewport(0,0,mainFrameBuffer.width,mainFrameBuffer.height);
 		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
-		//mainFrameBuffer.refresh();
 		mainFrameBuffer.bind(FrameBufferTarget.DRAW);
 		
 		drawBuffers([DrawBufferTarget.COLOR]);
 		GraphicsSubsystem.clearScreen();
 		if(camera !is null)
 		{
-			//camera.updateViewProjection();
 			mat4 vp = camera.projection * camera.view;
 			vp.transpose();
 			_globalData.vp[0..$] = vp.value_ptr[0..16].dup;

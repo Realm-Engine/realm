@@ -174,10 +174,11 @@ class Batch(T)
 			bindAttributes();
 			program.use();
 			uint offset = cmdBufferBase * (maxElementsInFrame * cmdTypeSize);
+
 			foreach(i,texture; textureAtlases.enumerate(0))
 			{
 				texture.setActive();
-				program.setUniformInt(program.uniformLocation("atlasTextures[%d]".format(i)),texture.slot);
+				program.setUniformInt(3 + i,texture.slot);
 
 			}
 			SamplerObject!(TextureType.TEXTURE2D)* cameraDepth;

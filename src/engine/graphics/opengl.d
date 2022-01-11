@@ -98,6 +98,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
     }
 
     void create()
+    out(;this.id > 0,"Failed creating buffer")
     {
         glGenBuffers(1, &id);
 
@@ -415,6 +416,7 @@ class GShaderProgram
     }
 
     void setUniformInt(int loc, int value)
+	in(loc >=0,"Must use valid uniform location")
     {
         glUniform1i(loc, value);
     }
@@ -465,6 +467,7 @@ struct GFrameBuffer
         return fbHeight;
     }
     void create(GFrameBufferAttachmentType[] attachmentTypes)(int width, int height)
+	in(width * height >0,"Framebuffer area must be bigger than 0")
     {
         import std.algorithm.searching :find;
         this.fbWidth = width;
@@ -657,6 +660,7 @@ struct GSamplerObject(GTextureType target)
     static if (target == GTextureType.TEXTURE2D)
     {
         void store(int width, int height)
+        in(width * height > 0,"Area must be greater than 1")
         {
 
             glBindTexture(target, id);
@@ -689,6 +693,7 @@ struct GSamplerObject(GTextureType target)
     static if (target == GTextureType.TEXTURE2DARRAY || target == GTextureType.TEXTURE3D)
     {
         void store(int width, int height, int depth)
+        in(width * height > 0,"Area must be greater than 1")
         {
             glBindTexture(target, id);
             glTexStorage3D(target, mipLevels, internalFormat, width, height, depth);
@@ -735,6 +740,7 @@ struct VertexArrayObject
 {
     mixin OpenGLObject;
     void create()
+    out(;this.id > 0,"Failed creating vertex array")
     {
         glGenVertexArrays(1, &id);
 
@@ -1014,6 +1020,8 @@ static void gCull(GCullFace face)
 }
 
 static void gSetViewport(int x, int y, int width, int height)
+in(width >0,"Viewport width must be positive")
+in(height >0,"Viewport width must be positive")
 {
     glViewport(x,y,width,height);
 }

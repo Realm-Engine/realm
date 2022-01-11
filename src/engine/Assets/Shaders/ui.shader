@@ -25,7 +25,7 @@ vec4 vertex(REVertexData IN)
 vec4 fragment()
 {
 	vec4 color = vec4(normalize(getObjectData(color).rgb), getObjectData(color).a);
-	return SAMPLE_TEXTURE(baseTexture, RESurfaceDataIn.texCoord);
+	return SAMPLE_TEXTURE(baseTexture, RESurfaceDataIn.texCoord) * color;
 
 }
 

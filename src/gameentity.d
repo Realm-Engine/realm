@@ -14,20 +14,26 @@ alias SimpleMaterial = Alias!(Material!(["color" : UserDataVarTypes.VECTOR,
 class GameEntity
 {
 	
-	mixin RealmEntity!(Transform,Mesh);
+	mixin RealmEntity!("GameEntity",Transform,Mesh);
 	private SimpleMaterial material;
 	private static ShaderProgram shader;
 	private static IFImage diffuse;
 	
+	void start()
+	{
+
+	}
+
+
 	this(string modelPath)
 	{
-		transform = new Transform;
+		setComponent!(Transform)(new Transform);
 		
 		if(shader is null)
 		{
 			shader = loadShaderProgram("./src/engine/Assets/Shaders/simpleShaded.shader","Simple shaded");
 		}
-		mesh = loadMesh(modelPath);
+		setComponent!(Mesh)(loadMesh(modelPath));
 		SimpleMaterial.allocate(&mesh);
 		material = new SimpleMaterial;
 		material.specularPower = 1.0;
