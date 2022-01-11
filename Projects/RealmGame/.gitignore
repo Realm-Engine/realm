@@ -11,6 +11,7 @@ realmgame.lib
 realmgame-test-*
 *.exe
 *.o
-*.obj
+/bin/*.obj
+/obj/*.obj
 *.lst
 *.suo
