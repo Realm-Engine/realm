@@ -10,7 +10,24 @@
 		"realm": "~main"
 	},
 	"targetPath": "./bin",
-	"workingDirectory" : "../../"
-	
+	"workingDirectory" : "../../",
+	"configurations": [
+		{
+			"name": "realm-executable",
+			"targetType": "executable",
+			"versions": [ "RealmExecutable" ]
+		},
+		{
+			"name": "realm-dynamiclibrary",
+			"targetType": "dynamicLibrary",
+			"versions": [ "RealmDynamicLibrary" ],
+		},
+		{
+			"name": "realm-hotreload",
+			"targetType": "executable",
+			"versions": [ "RealmHotReload" ]
+		}
+
+	]
 
 }
