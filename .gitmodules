@@ -1,3 +1,6 @@
 [submodule "external/freetype"]
 	path = external/freetype
 	url = https://github.com/Realm-Engine/freetype.git
+[submodule "bootstrap/realm-hotreload"]
+	path = bootstrap/realm-hotreload
+	url = https://github.com/Realm-Engine/realm-hotreload
