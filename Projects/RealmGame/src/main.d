@@ -7,20 +7,46 @@ version(RealmDynamicLibrary)
 	import realm.game;
 	import std.stdio;
 	import realm.engine.logging;
-	mixin SimpleDllMain;
 	pragma(msg,"Building project to dynamic library");
-	
-	void realm_main()
-	{
-		writeln("rti start");
-		RealmGame game = new RealmGame(1280,720,"Realm!");
 
-		game.run();
-		scope(exit)
+	version(Windows)
+	{
+		export extern(C) void realm_main()
 		{
-			game.destroy();
+			writeln("rti start");
+			RealmGame game = new RealmGame(1280,720,"Realm!");
+
+			game.run();
+			scope(exit)
+			{
+				game.destroy();
+			}
+		}
+
+		extern(Windows) bool DllMain(void* hInstance, uint ulReason, void*)
+		{
+			switch(ulReason)
+			{
+				case DLL_PROCESS_ATTACH:
+					dll_process_attach(hInstance,true);
+					break;
+				case DLL_PROCESS_DETACH:
+					dll_process_detach(hInstance,true);
+					break;
+				case DLL_THREAD_ATTACH:
+					dll_thread_attach(true,true);
+					break;
+				case DLL_THREAD_DETACH:
+					dll_thread_detach(true,true);
+					break;
+				default:
+					assert(0);
+			}
+			return true;
 		}
 	}
+
+
 }
 version(RealmExecutable)
 {
@@ -41,18 +67,3 @@ version(RealmExecutable)
 	}
 }
 
-version(RealmHotReload)
-{
-	import std.stdio;
-
-	import core.sys.windows.windows;
-	import core.runtime;
-	void main()
-	{
-		HMODULE h = cast(HMODULE)Runtime.loadLibrary("realmgame.dll");
-		FARPROC fp = GetProcAddress(h,"realm_main");
-		auto fun = cast(void function()) fp;
-		
-		fun();
-	}
-}

@@ -6,11 +6,11 @@
 	"description": "A minimal D application.",
 	"license": "proprietary",
 	"name": "realmgame",
+	"targetPath": "./bin",
+	"workingDirectory": "../../",
 	"dependencies": {
 		"realm": "~main"
 	},
-	"targetPath": "./bin",
-	"workingDirectory" : "../../",
 	"configurations": [
 		{
 			"name": "realm-executable",
@@ -20,12 +20,14 @@
 		{
 			"name": "realm-dynamiclibrary",
 			"targetType": "dynamicLibrary",
-			"versions": [ "RealmDynamicLibrary" ],
+			"versions": [ "RealmDynamicLibrary" ]
+
 		},
 		{
 			"name": "realm-hotreload",
 			"targetType": "executable",
 			"versions": [ "RealmHotReload" ]
+
 		}
 
 	]
