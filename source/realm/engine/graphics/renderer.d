@@ -14,7 +14,7 @@ import std.typecons;
 import std.meta;
 import std.algorithm;
 import realm.engine.debugdraw;
-import realm.engine.ui;
+import realm.engine.ui.realmui;
 import gl3n.frustum;
 alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "cameraNear" : UserDataVarTypes.FLOAT]);
 alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));

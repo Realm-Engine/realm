@@ -114,7 +114,7 @@ struct TextureDesc
 
 class Texture2D
 {
-	//private SamplerObject!(TextureType.TEXTURE2D) handle;
+	
 	IFImage* image;
 	alias image this;
 	int channels;

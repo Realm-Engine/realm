@@ -3,7 +3,7 @@ import realm.engine.app;
 import std.stdio;
 import realm.engine.core;
 import realm.engine.debugdraw;
-import realm.engine.ui;
+import realm.engine.ui.realmui;
 import realm.engine.graphics.core;
 import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.renderer;
@@ -35,12 +35,12 @@ class RealmGame : RealmApp
 	static IFImage crateNormal;
 	private RealmUI.UIElement panel;
 	private EntityManager manager;
-
+	private char currentChar;
 
 	this(int width, int height, const char* title)
 	{
 		
-
+		currentChar ='`';
 		super(width,height,title);
 		
 		manager = new EntityManager;
@@ -101,19 +101,18 @@ class RealmGame : RealmApp
 
 	override void update()
 	{
-
+		import core.thread.osthread;
+		import core.time;
 		double time = glfwGetTime();
 		double radians = glfwGetTime() *radians(150);
 		double sinT =  sin(time) ;
 		
 		mainLight.transform.rotation =  vec3(-20,radians,0);
 		manager.updateEntities();
-		
 		world.draw(Renderer.get);
 		crate.draw(Renderer.get);
-		RealmUI.drawPanel(panel,vec4(53,61,97,0.9));
+		RealmUI.drawCharacter(panel,vec4(255,255,255,1),vec4(53,61,97,0.9),'a',128);
 		Renderer.get.update();
-		
 
 	}
 

@@ -21,6 +21,14 @@ class Logger
 		writeln("[Log] " ~ fmt.format(t));
 	}
 
+	static void LogInfo(T...)(bool cond, string fmt, T t)
+	{
+		if(cond)
+		{
+			LogInfo(fmt,t);
+		}
+	}
+
 	static void LogError(int line = __LINE__,string file = __FILE__,T...)( string fmt,T t )
 	{
 		writeln("[Error] %s(%d): %s".format(file,line,fmt.format(t)) );
@@ -33,7 +41,7 @@ class Logger
 			LogError!(line,file)(fmt.format(t));
 		}
 	}
-	
+
 	static void Assert(int line = __LINE__,string file = __FILE__,T...)(bool cond,string fmt, T t)
 	{
 		if(!cond)

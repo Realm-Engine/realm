@@ -12,7 +12,6 @@ private
 	import std.file;
 	import std.array;
 	import realm.engine.graphics.core : Shader,ShaderProgram, ShaderType;
-	import realm.engine.graphics.material;
 	import std.algorithm.comparison : equal;
 	import realm.engine.logging;
 	import realm.engine.core : Mesh;
@@ -66,7 +65,6 @@ static class VirtualFS
 		string prefix = virtualPath[prefixStart+1..prefixEnd];
 		string postfix = virtualPath[prefixEnd..$];
 		string sysPath = registeredPaths[prefix] ~ postfix;
-
 		return sysPath;
 	}
 

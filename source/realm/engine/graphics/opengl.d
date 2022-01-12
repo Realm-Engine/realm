@@ -724,7 +724,7 @@ struct GSamplerObject(GTextureType target)
             glBindTexture(target, id);
 
             glTexStorage2D(target, mipLevels, internalFormat, width, height);
-            glGenerateMipmap(target);
+            //glGenerateMipmap(target);
             this.width = width;
             this.height = height;
             //glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -971,6 +971,7 @@ enum GTextureType : GLenum
 
 enum GImageFormat : GLenum
 {
+    RED = GL_RED,
     SRGB = GL_RGB,
     RGB = GL_RGB,
     RGBA8 = GL_RGBA,
@@ -1044,6 +1045,9 @@ GLenum imageFormatToInternalFormat(ImageFormat format)
     case GImageFormat.DEPTH:
         result = GL_DEPTH_COMPONENT;
         break;
+    case GImageFormat.RED:
+        result = GL_R8;
+        break;
     default:
         writeln("Unknown format");
         result = GL_RGB;
@@ -1062,6 +1066,8 @@ GLenum imageFormatToGLDataType(GImageFormat fmt)
     case GImageFormat.RGB:
         return GL_UNSIGNED_BYTE;
     case GImageFormat.RGBA8:
+        return GL_UNSIGNED_BYTE;
+    case GImageFormat.RED:
         return GL_UNSIGNED_BYTE;
     case GImageFormat.DEPTH_STENCIL:
         return GL_DEPTH24_STENCIL8;

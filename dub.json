@@ -3,7 +3,7 @@
 		"Nathan"
 	],
 	"copyright": "Copyright © 2021, Nathan",
-	"targetType" :  "library",
+	"targetType": "library",
 	"dependencies": {
 		"derelict-gl3": "~>1.0.24",
 		"dimage": "~>0.2.2",
@@ -12,7 +12,7 @@
 		"imagefmt": "~>2.1.2",
 		"bindbc-freetype": "~>1.0.0"
 	},
-	"versions" :  ["FT_211"],
+	"versions": [ "FT_211" ],
 	"description": "A minimal D application.",
 	"extraDependencyFiles": [
 		"./Assets/Shaders/*.shader",
@@ -24,5 +24,7 @@
 	"name": "realm",
 	"importPaths": [ "source/" ],
 	"sorucePaths": [ "source/" ],
-	"targetPath": "./bin"
+	"targetPath": "./bin",
+
+	"postBuildCommands": [ "copy $REALM_PACKAGE_DIR\\external\\freetype\\objs\\x64\\Release\\freetype.dll $ROOT_PACKAGE_DIR\\bin" ]
 }

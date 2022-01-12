@@ -185,9 +185,8 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
 		}
         int textureAtlasWidth = nextMultiple(sumWidth,1024);
         int textureAtlasHeight = nextMultiple(sumHeight,1024);
-        Logger.LogInfo("Creating atlas texture size (%d,%d)",textureAtlasWidth,textureAtlasHeight);
-        
-    
+
+      
         int totalWidth = 0;
         int totalHeight = 0;
         int rowWidth = 0;
@@ -236,6 +235,14 @@ WriteImage:
 
 
        
+	}
+
+    void updateAtlas(IFImage image, vec4* tilingOffset)
+	{
+        tilingOffset.x = cast(float)image.w / textureAtlas.width;
+        tilingOffset.y = cast(float)image.h / textureAtlas.height;
+       
+        textureAtlas.uploadSubImage(0,cast(int)tilingOffset.z * textureAtlas.width,cast(int)tilingOffset.w * textureAtlas.height,image.w,image.h,image.buf8.ptr);
 	}
 
     void updateAtlas(Texture2D texture, vec4 tilingOffset)

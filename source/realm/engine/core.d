@@ -100,49 +100,6 @@ class Transform
 }
 
 
-struct BoundingBox
-{
-	private AABB boundingBox;
-	private Transform* transform;
-	void initialize(vec3[] vertices, Transform* transform)
-	{
-		this.transform = transform;
-		boundingBox = AABB.from_points(vertices);
-	}
-	const vec3 extents(bool scaled = true)()
-	{
-		Logger.Assert(boundingBox.vertices.length > 0, "Bounding box not constructed");
-		if(scaled)
-		{
-			Logger.Assert(transform !is null,"Transform for bounding box not set");
-			vec3 extents = boundingBox.extent();
-			return vec3(extents.x*transform.scale.x,extents.y*transform.scale.y,extents.z*transform.scale.z);
-		}
-		else
-		{
-			return boundingBox.extent();
-		}
-	}
-	const vec3 center(bool translated = true)()
-	{
-		Logger.Assert(boundingBox.vertices.length > 0, "Bounding box not constructed");
-		static if(translated)
-		{
-			Logger.Assert(transform !is null,"Transform for bounding box not set");
-			return boundingBox.center + transform.position;
-		}
-		static if(!translated)
-		{
-			
-			return boundingBox.center;
-		}
-	}
-
-
-
-
-}
-
 struct Mesh
 {
 	vec3[] positions;

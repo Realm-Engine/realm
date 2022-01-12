@@ -15,3 +15,4 @@ realmgame-test-*
 /obj/*.obj
 *.lst
 *.suo
+/.vs
