@@ -734,7 +734,7 @@ struct GSamplerObject(GTextureType target)
 
         void uploadSubImage(int level, int xoffset, int yoffset, int width, int height, ubyte* data)
         {
-            assert(data != null);
+            //assert(data != null);
             glBindTexture(target, id);
             glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, dataType, data);
             glBindTexture(target, 0);
@@ -761,7 +761,6 @@ struct GSamplerObject(GTextureType target)
 
         void uploadSubImage(int level, int xoffset, int yoffset, int zoffset,int width, int height, int depth, ubyte* data)
         {
-            assert(data != null);
             glBindTexture(target, id);
             glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width,
                     height, depth, format, dataType, data);

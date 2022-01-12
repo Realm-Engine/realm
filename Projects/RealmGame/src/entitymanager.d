@@ -6,6 +6,7 @@ public
 	import realm.ocean;
 	import realm.world;
 	import realm.player;
+	import realm.uimenu;
 }
 private
 {
@@ -13,6 +14,6 @@ private
 }
 class EntityManager
 {
-	mixin EntityRegistry!(World,GameEntity,Ocean,Player);
+	mixin EntityRegistry!(World,GameEntity,Ocean,Player,UIMenu);
 
 }

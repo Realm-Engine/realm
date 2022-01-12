@@ -9,7 +9,9 @@ import realm.engine.graphics.material;
 import std.range;
 import std.uuid;
 import bindbc.freetype;
+import realm.engine.input;
 import realm.engine.ui.font;
+import std.algorithm;
 static class RealmUI
 {
 
@@ -32,6 +34,8 @@ static class RealmUI
 		static Transform[UUID] transforms;
 	}
 
+	
+
 	struct TextLayout
 	{
 		int charSpacing;
@@ -48,6 +52,7 @@ static class RealmUI
 	alias UIMaterial = Alias!(Material!(UIMaterialLayout));
 	alias TextMaterial = Alias!(Material!(TextMaterialLayout,0,true));
 	private static IFImage panelImage;
+	private static IFImage pressedButtonImage;
 	private static Camera uiCamera;
 	private static Mesh panelMesh;
 	private static Font font;
@@ -62,6 +67,7 @@ static class RealmUI
 		Logger.LogInfo(ret != FTSupport.badLibrary && ret != FTSupport.noLibrary,"Loaded freetype version %s", ret);
 
 		panelImage = readImageBytes("$EngineAssets/Images/ui-panel.png");
+		pressedButtonImage = readImageBytes("$EngineAssets/images/ui-button-pressed.png");
 		panelMesh = loadMesh("$EngineAssets/Models/ui-panel.obj");
 		panelMesh.calculateTangents();
 		uiProgram = loadShaderProgram("$EngineAssets/Shaders/ui.shader","UI");
@@ -114,11 +120,12 @@ static class RealmUI
 	in(sampler !is null)
 	in(sampler.ID > 0)
 	{
-		import std.algorithm;
+
 		import std.conv;
 		auto chars = zip(text,text.map!(c => font.getChar(to!char(c))));
 		int totalWidth = 0;
 		int height = int.min;
+
 		foreach(tup; chars)
 		{
 			if(tup[0] == ' ')
@@ -132,10 +139,19 @@ static class RealmUI
 			}
 
 		}
+		ubyte[] space;
+		space.length = layout.spaceWidth * height;
+		space[0..$] = 0;		
 		int currentX = 0;
 		int currentY = 0;
 		sampler.setActive();
-		sampler.store(totalWidth,height);
+		sampler.width = totalWidth;
+		sampler.height = height;
+		ubyte[] blank;
+		blank.length = totalWidth * height;
+		blank[0..$] = 0;
+		//sampler.store(totalWidth,height);
+		sampler.uploadImage(0,0,blank.ptr);
 		foreach(tup; chars)
 		{
 			IFImage charTexture = tup[1];
@@ -144,8 +160,8 @@ static class RealmUI
 			{
 				charTexture.w = layout.spaceWidth;
 				charTexture.h = height;
-				charTexture.buf8.length = charTexture.w * charTexture.h;
-				charTexture.buf8[0..$] = 0;
+				charTexture.buf8.length = space.length;
+				charTexture.buf8[0..$] = space.dup;
 			}
 			int heightDiff = height - charTexture.h;
 			sampler.uploadSubImage(0,currentX,currentY + heightDiff,charTexture.w,charTexture.h,charTexture.buf8.ptr);
@@ -153,8 +169,9 @@ static class RealmUI
 		}
 	}
 
-	static void drawTextString(UIElement element, vec4 textColor, vec4 panelColor, string text, TextLayout layout = TextLayout(4,8,12))
+	static void drawTextString(T...)(UIElement element, vec4 textColor, vec4 panelColor, TextLayout layout ,string text,T t )
 	{
+		import std.format : format;
 		font.setPixelSize(0,layout.fontSize);
 		drawPanel(element,panelColor);
 		TextMaterial material;
@@ -169,7 +186,7 @@ static class RealmUI
 		SamplerObject!(TextureType.TEXTURE2D)* materialAtlas = material.getTextureAtlas();
 		materialAtlas.textureDesc = TextureDesc(ImageFormat.RED,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 
-		packStringTexture(materialAtlas,text,layout);
+		packStringTexture(materialAtlas,text.format(t),layout);
 		material.fontTexture = vec4(1,1,0,0);
 		material.color = textColor;
 		UIElements.transforms[element].updateTransformation();
@@ -177,6 +194,24 @@ static class RealmUI
 		textBatch.submitVertices!(TextMaterial)(vertices,panelMesh.faces,material);
 	}
 
+	static bool button(UIElement element,vec4 textColor,vec4 panelColor,string text,TextLayout layout = TextLayout(4,8,12))
+	{
+		import std.stdio;
+		double mouseX = InputManager.getMouseAxis(MouseAxis.X);
+		double mouseY = InputManager.getMouseAxis(MouseAxis.Y);
+		UIMaterial material =UIElements.materials[element];
+		material.color = panelColor;
+		Transform transform = UIElements.transforms[element];
+		drawTextString(element,textColor,panelColor,layout,text);
+		RealmVertex[] panelVertices = panelVertices!(UIMaterial)(transform,material);
+		AABB panelAABB = AABB.from_points(panelVertices.map!(v => vec3(v.position)).array);
+
+
+
+		drawPanel(element,panelColor);
+		return true;
+
+	}
 
 	static private RealmVertex[] panelVertices(Mat)(Transform transform,Mat material)
 	in
@@ -227,6 +262,8 @@ static class RealmUI
 		uiBatch.submitVertices!(UIMaterial)(vertices,panelMesh.faces,material);
 
 	}
+
+
 
 	static void flush()
 	{

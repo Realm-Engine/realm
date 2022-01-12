@@ -13,7 +13,6 @@ import std.math.trigonometry;
 import std.math.constants : PI;
 import glfw3.api;
 import gl3n.math;
-
 import realm.entitymanager;
 
 //import realm.engine.graphics.core;
@@ -27,6 +26,7 @@ class RealmGame : RealmApp
 	Player player;
 	World world;	
 	Ocean ocean;
+	UIMenu menu;
 	DirectionalLight mainLight;
 	GameEntity plane;
 	GameEntity crate;
@@ -49,7 +49,7 @@ class RealmGame : RealmApp
 
 		player = manager.instantiate!(Player)(&cam);
 		world = manager.instantiate!(World)(manager);
-
+		menu = manager.instantiate!(UIMenu)(cam);
 		mainLight.transform = new Transform;
 		writeln(mainLight.transform.front);
 		mainLight.color = vec3(1.0,1.0,1.0);
@@ -90,7 +90,7 @@ class RealmGame : RealmApp
 
 	override void start()
 	{
-		panel = RealmUI.createElement(vec3(0,650,0),vec3(650,100,1),vec3(0,0,0));
+
 		
 		
 		
@@ -103,6 +103,7 @@ class RealmGame : RealmApp
 	{
 		import core.thread.osthread;
 		import core.time;
+		import std.format;
 		double time = glfwGetTime();
 		double radians = glfwGetTime() *radians(150);
 		double sinT =  sin(time) ;
@@ -111,7 +112,6 @@ class RealmGame : RealmApp
 		manager.updateEntities();
 		world.draw(Renderer.get);
 		crate.draw(Renderer.get);
-		RealmUI.drawTextString(panel,vec4(255,255,255,1),vec4(0),"Hello Realm", RealmUI.TextLayout(4,6,48));
 		Renderer.get.update();
 
 	}
