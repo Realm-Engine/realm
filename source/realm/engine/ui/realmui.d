@@ -32,6 +32,13 @@ static class RealmUI
 		static Transform[UUID] transforms;
 	}
 
+	struct TextLayout
+	{
+		int charSpacing;
+		int spaceWidth;
+		uint fontSize;
+	}
+
 	private static Batch!(RealmVertex) uiBatch;
 	private static Batch!(RealmVertex) textBatch;
 	private static ShaderProgram uiProgram;
@@ -39,7 +46,7 @@ static class RealmUI
 	alias UIMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR,"baseTexture" : UserDataVarTypes.TEXTURE2D]);
 	alias TextMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR,"fontTexture" : UserDataVarTypes.TEXTURE2D]);
 	alias UIMaterial = Alias!(Material!(UIMaterialLayout));
-	alias TextMaterial = Alias!(Material!(TextMaterialLayout));
+	alias TextMaterial = Alias!(Material!(TextMaterialLayout,0,true));
 	private static IFImage panelImage;
 	private static Camera uiCamera;
 	private static Mesh panelMesh;
@@ -103,43 +110,73 @@ static class RealmUI
 		drawPanel(UIElements.materials[element],UIElements.transforms[element],color);
 	}
 
-	static void drawCharacter(UIElement element, vec4 textColor,vec4 panelColor, char character,uint fontSize = 48)
+	private static void packStringTexture(SamplerObject!(TextureType.TEXTURE2D)* sampler, string text,TextLayout layout = TextLayout(4,8,12))
+	in(sampler !is null)
+	in(sampler.ID > 0)
 	{
-		font.setPixelSize(0,fontSize);
-		IFImage fontChar = font.getChar(character);
-		drawPanel(element,panelColor);
-		if(fontChar.w <= 0 || fontChar.h <= 0)
+		import std.algorithm;
+		import std.conv;
+		auto chars = zip(text,text.map!(c => font.getChar(to!char(c))));
+		int totalWidth = 0;
+		int height = int.min;
+		foreach(tup; chars)
 		{
-			return;
+			if(tup[0] == ' ')
+			{
+				totalWidth += layout.spaceWidth;
+			}
+			totalWidth += tup[1].w + layout.charSpacing;
+			if(tup[1].h > height)
+			{
+				height = tup[1].h ;
+			}
+
 		}
+		int currentX = 0;
+		int currentY = 0;
+		sampler.setActive();
+		sampler.store(totalWidth,height);
+		foreach(tup; chars)
+		{
+			IFImage charTexture = tup[1];
+			dchar character= tup[0];
+			if(character == ' ')
+			{
+				charTexture.w = layout.spaceWidth;
+				charTexture.h = height;
+				charTexture.buf8.length = charTexture.w * charTexture.h;
+				charTexture.buf8[0..$] = 0;
+			}
+			int heightDiff = height - charTexture.h;
+			sampler.uploadSubImage(0,currentX,currentY + heightDiff,charTexture.w,charTexture.h,charTexture.buf8.ptr);
+			currentX += charTexture.w + layout.charSpacing;
+		}
+	}
+
+	static void drawTextString(UIElement element, vec4 textColor, vec4 panelColor, string text, TextLayout layout = TextLayout(4,8,12))
+	{
+		font.setPixelSize(0,layout.fontSize);
+		drawPanel(element,panelColor);
 		TextMaterial material;
-		if( element !in TextElements.materials)
+		if(element!in TextElements.materials)
 		{
 			material = new TextMaterial;
 			material.setShaderProgram(textProgram);
 			TextElements.materials[element] = material;
-			material.textures.settings = TextureDesc(ImageFormat.RED,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
-			material.textures.fontTexture = new Texture2D(&fontChar,material.textures.settings);
-			material.packTextureAtlas();
-
-		}
-		else
-		{
-			material = TextElements.materials[element];
-			material.updateAtlas(fontChar,&material.fontTexture);
-
 		}
 		TextElements.transforms[element] = UIElements.transforms[element];
-	
-		
+		material = TextElements.materials[element];
+		SamplerObject!(TextureType.TEXTURE2D)* materialAtlas = material.getTextureAtlas();
+		materialAtlas.textureDesc = TextureDesc(ImageFormat.RED,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+
+		packStringTexture(materialAtlas,text,layout);
+		material.fontTexture = vec4(1,1,0,0);
 		material.color = textColor;
-		Transform transform = UIElements.transforms[element];
-		transform.updateTransformation();
-		RealmVertex[] vertices = panelVertices(transform,material);
-		
+		UIElements.transforms[element].updateTransformation();
+		RealmVertex[] vertices = panelVertices(UIElements.transforms[element],material);
 		textBatch.submitVertices!(TextMaterial)(vertices,panelMesh.faces,material);
-		
 	}
+
 
 	static private RealmVertex[] panelVertices(Mat)(Transform transform,Mat material)
 	in

@@ -41,7 +41,7 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
             TextureDesc settings;
             static foreach (uniform; uniforms.keys)
             {
-                static if (uniforms[uniform] == UserDataVarTypes.TEXTURE2D)
+                static if (uniforms[uniform] == UserDataVarTypes.TEXTURE2D && !overrideTexturePacking)
                 {
 
                     mixin("@(\"Texture\") %s %s;".format("Texture2D", uniform));
@@ -59,7 +59,7 @@ enum bool isMaterial(T) = (__traits(hasMember, T, "shaderStorageBuffer") == true
 enum texturesMembers(T) = (__traits(allMembers, T.Textures));
 enum texturesAttributes(T, alias Member) = (__traits(getAttributes, __traits(getMember, T.Textures, Member)));
 enum isTexture(alias T) = (T == "Texture");
-class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
+class Material(UserDataVarTypes[string] uniforms = [],int order = 0, bool overrideTexturePacking = false)
 {
     import std.format;
     import std.stdio;
@@ -100,7 +100,11 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
         storageBufferPtr = &shaderStorageBuffer.ptr[numMaterials];
         materialIndex = numMaterials;
         numMaterials++;
-        if(texturesMembers!(UniformLayout).length >1)
+        if(texturesMembers!(UniformLayout).length >1 )
+		{
+            textureAtlas.create();
+		}
+        if(overrideTexturePacking)
 		{
             textureAtlas.create();
 		}
@@ -125,6 +129,11 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
 
         
     void packTextureAtlas()
+    in
+	{
+	    assert(!overrideTexturePacking,"Cannot call if packing texture atlas is done manually");
+	}
+    do
 	{
         import std.math;
         textureAtlas.setActive();
@@ -155,16 +164,6 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0)
 			}
 		}
         auto sortedTextures = textures.sort!((t1, t2) => (t1.w * t1.h) > (t2.w * t2.h));
-        /*if(sortedTextures.length == 1)
-		{
-            Texture2D texture = sortedTextures[0];
-            textureAtlas.uploadSubImage(0,0,0,texture.w,texture.h,texture.buf8.ptr);
-			tilingOffsets[0].x = 1;
-			tilingOffsets[0].y = 1;
-			tilingOffsets[0].z = 0;
-			tilingOffsets[0].w = 0;
-            return;
-		}*/
         int nextMultiple(int num, int multiple)
 		{
            

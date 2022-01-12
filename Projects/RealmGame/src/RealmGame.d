@@ -90,7 +90,7 @@ class RealmGame : RealmApp
 
 	override void start()
 	{
-		panel = RealmUI.createElement(vec3(-1150,0,0),vec3(300,600,1),vec3(0,0,0));
+		panel = RealmUI.createElement(vec3(0,650,0),vec3(650,100,1),vec3(0,0,0));
 		
 		
 		
@@ -111,7 +111,7 @@ class RealmGame : RealmApp
 		manager.updateEntities();
 		world.draw(Renderer.get);
 		crate.draw(Renderer.get);
-		RealmUI.drawCharacter(panel,vec4(255,255,255,1),vec4(53,61,97,0.9),'a',128);
+		RealmUI.drawTextString(panel,vec4(255,255,255,1),vec4(0),"Hello Realm", RealmUI.TextLayout(4,6,48));
 		Renderer.get.update();
 
 	}
