@@ -724,15 +724,25 @@ struct GSamplerObject(GTextureType target)
             glBindTexture(target, id);
 
             glTexStorage2D(target, mipLevels, internalFormat, width, height);
-            //glGenerateMipmap(target);
             this.width = width;
             this.height = height;
-            //glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
             glBindTexture(target, 0);
 
         }
+        void clear(int level,float[4] color)
+		{
+            glClearTexImage(this,level,format,dataType,color.ptr);
+
+		}
+
+        void clear(int level, int xoffset,int yoffset, int width, int height,float[4] color)
+		{
+            glClearTexSubImage(this,level,xoffset,yoffset,0,width,height,0,format,dataType,color.ptr);
+		}
 
         void uploadSubImage(int level, int xoffset, int yoffset, int width, int height, ubyte* data)
+        in(data !is null)
         {
             //assert(data != null);
             glBindTexture(target, id);
@@ -760,6 +770,7 @@ struct GSamplerObject(GTextureType target)
         }
 
         void uploadSubImage(int level, int xoffset, int yoffset, int zoffset,int width, int height, int depth, ubyte* data)
+        in(data !is null)
         {
             glBindTexture(target, id);
             glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width,

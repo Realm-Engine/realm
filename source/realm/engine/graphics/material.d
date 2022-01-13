@@ -9,6 +9,7 @@ import std.range;
 import gl3n.linalg;
 import gl3n.math;
 import realm.engine.core;
+
 mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
 {
     import std.format;
@@ -182,8 +183,14 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0, bool overri
 			}
             return num + multiple - remainder;
 		}
-        int textureAtlasWidth = nextMultiple(sumWidth,1024);
-        int textureAtlasHeight = nextMultiple(sumHeight,1024);
+        int textureAtlasWidth = sumWidth;
+        int textureAtlasHeight = sumHeight;
+        if(sortedTextures.length > 1)
+		{
+			textureAtlasWidth = nextMultiple(sumWidth,1024);
+			textureAtlasHeight = nextMultiple(sumHeight,1024);
+		}
+
 
       
         int totalWidth = 0;
@@ -212,6 +219,7 @@ WriteImage:
                 tilingOffsets[index].y = cast(float)texture.h/ textureAtlas.height;
                 tilingOffsets[index].z = cast(float)rowWidth / textureAtlas.width;
                 tilingOffsets[index].w = cast(float)totalHeight/textureAtlas.height;
+                
                 textureAtlas.uploadSubImage(0,rowWidth,totalHeight,texture.w,texture.h,texture.buf8.ptr);
 
 				if(cast(int)texture.h > rowHeight)
@@ -236,17 +244,39 @@ WriteImage:
        
 	}
 
+    void clearTexture(vec4 tilingOffset, vec4 color)
+	{
+        int x = cast(int)(tilingOffset.z * textureAtlas.width);
+        int y = cast(int)(tilingOffset.w * textureAtlas.height);
+        int w =cast(int)( tilingOffset.x * textureAtlas.width);
+        int h = cast(int)(tilingOffset.y * textureAtlas.height);
+        textureAtlas.clear(0,x,y,w,h,color.vector);
+	}
+
     void updateAtlas(IFImage image, vec4* tilingOffset)
 	{
+        vec4 clearColor = vec4(0);
         tilingOffset.x = cast(float)image.w / textureAtlas.width;
         tilingOffset.y = cast(float)image.h / textureAtlas.height;
-       
-        textureAtlas.uploadSubImage(0,cast(int)tilingOffset.z * textureAtlas.width,cast(int)tilingOffset.w * textureAtlas.height,image.w,image.h,image.buf8.ptr);
+		int x = cast(int)(tilingOffset.z * textureAtlas.width);
+        int y = cast(int)(tilingOffset.w * textureAtlas.height);
+        int w = image.w;
+        int h = image.h;
+        textureAtlas.clear(0,x,y,w,h,clearColor.vector);
+        textureAtlas.uploadSubImage(0,x,y,w,h,image.buf8.ptr);
 	}
 
     void updateAtlas(Texture2D texture, vec4 tilingOffset)
     {
-        textureAtlas.uploadSubImage(0,cast(int)tilingOffset.z * textureAtlas.width,cast(int)tilingOffset.w * textureAtlas.height,texture.w,texture.h,texture.buf8.ptr);
+		tilingOffset.x = cast(float)texture.w / textureAtlas.width;
+        tilingOffset.y = cast(float)texture.h / textureAtlas.height;
+        vec4 clearColor = vec4(0);
+        int x = cast(int)(tilingOffset.z * textureAtlas.width);
+        int y = cast(int)(tilingOffset.w * textureAtlas.height);
+        int w = texture.w;
+        int h = texture.h;
+        textureAtlas.clear(0,x,y,w,h,clearColor.vector);
+        textureAtlas.uploadSubImage(0,x,y,w,h,texture.buf8.ptr);
     }
     void updateAtlas(FrameBuffer* fb, vec4 tilingOffset)
     {

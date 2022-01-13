@@ -157,8 +157,9 @@ static class RealmUI
 		ubyte[] blank;
 		blank.length = totalWidth * height;
 		blank[0..$] = 0;
-		//sampler.store(totalWidth,height);
-		sampler.uploadImage(0,0,blank.ptr);
+		sampler.store(totalWidth,height);
+		vec4 clearColor = vec4(0);
+		sampler.clear(0,clearColor.vector);
 		foreach(tup; chars)
 		{
 			int xoffset = 0;

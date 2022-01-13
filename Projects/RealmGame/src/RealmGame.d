@@ -68,6 +68,8 @@ class RealmGame : RealmApp
 		crate.getMaterial().textures.normal= new Texture2D(&crateNormal,crate.getMaterial().textures.settings);
 		crate.getMaterial().packTextureAtlas();
 
+
+
 		scope(exit)
 		{
 			crateDiffuse.free();
