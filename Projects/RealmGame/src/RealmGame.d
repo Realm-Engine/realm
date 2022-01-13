@@ -49,7 +49,7 @@ class RealmGame : RealmApp
 
 		player = manager.instantiate!(Player)(&cam);
 		world = manager.instantiate!(World)(manager);
-		menu = manager.instantiate!(UIMenu)(cam);
+		menu = manager.instantiate!(UIMenu)(cam,manager);
 		mainLight.transform = new Transform;
 		writeln(mainLight.transform.front);
 		mainLight.color = vec3(1.0,1.0,1.0);
@@ -60,6 +60,7 @@ class RealmGame : RealmApp
 		Renderer.get.mainLight(&mainLight);
 		crate = manager.instantiate!(GameEntity)("$Assets/Models/wooden crate.obj");
 		crate.getMaterial().color = vec4(1,1,1,1.0);
+		crate.entityName = "Crate";
 		crate.getComponent!(Transform).position = vec3(0,0.5,-0.5);
 		crate.getComponent!(Transform).scale = vec3(0.25,0.25,0.25);
 		crate.getMaterial().textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);

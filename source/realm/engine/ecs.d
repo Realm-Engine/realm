@@ -61,6 +61,10 @@ mixin template EntityRegistry(T...)
             mixin("foreach(entity; %s){entity.update();entity.updateComponents();}".format(toLower(Type.mangleof)));
 		}
 	}
+    E[] getEntities(E)()
+	{
+        mixin("return " ~ toLower(E.mangleof) ~ ".values;");
+	}
 
 
 }

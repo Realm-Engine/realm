@@ -172,6 +172,13 @@ enum CameraProjection
 	ORTHOGRAPHIC
 }
 
+
+enum ProjectionWindowBounds
+{
+	ZERO_TO_ONE,
+	NEGATIVE_HALF_TO_HALF,
+}
+
 class Camera
 {
 	Transform transform;
@@ -184,6 +191,7 @@ class Camera
 	mat4 cameraTransformation;
 	float yaw;
 	float pitch;
+	ProjectionWindowBounds projBounds = ProjectionWindowBounds.NEGATIVE_HALF_TO_HALF;
 	//Front
 	//Maybe goes in transform?
 	
@@ -236,7 +244,15 @@ class Camera
 				proj = mat4.perspective(size.x,size.y,fieldOfView,nearPlane,farPlane);
 				break;
 			case CameraProjection.ORTHOGRAPHIC:
-				proj = mat4.orthographic(-size.x,size.x,-size.y,size.y,nearPlane,farPlane);
+				if(projBounds == ProjectionWindowBounds.NEGATIVE_HALF_TO_HALF)
+				{
+					proj = mat4.orthographic(-size.x/2,size.x/2,-size.y/2,size.y,nearPlane,farPlane);
+				}
+				else
+				{
+					proj = mat4.orthographic(0,size.x,0,size.y,nearPlane,farPlane);
+				}
+				
 				break;
 			default:
 				proj = mat4.perspective(size.x,size.y,fieldOfView,nearPlane,farPlane);

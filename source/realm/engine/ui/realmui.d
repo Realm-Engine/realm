@@ -12,6 +12,7 @@ import bindbc.freetype;
 import realm.engine.input;
 import realm.engine.ui.font;
 import std.algorithm;
+import realm.engine.debugdraw;
 static class RealmUI
 {
 
@@ -43,6 +44,14 @@ static class RealmUI
 		uint fontSize;
 	}
 
+	enum ButtonState
+	{
+		NONE,
+		HOVER,
+		PRESSED,
+		RELEASED
+	}
+
 	private static Batch!(RealmVertex) uiBatch;
 	private static Batch!(RealmVertex) textBatch;
 	private static ShaderProgram uiProgram;
@@ -60,11 +69,8 @@ static class RealmUI
 	static void initialize()
 	{
 		
-		FTSupport ret = loadFreeType();
+	
 
-		Logger.LogError(ret != FTSupport.noLibrary,"Could not find freetype library");
-		Logger.LogError(ret != FTSupport.badLibrary,"Failed to load freetype");
-		Logger.LogInfo(ret != FTSupport.badLibrary && ret != FTSupport.noLibrary,"Loaded freetype version %s", ret);
 
 		panelImage = readImageBytes("$EngineAssets/Images/ui-panel.png");
 		pressedButtonImage = readImageBytes("$EngineAssets/images/ui-button-pressed.png");
@@ -89,6 +95,7 @@ static class RealmUI
 		
 		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
 		uiCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(windowSize[0],windowSize[1]),-1,100,0);
+		uiCamera.projBounds = ProjectionWindowBounds.ZERO_TO_ONE;
 		font = Font.load("$EngineAssets/Fonts/arial.ttf");
 
 
@@ -154,6 +161,8 @@ static class RealmUI
 		sampler.uploadImage(0,0,blank.ptr);
 		foreach(tup; chars)
 		{
+			int xoffset = 0;
+			int yoffset = 0;
 			IFImage charTexture = tup[1];
 			dchar character= tup[0];
 			if(character == ' ')
@@ -163,8 +172,13 @@ static class RealmUI
 				charTexture.buf8.length = space.length;
 				charTexture.buf8[0..$] = space.dup;
 			}
+
+			else if(character == '-')
+			{
+				yoffset = -(height/2);
+			}
 			int heightDiff = height - charTexture.h;
-			sampler.uploadSubImage(0,currentX,currentY + heightDiff,charTexture.w,charTexture.h,charTexture.buf8.ptr);
+			sampler.uploadSubImage(0,currentX + xoffset,currentY + heightDiff + yoffset,charTexture.w,charTexture.h,charTexture.buf8.ptr);
 			currentX += charTexture.w + layout.charSpacing;
 		}
 	}
@@ -194,22 +208,43 @@ static class RealmUI
 		textBatch.submitVertices!(TextMaterial)(vertices,panelMesh.faces,material);
 	}
 
-	static bool button(UIElement element,vec4 textColor,vec4 panelColor,string text,TextLayout layout = TextLayout(4,8,12))
+	static ButtonState button(UIElement element,vec4 textColor,vec4 panelColor,string text,TextLayout layout = TextLayout(4,8,12))
 	{
 		import std.stdio;
 		double mouseX = InputManager.getMouseAxis(MouseAxis.X);
 		double mouseY = InputManager.getMouseAxis(MouseAxis.Y);
+		auto windowSize = RealmApp.getWindowSize();
+		mouseY = ((1 - (mouseY/cast(double)windowSize[1])) * windowSize[1]);
 		UIMaterial material =UIElements.materials[element];
 		material.color = panelColor;
 		Transform transform = UIElements.transforms[element];
-		drawTextString(element,textColor,panelColor,layout,text);
+
 		RealmVertex[] panelVertices = panelVertices!(UIMaterial)(transform,material);
 		AABB panelAABB = AABB.from_points(panelVertices.map!(v => vec3(v.position)).array);
-
-
+		ButtonState result = ButtonState.NONE;
+		if((mouseX >= panelAABB.min.x && mouseX <= panelAABB.max.x) && (mouseY >= panelAABB.min.y && mouseY <= panelAABB.max.y) )
+		{
+			if(InputManager.getMouseButton(RealmMouseButton.ButtonLeft) == KeyState.Press)
+			{
+				material.updateAtlas(pressedButtonImage,&material.baseTexture);
+				result = ButtonState.PRESSED;
+			}
+			else
+			{
+				result = ButtonState.HOVER;
+				material.updateAtlas(panelImage,&material.baseTexture);
+			}
+			
+		}
+		else
+		{
+			material.updateAtlas(panelImage,&material.baseTexture);
+		}
 
 		drawPanel(element,panelColor);
-		return true;
+		drawTextString(element,textColor,panelColor,layout,text);
+		
+		return result;
 
 	}
 
@@ -237,6 +272,8 @@ static class RealmUI
 		}
 		return vertices;
 	}
+
+	
 
 	static void drawPanel(UIMaterial material, Transform transform,vec4 color)
 	{
