@@ -36,7 +36,7 @@ class RealmGame : RealmApp
 	private RealmUI.UIElement panel;
 	private EntityManager manager;
 	private char currentChar;
-
+	
 	this(int width, int height, const char* title)
 	{
 		
@@ -44,7 +44,7 @@ class RealmGame : RealmApp
 		super(width,height,title);
 		
 		manager = new EntityManager;
-		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),0.1,200,45);
+		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),0.1,200,60);
 		Renderer.get.activeCamera = &cam;
 
 		player = manager.instantiate!(Player)(&cam);
@@ -77,7 +77,8 @@ class RealmGame : RealmApp
 		
 		
 		plane.getMaterial.packTextureAtlas();
-
+		
+		
 
 		scope(exit)
 		{

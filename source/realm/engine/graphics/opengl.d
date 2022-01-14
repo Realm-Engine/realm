@@ -1033,6 +1033,8 @@ enum GTextureType : GLenum
 
 }
 
+
+
 enum GImageFormat : GLenum
 {
     RED = GL_RED,
@@ -1040,9 +1042,13 @@ enum GImageFormat : GLenum
     RGB = GL_RGB,
     RGBA8 = GL_RGBA,
     DEPTH_STENCIL = GL_DEPTH_STENCIL,
-    DEPTH = GL_DEPTH_COMPONENT
+    DEPTH = GL_DEPTH_COMPONENT,
+    SRGB_ALPHA = GL_RGBA
+
+    
 
 }
+
 
 enum GDrawBufferTarget : GLenum
 {
@@ -1100,6 +1106,7 @@ GLenum imageFormatToInternalFormat(ImageFormat format)
         result = GL_RGB8;
         break;
     case GImageFormat.RGBA8:
+        
         result = GL_RGBA8;
         break;
 
@@ -1112,6 +1119,7 @@ GLenum imageFormatToInternalFormat(ImageFormat format)
     case GImageFormat.RED:
         result = GL_R8;
         break;
+
     default:
         writeln("Unknown format");
         result = GL_RGB;

@@ -36,9 +36,22 @@ class Transform
 		this.scale = vec3(1,1,1);
 		transformMat = mat4(1.0f);
 	}
+
+
+	this(Transform other)
+	{
+		position = other.position;
+		rotation = other.rotation;
+		scale = other.scale;
+	}
+
 	@property mat4 transformation()
 	{
 		return transformMat;
+	}
+	@property void transformation(mat4 t)
+	{
+		transformMat = t;
 	}
 
 	@property front()
@@ -52,23 +65,6 @@ class Transform
 		
 	}
 	
-	/*vec3 computeDirection(vec3 direction)
-	{
-		vec4 dir = rotation.to_matrix!(4,4) * vec4(direction,1.0);
-		
-		return vec3(dir).normalized();
-
-	}
-	
-
-	@property up()
-	{
-		return computeDirection(vec3(0,1,0));
-	}
-	@property right()
-	{
-		return computeDirection(vec3(1,0,0));
-	}*/
 
 
 	

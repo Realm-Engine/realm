@@ -14,31 +14,57 @@ class UIMenu
 	private RealmUI.UIElement button;
 	private RealmUI.UIElement infoPanel;
 	private RealmUI.UIElement entityName;
+	private RealmUI.UIElement nextEntity;
+	private RealmUI.UIElement lastEntity;
 	private EntityManager entityManager;
+	private int currentEntity;
 	private vec4 color = vec4(24,24,25,1);
 	mixin RealmEntity!("Menu");
 	this(Camera camera,EntityManager entityManager)
 	{
+		currentEntity = 0;
 		this.camera = camera;
 		this.entityManager = entityManager;
 		cameraInfo =  RealmUI.createElement(vec3(150,680,1),vec3(300,25,1),vec3(0,0,0));
 		mouseInfo =  RealmUI.createElement(vec3(150,630,1),vec3(300,25,1),vec3(0,0,0));
-		button = RealmUI.createElement(vec3(75,100,1),vec3(150,25,1),vec3(0));
+		button = RealmUI.createElement(vec3(0,-100,0),vec3(150,25,1),vec3(0));
 		infoPanel = RealmUI.createElement(vec3(75,200,1),vec3(150,400,1),vec3(0));
-		entityName = RealmUI.createElement(vec3(75,350,1),vec3(100,25,1),vec3(0));
+		entityName = RealmUI.createElement(vec3(0,150,0),vec3(100,35,1),vec3(0));
+
+		nextEntity = RealmUI.createElement(vec3(50,25,0),vec3(50,25,1),vec3(0));
+		lastEntity = RealmUI.createElement(vec3(-50,25,0),vec3(50,25,1),vec3(0));
+
 	}
 
 	void drawInfoPanel()
 	{
+
 		RealmUI.drawPanel(infoPanel,color);
+		RealmUI.containerPush(infoPanel);
 		GameEntity[] gameEntities = entityManager.getEntities!(GameEntity)();
-		GameEntity entity = gameEntities[0];
-		RealmUI.drawTextString(entityName,vec4(0,0,0,1),color,RealmUI.TextLayout(4,6,16),gameEntities[0].entityName);
+		
 
 		if(RealmUI.button(button,vec4(0,0,0,1),vec4(1),"Press me!",RealmUI.TextLayout(4,6,24)) == RealmUI.ButtonState.PRESSED)
 		{
 			Logger.LogInfo("Button pressed");
 		}
+		if(RealmUI.button(nextEntity,vec4(0,0,0,1),vec4(1),"Next",RealmUI.TextLayout(4,6,12)) == RealmUI.ButtonState.PRESSED )
+		{
+			if(currentEntity < gameEntities.length-1)
+			{
+				currentEntity++;
+			}
+		}
+		if(RealmUI.button(lastEntity,vec4(0,0,0,1),vec4(1),"Prev",RealmUI.TextLayout(4,6,12)) == RealmUI.ButtonState.PRESSED )
+		{
+			if(currentEntity > 0)
+			{
+				currentEntity--;
+			}
+		}
+		GameEntity entity = gameEntities[currentEntity];
+		RealmUI.drawTextString(entityName,vec4(0,0,0,1),color,RealmUI.TextLayout(4,6,16),entity.entityName);
+		RealmUI.containerPop();
 	}
 
 	void update()

@@ -13,10 +13,12 @@ import realm.engine.input;
 import realm.engine.ui.font;
 import std.algorithm;
 import realm.engine.debugdraw;
+import realm.engine.container.stack;
 static class RealmUI
 {
 
 	
+
 	struct UIElement
 	{
 		UUID id;
@@ -52,6 +54,8 @@ static class RealmUI
 		RELEASED
 	}
 
+	
+
 	private static Batch!(RealmVertex) uiBatch;
 	private static Batch!(RealmVertex) textBatch;
 	private static ShaderProgram uiProgram;
@@ -65,7 +69,8 @@ static class RealmUI
 	private static Camera uiCamera;
 	private static Mesh panelMesh;
 	private static Font font;
-	
+	private static Stack!(UIElement) containerStack;
+	private static UIElement parentContainer;
 	static void initialize()
 	{
 		
@@ -97,7 +102,10 @@ static class RealmUI
 		uiCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(windowSize[0],windowSize[1]),-1,100,0);
 		uiCamera.projBounds = ProjectionWindowBounds.ZERO_TO_ONE;
 		font = Font.load("$EngineAssets/Fonts/arial.ttf");
+		parentContainer = createElement(vec3(0),vec3(1),vec3(0));
 
+		containerStack = new Stack!(UIElement)(32);
+		containerPush(parentContainer);
 
 	}
 
@@ -154,11 +162,8 @@ static class RealmUI
 		sampler.setActive();
 		sampler.width = totalWidth;
 		sampler.height = height;
-		ubyte[] blank;
-		blank.length = totalWidth * height;
-		blank[0..$] = 0;
+
 		sampler.store(totalWidth,height);
-		vec4 clearColor = vec4(0);
 		sampler.clear(0,[0]);
 		foreach(tup; chars)
 		{
@@ -258,7 +263,13 @@ static class RealmUI
 	{
 		RealmVertex[] vertices;
 		vertices.length = panelMesh.positions.length;
-		mat4 modelMatrix = transform.transformation;
+		Transform parent = UIElements.transforms[containerStack.peek()];
+		Transform copy = new Transform(transform);
+		copy.position += parent.position;
+		//copy.scale += parent.scale;
+		copy.rotation += parent.rotation;
+		copy.updateTransformation();
+		mat4 modelMatrix = copy.transformation;
 		for(int i = 0; i < panelMesh.positions.length;i++)
 		{
 			RealmVertex vertex;
@@ -279,26 +290,53 @@ static class RealmUI
 	static void drawPanel(UIMaterial material, Transform transform,vec4 color)
 	{
 		
-		transform.updateTransformation();
-		mat4 modelMatrix = transform.transformation;
 
-		RealmVertex[] vertices;
-		vertices.length = panelMesh.positions.length;
+		
+		
+		RealmVertex[] vertices = panelVertices!(UIMaterial)(transform,material);
 		material.color = color;
-		for(int i = 0; i < panelMesh.positions.length;i++)
-		{
-			RealmVertex vertex;
-			vertex.position = vec3( modelMatrix * vec4(panelMesh.positions[i],1.0));
-			vertex.texCoord = panelMesh.textureCoordinates[i];
-			vertex.normal =  vec3(modelMatrix * vec4(0,0,1,1));
-			vertex.tangent = vec3(modelMatrix * vec4(panelMesh.tangents[i],1.0));
-			vertex.materialId = material.instanceId;
-			
-			vertices[i] = vertex;
-
-		}
+		
 		uiBatch.submitVertices!(UIMaterial)(vertices,panelMesh.faces,material);
 
+	}
+
+	static void containerPush(UIElement element)
+	{
+		
+		if(!containerStack.empty)
+		{
+			Transform transform = UIElements.transforms[element];
+			
+
+			transform.position += UIElements.transforms[containerStack.peek()].position;
+			transform.scale += UIElements.transforms[containerStack.peek()].scale;
+			transform.rotation += UIElements.transforms[containerStack.peek()].rotation;
+			transform.updateTransformation();
+
+		}
+		
+		containerStack.push(element);
+	}
+	static void containerPop()
+	{
+		if(containerStack.peek() == parentContainer)
+		{
+			Logger.LogWarning("Cant pop root container off stack");
+			return;
+		}
+		
+	
+		UIElement element = containerStack.pop();
+		Transform transform = UIElements.transforms[element];
+
+
+		transform.position -= UIElements.transforms[containerStack.peek()].position;
+		transform.scale -= UIElements.transforms[containerStack.peek()].scale;
+		transform.rotation -= UIElements.transforms[containerStack.peek()].rotation;
+		transform.updateTransformation();
+
+		
+		
 	}
 
 
