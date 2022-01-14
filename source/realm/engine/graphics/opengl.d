@@ -648,6 +648,7 @@ struct DrawIndirectCommandBuffer(GBufferUsage usage)
 
 struct GSamplerObject(GTextureType target)
 {
+    import std.meta;
     enum is3dTexture = (target == GTextureType.TEXTURE2DARRAY || target == GTextureType.TEXTURE3D);
     mixin OpenGLObject;
     private GLenum wrapFunc;
@@ -757,24 +758,43 @@ struct GSamplerObject(GTextureType target)
 
 		}
 
-        void clear(int level,float[4] color)
+        void clear(T)(int level,T[] color)
 		{
 
             glBindTexture(target,id);
-            ubyte[4] clearColor = [255,255,255,255];
-            glClearTexImage(this,level,format,dataType,clearColor.ptr);
+            //ubyte[4] clearColor = [255,255,255,255];
+            glClearTexImage(this,level,format,dataType,color.ptr);
             glBindTexture(target,0);
 
 		}
 
-        void clear(int level, int xoffset,int yoffset, int width, int height,float[4] color)
+        void clear(T)(int level, int xoffset,int yoffset, int width, int height,T[] color)
 		{
-            ubyte[4] clearColor = [1,1,1,1];
+            //[4] clearColor = [1,1,1,1];
             glBindTexture(target,id);
-            glClearTexSubImage(this,level,xoffset,yoffset,0,width,height,0,format,dataType,clearColor.ptr);
+            glClearTexSubImage(this,level,xoffset,yoffset,0,width,height,1,format,dataType,color.ptr);
             glBindTexture(target,0);
 		}
 
+		//void clear(Args...)(int level, int xoffset,int yoffset, int width, int height, Args args)
+		//{
+		//    glBindTexture(target, id);
+		//    glClearTexSubImage(this,level,xoffset,yoffset,0,width,height,0,format,dataType,args);
+		//    glBindTexture(target,0);
+		//}
+		//
+		//void clear(T,Args...)(int level,Args args)
+		//{
+		//    glBindTexture(target,id);
+		//    T[] colorData;
+		//    foreach(value; AliasSeq!(args))
+		//    {
+		//        colorData ~= cast(T)value;
+		//    }
+		//    glClearTexImage(this,level,format,dataType,colorData.ptr);
+		//    glBindTexture(target,0);
+		//}
+        
         void uploadSubImage(int level, int xoffset, int yoffset, int width, int height, ubyte* data)
         //in(data !is null)
         {

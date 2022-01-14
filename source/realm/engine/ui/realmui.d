@@ -159,7 +159,7 @@ static class RealmUI
 		blank[0..$] = 0;
 		sampler.store(totalWidth,height);
 		vec4 clearColor = vec4(0);
-		sampler.clear(0,clearColor.vector);
+		sampler.clear(0,[0]);
 		foreach(tup; chars)
 		{
 			int xoffset = 0;

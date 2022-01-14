@@ -66,7 +66,7 @@ struct MaterialTexture
     union
 	{
 		Texture2D texture;
-		vec4 color;
+		Vector!(ubyte,4) color;
 	}
 
 	void opAssign(Texture2D texture)
@@ -74,7 +74,7 @@ struct MaterialTexture
 		this.texture = texture;
         type = InternalType.TEXTURE;
 	}
-	void opAssign(vec4 c)
+	void opAssign(Vector!(ubyte,4) c)
 	{
 		color = c;
         type = InternalType.COLOR;
@@ -88,6 +88,16 @@ struct MaterialTexture
         return type == InternalType.COLOR;
 	}
 
+    Vector!(ubyte,4) opCast(T : Vector!(ubyte,4))() 
+    in(isColor)
+	{
+        return color;
+	}
+    Texture2D opCast(T:Texture2D)() 
+    in(isTexture)
+	{
+        return texture;
+	}
     
 
     int width()
@@ -279,11 +289,11 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0, bool overri
         }
        
        //auto pbo = GraphicsSubsystem.startPixelTransfer((32 *32) * 4);
-        foreach(index,texture; sortedTextures.enumerate(0))
+        foreach(index,materialTexture; sortedTextures.enumerate(0))
 		{
 WriteImage:
-            int width = texture.width();
-            int height = texture.height();
+            int width = materialTexture.width();
+            int height = materialTexture.height();
             
             if(width + rowWidth <= cast(int)textureAtlas.width)
 			{
@@ -292,21 +302,19 @@ WriteImage:
                 tilingOffsets[index].y = cast(float)height/ textureAtlas.height;
                 tilingOffsets[index].z = cast(float)rowWidth / textureAtlas.width;
                 tilingOffsets[index].w = cast(float)totalHeight/textureAtlas.height;
-                if(texture.isTexture)
+                if(materialTexture.isTexture)
 				{
-                    textureAtlas.uploadSubImage(0,rowWidth,totalHeight,width,height,texture.texture.buf8.ptr);
+                    Texture2D tex = cast(Texture2D) *materialTexture;
+                    textureAtlas.uploadSubImage(0,rowWidth,totalHeight,width,height,tex.buf8.ptr);
 				}
                 else
 				{
-                   // textureAtlas.clear(0,vec4(1).vector);
-
-					
-                    textureAtlas.clear(0,vec4(255).vector);
-					//GraphicsSubsystem.transferPixelData(pbo,&textureAtlas,color.dup);
+					Vector!(ubyte,4) color = cast(Vector!(ubyte,4)) *materialTexture;
+                    textureAtlas.clear(0,rowWidth,totalHeight,width,height,color.vector.dup);
 				}
                 
 
-				if(cast(int)texture.height() > rowHeight)
+				if(cast(int)materialTexture.height() > rowHeight)
 				{
                     rowHeight = height;
 				}
@@ -334,7 +342,7 @@ WriteImage:
         int y = cast(int)(tilingOffset.w * textureAtlas.height);
         int w =cast(int)( tilingOffset.x * textureAtlas.width);
         int h = cast(int)(tilingOffset.y * textureAtlas.height);
-        textureAtlas.clear(0,x,y,w,h,color.vector);
+        textureAtlas.clear(0,x,y,w,h,cast(real[])color.vector.dup);
 	}
 
     void updateAtlas(IFImage image, vec4* tilingOffset)
@@ -346,7 +354,7 @@ WriteImage:
         int y = cast(int)(tilingOffset.w * textureAtlas.height);
         int w = image.w;
         int h = image.h;
-        textureAtlas.clear(0,x,y,w,h,clearColor.vector);
+        textureAtlas.clear!(float)(0,x,y,w,h,clearColor.vector.dup);
         textureAtlas.uploadSubImage(0,x,y,w,h,image.buf8.ptr);
 	}
 
@@ -359,7 +367,7 @@ WriteImage:
         int y = cast(int)(tilingOffset.w * textureAtlas.height);
         int w = texture.w;
         int h = texture.h;
-        textureAtlas.clear(0,x,y,w,h,clearColor.vector);
+        textureAtlas.clear!(float)(0,x,y,w,h,clearColor.vector);
         textureAtlas.uploadSubImage(0,x,y,w,h,texture.buf8.ptr);
     }
     void updateAtlas(FrameBuffer* fb, vec4 tilingOffset)

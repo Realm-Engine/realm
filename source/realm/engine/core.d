@@ -311,6 +311,9 @@ struct DirectionalLight
 	}
 
 }
+alias ColorRGBA = Color!(4,ubyte);
+alias ColorFRGBA = Color!(4,float);
+alias ColorR = Color!(1,ubyte);
 
 struct Color(int channels, T)
 {
@@ -327,7 +330,27 @@ struct Color(int channels, T)
 		return value[charToIndex!c];
 	}
 
+	this(Args...)(Args args)
+	{
+		import std.conv;
+		import std.exception;
+		foreach(i ; AliasSeq!(0,channels-1))
+		{
+			
+			T val = cast(T)args[i];
+			if(&val !is null)
+			{
+				value[i] = val;
+			}
 
+		}
+	}
+
+	void opAssign(T[] t)
+	do
+	{
+		value = t;
+	}
 
 	alias get!('r') r;
 	static if(channels >=2)
