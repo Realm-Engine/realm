@@ -52,11 +52,11 @@ class World
 		material.heightStrength = 0.5;
 		material.oceanLevel = 0.225;
 		material.setShaderProgram(shaderProgram);
-		material.textures.heightMap = new Texture2D(&heightImg,TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER));
+		material.textures.heightMap = new Texture2D(&heightImg);
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		
-		ocean = manager.instantiate!(Ocean)(material.oceanLevel,material.textures.heightMap,material.heightStrength);
+		ocean = manager.instantiate!(Ocean)(material.oceanLevel,material.textures.heightMap.texture,material.heightStrength);
 		ocean.getComponent!(Transform).scale = getComponent!(Transform).scale;
 
 		

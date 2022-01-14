@@ -18,7 +18,6 @@ class GraphicsSubsystem
 	private static ShaderBlock globalDataBuffer;
 	static State depthTest = State.None;
 	private static SamplerObject!(TextureType.TEXTURE2D) shadowMap;
-	
 	static void setClearColor(float r, float g, float b, bool normalize)
 	{
 		vec3 color = vec3(r,g,b);
@@ -104,7 +103,5 @@ class GraphicsSubsystem
 		disable(State.DepthTest);
 	}
 
-
-	
 
 }

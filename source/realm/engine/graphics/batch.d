@@ -17,6 +17,7 @@ class Batch(T)
 	private VertexBuffer!(T,BufferUsage.MappedWrite) vertexBuffer;
 	private ElementBuffer!(BufferUsage.MappedWrite) elementBuffer;
 	private DrawIndirectCommandBuffer!(BufferUsage.MappedWrite) cmdBuffer;
+	
 	//private ShaderStorage!(BufferUsage.MappedWrite) perObjectData;
 	
 

@@ -311,3 +311,58 @@ struct DirectionalLight
 	}
 
 }
+
+struct Color(int channels, T)
+{
+	import std.range;
+	private T[channels] value;
+
+	@property dataFormat()
+	{
+		return typeid(T);
+	}
+
+	@property ref inout(T) get(char c)()inout
+	{
+		return value[charToIndex!c];
+	}
+
+
+
+	alias get!('r') r;
+	static if(channels >=2)
+	{
+		alias get!('g') r;
+	}
+	static if(channels >= 3)
+	{
+		alias get!('b') r;
+	}
+	static if(channels >= 4)
+	{
+		alias get!('a') r;
+	}
+
+	template charToIndex(char c)
+	{
+		static if(c == 'r')
+		{
+			enum charToIndex = 0;
+		}
+		static if(c == 'g')
+		{
+			enum charToIndex = 1;
+		}
+		static if(c == 'b')
+		{
+			enum charToIndex = 2;
+		}
+		static if(c == 'a')
+		{
+			enum charToIndex = 3;
+		}
+	}
+
+
+
+}

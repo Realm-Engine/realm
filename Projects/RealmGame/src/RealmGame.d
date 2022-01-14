@@ -61,13 +61,21 @@ class RealmGame : RealmApp
 		crate = manager.instantiate!(GameEntity)("$Assets/Models/wooden crate.obj");
 		crate.getMaterial().color = vec4(1,1,1,1.0);
 		crate.entityName = "Crate";
-		crate.getComponent!(Transform).position = vec3(0,0.5,-0.5);
+		crate.getComponent!(Transform).position = vec3(0,1,-0.5);
 		crate.getComponent!(Transform).scale = vec3(0.25,0.25,0.25);
 		crate.getMaterial().textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
-		crate.getMaterial().textures.diffuse= new Texture2D(&crateDiffuse,crate.getMaterial().textures.settings);
-		crate.getMaterial().textures.normal= new Texture2D(&crateNormal,crate.getMaterial().textures.settings);
+		crate.getMaterial().textures.diffuse= new Texture2D(&crateDiffuse);
+		crate.getMaterial().textures.normal= new Texture2D(&crateNormal);
 		crate.getMaterial().packTextureAtlas();
 
+		plane = manager.instantiate!(GameEntity)("$EngineAssets/Models/ui-panel.obj");
+		plane.entityName = "Plane";
+		plane.getComponent!(Transform).position = vec3(0,0.5,0);
+		plane.getMaterial().textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+		plane.getMaterial.textures.diffuse = vec4(255);
+		plane.getMaterial.textures.normal = vec4(255);
+		Color!(4,ubyte) white;
+		plane.getMaterial.packTextureAtlas();
 
 
 		scope(exit)
@@ -115,6 +123,7 @@ class RealmGame : RealmApp
 		manager.updateEntities();
 		world.draw(Renderer.get);
 		crate.draw(Renderer.get);
+		plane.draw(Renderer.get);
 		Renderer.get.update();
 
 	}

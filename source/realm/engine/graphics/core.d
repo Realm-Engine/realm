@@ -22,6 +22,7 @@ alias QueryObject = GQueryObject;
 alias State = GState;
 alias FrameBuffer = GFrameBuffer;
 alias FrameBufferAttachment = GFrameBufferAttachment;
+alias PixelBuffer = GPixelBuffer;
 alias FrameBufferTarget = GFrameBufferTarget;
 alias DrawBufferTarget = GDrawBufferTarget;
 alias FrameMask = GFrameMask;
@@ -118,21 +119,41 @@ class Texture2D
 	IFImage* image;
 	alias image this;
 	int channels;
-	ImageFormat format;
 	TextureFilterfunc filter;
 	TextureWrapFunc wrap;
-	this(IFImage* image, TextureDesc desc)
+	this(IFImage* image)
 	{
 		this.image = image;
-		format = desc.fmt;
-		filter = desc.filter;
-		wrap = desc.wrap;
                 
+	}
+
+	this(ubyte r, ubyte g, ubyte b, ubyte a, int width, int height)
+	{
+		import std.range;
+		image = new IFImage;
+		image.w = width;
+		image.h = height;
+		image.c = 4;
+		image.cinfile =4;
+		image.bpc = 8;
+		image.e = 0;
+		
+		image.buf8.length = (image.w * image.h) * image.c;
+		for(int i = 0; i < image.w * image.h; i += image.c)
+		{
+			image.buf8[i..i+4] = [r,g,b,a];
+		}
+		
 	}
 
 	void freeImage()
 	{
 		image.free();
+	}
+
+	void opAssign(vec4 color)
+	{
+		
 	}
 
 }

@@ -40,6 +40,7 @@ mixin template OpenGLObject()
 enum GBufferUsage : GLenum
 {
     MappedWrite = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT,
+    WriteOnlyTemp = GL_MAP_WRITE_BIT,
     Buffered = GL_DYNAMIC_STORAGE_BIT
 }
 
@@ -50,7 +51,8 @@ enum GBufferType : GLenum
     ShaderStorage = GL_SHADER_STORAGE_BUFFER,
     Uniform = GL_UNIFORM_BUFFER,
     DrawIndirect = GL_DRAW_INDIRECT_BUFFER,
-    Query = GL_QUERY_BUFFER
+    Query = GL_QUERY_BUFFER,
+    PixelBuffer = GL_PIXEL_UNPACK_BUFFER
 }
 
 enum GState : GLenum
@@ -75,6 +77,7 @@ enum bool isValidBufferTarget(GLenum T) = (T == GL_ARRAY_BUFFER
 											      || T ==GL_TRANSFORM_FEEDBACK_BUFFER
 											      || T == GL_UNIFORM_BUFFER);
 
+enum bool isMappedBuffer(T) = (T == GBufferUsage.MappedWrite || T == GBufferUsage.WriteOnlyTemp);
 
 mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 {
@@ -86,7 +89,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
     
 
 
-    static if (usage == GBufferUsage.MappedWrite)
+    static if (usage == GBufferUsage.MappedWrite )
     {
 
         private T* glPtr;
@@ -129,7 +132,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
     in(size > 0, "Buffer size must be positive")
 	out
 	{
-        static if(usage == GBufferUsage.MappedWrite)
+        static if(usage == GBufferUsage.MappedWrite )
 		{
 			GLboolean mapped = getParameter!(GLboolean)(GL_BUFFER_MAPPED);
 			assert(mapped == GL_TRUE,"Could not map buffer");
@@ -145,7 +148,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
         glBufferStorage(bufferType, size * T.sizeof, null, usage);
         ringPtr = 0;
         ringSize = size * T.sizeof;
-        static if (usage == GBufferUsage.MappedWrite)
+        static if (usage == GBufferUsage.MappedWrite )
         {
             glPtr = cast(T*) glMapBufferRange(bufferType, 0, ringSize, usage);
             
@@ -175,6 +178,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
     uint bufferData(T* data, size_t length)
 	in
 	{
+        assert(id > 0,"Trying to buffer data to non exsistent buffer");
         assert(length <= ringSize,"Cant write more data than allocated");
 	}
     do
@@ -185,6 +189,8 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
         return dataStart;
 
     }
+
+
 
     void invalidate()
     {
@@ -594,6 +600,12 @@ struct GFrameBuffer
 
 }
 
+struct GPixelBuffer(GBufferUsage usage)
+{
+    mixin OpenGLBuffer!(GBufferType.PixelBuffer,ubyte,usage);
+
+}
+
 struct VertexBuffer(T, GBufferUsage usage)
 {
     mixin OpenGLBuffer!(GBufferType.Vertex, T, usage);
@@ -669,11 +681,13 @@ struct GSamplerObject(GTextureType target)
         dataType = imageFormatToGLDataType(desc.fmt);
         format = desc.fmt;
         mipLevels = 3;
+        
         glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapFunc);
         glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapFunc);
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterFunc);
         glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterFunc);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glPixelStorei(GL_PACK_ALIGNMENT,1);
         glBindTexture(target, 0);
 
     }
@@ -730,19 +744,39 @@ struct GSamplerObject(GTextureType target)
             glBindTexture(target, 0);
 
         }
+    
+        ubyte[] getClearData(float[4] color)
+		{
+            ubyte[] clearData;
+            clearData.length = 4;
+            clearData[0] = cast(ubyte)color[0];
+            clearData[1] = cast(ubyte)color[1];
+			clearData[2] = cast(ubyte)color[2];
+			clearData[3] = cast(ubyte)color[3];
+            return clearData;
+
+		}
+
         void clear(int level,float[4] color)
 		{
-            glClearTexImage(this,level,format,dataType,color.ptr);
+
+            glBindTexture(target,id);
+            ubyte[4] clearColor = [255,255,255,255];
+            glClearTexImage(this,level,format,dataType,clearColor.ptr);
+            glBindTexture(target,0);
 
 		}
 
         void clear(int level, int xoffset,int yoffset, int width, int height,float[4] color)
 		{
-            glClearTexSubImage(this,level,xoffset,yoffset,0,width,height,0,format,dataType,color.ptr);
+            ubyte[4] clearColor = [1,1,1,1];
+            glBindTexture(target,id);
+            glClearTexSubImage(this,level,xoffset,yoffset,0,width,height,0,format,dataType,clearColor.ptr);
+            glBindTexture(target,0);
 		}
 
         void uploadSubImage(int level, int xoffset, int yoffset, int width, int height, ubyte* data)
-        in(data !is null)
+        //in(data !is null)
         {
             //assert(data != null);
             glBindTexture(target, id);

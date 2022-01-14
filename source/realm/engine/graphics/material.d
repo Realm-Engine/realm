@@ -10,6 +10,7 @@ import gl3n.linalg;
 import gl3n.math;
 import realm.engine.core;
 
+
 mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
 {
     import std.format;
@@ -45,15 +46,77 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
                 static if (uniforms[uniform] == UserDataVarTypes.TEXTURE2D && !overrideTexturePacking)
                 {
 
-                    mixin("@(\"Texture\") %s %s;".format("Texture2D", uniform));
+                    mixin("@(\"Texture\") %s %s;".format("MaterialTexture", uniform));
                 }
 
             }
         }
 
     }
+    
+struct MaterialTexture
+{
+    private const int TEXTURE_COLOR_SIZE = 32;
+    enum InternalType
+	{
+        TEXTURE,
+        COLOR
+	}
+    private InternalType type;
+    union
+	{
+		Texture2D texture;
+		vec4 color;
+	}
+
+	void opAssign(Texture2D texture)
+	{
+		this.texture = texture;
+        type = InternalType.TEXTURE;
+	}
+	void opAssign(vec4 c)
+	{
+		color = c;
+        type = InternalType.COLOR;
+	}
+    @property bool isTexture() 
+	{
+		return type == InternalType.TEXTURE;
+	}
+    @property bool isColor()
+	{
+        return type == InternalType.COLOR;
+	}
+
+    
+
+    int width()
+	{
+        if(isTexture)
+		{
+            return texture.w;
+		}
+        else
+		{
+            return TEXTURE_COLOR_SIZE;
+		}
+	}
+   int height()
+	{
+        if(isTexture)
+		{
+            return texture.h;
+		}
+        else
+		{
+            return TEXTURE_COLOR_SIZE;
+		}
+	}
 
 }
+
+}
+
 
 
 enum bool isMaterial(T) = (__traits(hasMember, T, "shaderStorageBuffer") == true && __traits(hasMember, T, "textures") == true && __traits(hasMember, T, "layout") == true);
@@ -82,6 +145,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0, bool overri
     private static uint reservedVertices;
     private static uint reservedElements;
     
+
     private bool shadows;
     static int getOrder()
     {
@@ -139,7 +203,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0, bool overri
         import std.math;
         textureAtlas.setActive();
         textureAtlas.textureDesc = textures.settings;
-        Texture2D[] textures;
+        MaterialTexture*[] textures;
 		int sumWidth = 0;
         int sumHeight = 0;
         vec4*[] tilingOffsets;
@@ -150,21 +214,27 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0, bool overri
                 static if (isTexture!(attribute))
                 {
                     
-                    if(__traits(getMember, this.textures, member) !is null)
+                    
+
+                    if(&__traits(getMember, this.textures, member) !is null)
 					{
                        
-                        textures~= __traits(getMember, this.textures, member);
-                        tilingOffsets ~= &__traits(getMember,this.layout,member);
-                        sumWidth += __traits(getMember, this.textures, member).w;
-                        sumHeight += __traits(getMember, this.textures, member).h;
+						
+						textures~= &__traits(getMember, this.textures, member);
+						tilingOffsets ~= &__traits(getMember,this.layout,member);
+						sumWidth += __traits(getMember, this.textures, member).width();
+						sumHeight += __traits(getMember, this.textures, member).height();
+						
+                       
 
 					}
+
                     
 
 				}
 			}
 		}
-        auto sortedTextures = textures.sort!((t1, t2) => (t1.w * t1.h) > (t2.w * t2.h));
+        auto sortedTextures = textures.sort!((t1, t2) => (t1.width() * t1.height()) > (t2.width() * t2.height()));
         int nextMultiple(int num, int multiple)
 		{
            
@@ -208,25 +278,39 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0, bool overri
             return tilingOffset;
         }
        
-
+       //auto pbo = GraphicsSubsystem.startPixelTransfer((32 *32) * 4);
         foreach(index,texture; sortedTextures.enumerate(0))
 		{
 WriteImage:
-            if(texture.w + rowWidth <= cast(int)textureAtlas.width)
+            int width = texture.width();
+            int height = texture.height();
+            
+            if(width + rowWidth <= cast(int)textureAtlas.width)
 			{
                 
-                tilingOffsets[index].x = cast(float)texture.w / textureAtlas.width;
-                tilingOffsets[index].y = cast(float)texture.h/ textureAtlas.height;
+                tilingOffsets[index].x = cast(float)width / textureAtlas.width;
+                tilingOffsets[index].y = cast(float)height/ textureAtlas.height;
                 tilingOffsets[index].z = cast(float)rowWidth / textureAtlas.width;
                 tilingOffsets[index].w = cast(float)totalHeight/textureAtlas.height;
-                
-                textureAtlas.uploadSubImage(0,rowWidth,totalHeight,texture.w,texture.h,texture.buf8.ptr);
-
-				if(cast(int)texture.h > rowHeight)
+                if(texture.isTexture)
 				{
-                    rowHeight = texture.h;
+                    textureAtlas.uploadSubImage(0,rowWidth,totalHeight,width,height,texture.texture.buf8.ptr);
 				}
-                rowWidth += texture.w;
+                else
+				{
+                   // textureAtlas.clear(0,vec4(1).vector);
+
+					
+                    textureAtlas.clear(0,vec4(255).vector);
+					//GraphicsSubsystem.transferPixelData(pbo,&textureAtlas,color.dup);
+				}
+                
+
+				if(cast(int)texture.height() > rowHeight)
+				{
+                    rowHeight = height;
+				}
+                rowWidth += width;
 
 
 			}
@@ -239,7 +323,7 @@ WriteImage:
 
 
 		}
-
+       // GraphicsSubsystem.endPixelTransfer(pbo);
 
        
 	}
