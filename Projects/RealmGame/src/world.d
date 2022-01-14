@@ -30,27 +30,29 @@ class World
 	private Transform transform;
 	private Ocean ocean;
 	ShaderProgram shaderProgram;
-   
 
-	this(EntityManager manager)
+
+
+	void start(EntityManager manager)
 	{
-		heightImg = readImageBytes("$Assets/Images/noiseTexture.png");
-		setComponent!(Transform)(new Transform);
-		transform = getComponent!(Transform);
-		
-                
-
 		WorldMaterial.initialze();
 		WorldMaterial.reserve(1);
+		heightImg = readImageBytes("$Assets/Images/noiseTexture.png");
+		//setComponent!(Transform)(new Transform);
+		transform = getComponent!(Transform);
+		material = new Material;
+                
+
+
 
 		meshData = generateFace(vec3(0,1,0),24);
 		WorldMaterial.allocate(&meshData);
 		transform.position = vec3(0,-2,0);
-		transform.scale = vec3(5,1,3.5);
+		transform.scale = vec3(20,1,15);
 		shaderProgram = loadShaderProgram("$Assets/Shaders/world.shader","World");
-		material = new WorldMaterial;
-		material.heightStrength = 0.5;
-		material.oceanLevel = 0.225;
+		
+		material.heightStrength = 1.5;
+		material.oceanLevel = 0.7;
 		material.setShaderProgram(shaderProgram);
 		material.textures.heightMap = new Texture2D(&heightImg);
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
@@ -80,6 +82,7 @@ class World
 
 	void draw(Renderer renderer)
 	{
+
 		renderer.submitMesh!(WorldMaterial)(meshData,transform,material);
 		ocean.draw(renderer);
 	}

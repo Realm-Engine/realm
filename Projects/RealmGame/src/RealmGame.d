@@ -71,6 +71,7 @@ class RealmGame : RealmApp
 		plane = manager.instantiate!(GameEntity)("$EngineAssets/Models/ui-panel.obj");
 		plane.entityName = "Plane";
 		plane.getComponent!(Transform).position = vec3(0,0.5,0);
+		plane.getComponent!(Transform).rotation = vec3(90,0,0);
 		plane.getMaterial().textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		plane.getMaterial.textures.diffuse = Vector!(ubyte,4)(255);
 		plane.getMaterial.textures.normal = Vector!(ubyte,4)(0);

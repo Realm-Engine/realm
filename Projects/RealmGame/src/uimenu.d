@@ -16,11 +16,12 @@ class UIMenu
 	private RealmUI.UIElement entityName;
 	private RealmUI.UIElement nextEntity;
 	private RealmUI.UIElement lastEntity;
+	private RealmUI.UIElement toggleActive;
 	private EntityManager entityManager;
 	private int currentEntity;
 	private vec4 color = vec4(24,24,25,1);
 	mixin RealmEntity!("Menu");
-	this(Camera camera,EntityManager entityManager)
+	void start(Camera camera,EntityManager entityManager)
 	{
 		currentEntity = 0;
 		this.camera = camera;
@@ -31,8 +32,9 @@ class UIMenu
 		infoPanel = RealmUI.createElement(vec3(75,200,1),vec3(150,400,1),vec3(0));
 		entityName = RealmUI.createElement(vec3(0,150,0),vec3(100,35,1),vec3(0));
 
-		nextEntity = RealmUI.createElement(vec3(50,25,0),vec3(50,25,1),vec3(0));
-		lastEntity = RealmUI.createElement(vec3(-50,25,0),vec3(50,25,1),vec3(0));
+		nextEntity = RealmUI.createElement(vec3(50,100,0),vec3(50,25,1),vec3(0));
+		lastEntity = RealmUI.createElement(vec3(-50,100,0),vec3(50,25,1),vec3(0));
+		toggleActive = RealmUI.createElement(vec3(0,50,0),vec3(100,25,1),vec3(0));
 
 	}
 
@@ -48,14 +50,14 @@ class UIMenu
 		{
 			Logger.LogInfo("Button pressed");
 		}
-		if(RealmUI.button(nextEntity,vec4(0,0,0,1),vec4(1),"Next",RealmUI.TextLayout(4,6,12)) == RealmUI.ButtonState.PRESSED )
+		if(RealmUI.button(nextEntity,vec4(0,0,0,1),vec4(1),"Next",RealmUI.TextLayout(4,6,16)) == RealmUI.ButtonState.PRESSED )
 		{
 			if(currentEntity < gameEntities.length-1)
 			{
 				currentEntity++;
 			}
 		}
-		if(RealmUI.button(lastEntity,vec4(0,0,0,1),vec4(1),"Prev",RealmUI.TextLayout(4,6,12)) == RealmUI.ButtonState.PRESSED )
+		if(RealmUI.button(lastEntity,vec4(0,0,0,1),vec4(1),"Prev",RealmUI.TextLayout(4,6,16)) == RealmUI.ButtonState.PRESSED )
 		{
 			if(currentEntity > 0)
 			{
@@ -63,6 +65,10 @@ class UIMenu
 			}
 		}
 		GameEntity entity = gameEntities[currentEntity];
+		if(RealmUI.button(toggleActive,vec4(0,0,0,1),vec4(1),"Toggle",RealmUI.TextLayout(4,6,16)) == RealmUI.ButtonState.PRESSED)
+		{
+			entity.active = entity.active ^ true;
+		}
 		RealmUI.drawTextString(entityName,vec4(0,0,0,1),color,RealmUI.TextLayout(4,6,16),entity.entityName);
 		RealmUI.containerPop();
 	}

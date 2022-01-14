@@ -33,8 +33,9 @@ mixin template EntityRegistry(T...)
     do
     {
         UUID uuid = randomUUID();
-        E entity = new E(t);
-        entity.construct(uuid);
+        E entity = new E(uuid);
+        //entity.construct(uuid);
+        entity.start(t);
         mixin("%s[uuid] = entity;".format(toLower(E.mangleof)));
         return entity;
     }
@@ -50,6 +51,7 @@ mixin template EntityRegistry(T...)
         E entity = new E(e);
         UUID uuid = randomUUID();
 		entity.construct(uuid);
+
         mixin("%s[uuid] = entity;".format(toLower(E.mangleof)));
         return entity;
 	}
@@ -57,8 +59,15 @@ mixin template EntityRegistry(T...)
 	{
         static foreach(Type; T)
 		{
-            
-            mixin("foreach(entity; %s){entity.update();entity.updateComponents();}".format(toLower(Type.mangleof)));
+            foreach(entity; __traits(getMember,this,toLower(Type.mangleof)))
+			{
+                if(entity.active)
+				{
+                    entity.update();
+                    entity.updateComponents();
+				}
+			}
+            //mixin("foreach(entity; %s){entity.update();entity.updateComponents();}".format(toLower(Type.mangleof)));
 		}
 	}
     E[] getEntities(E)()
@@ -87,6 +96,8 @@ mixin template RealmComponent(string cName)
 
 }
 
+enum string componentName(T) = T.mangleof;
+
 mixin template RealmEntity(string eName, T...)
 {
 
@@ -95,6 +106,7 @@ mixin template RealmEntity(string eName, T...)
         import realm.engine.logging;
         import std.uni;
         import std.format;
+        import realm.engine.graphics.material;
     }
 
     struct Components
@@ -102,6 +114,7 @@ mixin template RealmEntity(string eName, T...)
        
         static foreach (Type; T)
         {
+            static assert(!isMaterial!(Type),"Materials cant be components");
             pragma(msg,"Adding " ~ Type.stringof ~ " component to " ~ eName);  
             mixin("private %s %s;".format(Type.stringof, Type.mangleof));
 			static if(!__traits(hasMember,Type,"componentUpdate"))
@@ -145,11 +158,58 @@ mixin template RealmEntity(string eName, T...)
 
     private string _entityName = eName;
     private UUID _id;
+    private bool _active;
 
     void construct(UUID id)
     {
+        import core.memory :GC;
+        import core.stdc.stdlib : malloc;
+        import std.conv : emplace;
+        
         this._id = id;
+        _active = true;
+        static foreach(Type; T)
+		{
+            static if(!__traits(isZeroInit,Type))
+			{
+				const (void)[] init = typeid(Type).initializer();
+				void* ptr = malloc(init.length);
+				ptr[0..init.length] = init[];
+				__traits(getMember,this,componentName!(Type)) = cast(Type)ptr;
+                GC.addRange(ptr.ptr,init.length);
+
+			}
+
+
+
+		}
     }
+
+    this(UUID id)
+	{
+		import core.memory :GC;
+        import core.stdc.stdlib : malloc;
+        import std.conv : emplace;
+
+        this._id = id;
+        _active = true;
+        static foreach(Type; T)
+		{
+            static if(componentName!(Type)[0] == 'C')
+			{
+                {
+                    auto size= __traits(classInstanceSize,Type);
+					//const (void)[] init = typeid(Type).initializer();
+					auto memory = malloc(size)[0..size];
+					GC.addRange(memory.ptr,size);
+                    __traits(getMember,this,componentName!(Type)) = emplace!(Type)(memory);
+				}
+			}
+
+
+
+		}
+	}
 
     @property id()
     {
@@ -165,5 +225,13 @@ mixin template RealmEntity(string eName, T...)
     {
         _entityName = value;
     }
+    @property active(bool value)
+	{
+        _active = value;
+	}
+    @property bool active()
+	{
+        return _active;
+	}
 
 }

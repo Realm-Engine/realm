@@ -11,6 +11,9 @@
 	"dependencies": {
 		"realm": "~main"
 	},
+	"extraDependencyFiles": [
+		"./Assets/Shaders/*.shader"
+	],
 	"configurations": [
 		{
 			"name": "realm-executable",

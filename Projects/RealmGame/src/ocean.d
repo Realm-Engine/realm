@@ -23,13 +23,10 @@ class Ocean
 	ShaderProgram shaderProgram;
 	private Mesh* mesh;
 	private Transform transform;
-	void start()
-	{
 
-	}
-	this(float oceanLevel,Texture2D worldHeight,float heightStrength)
+	void start(float oceanLevel,Texture2D worldHeight,float heightStrength)
 	{
-		setComponent!(Transform)(new Transform);
+		//setComponent!(Transform)(new Transform);
 		transform = getComponent!(Transform);
 		mesh = &getComponent!(Mesh)();
 		WaterMaterial.initialze();
