@@ -17,10 +17,7 @@ class Batch(T)
 	private VertexBuffer!(T,BufferUsage.MappedWrite) vertexBuffer;
 	private ElementBuffer!(BufferUsage.MappedWrite) elementBuffer;
 	private DrawIndirectCommandBuffer!(BufferUsage.MappedWrite) cmdBuffer;
-	
 	//private ShaderStorage!(BufferUsage.MappedWrite) perObjectData;
-	
-
 	private uint numElementsInFrame;
 	private uint numVerticesInFrame;
 	private uint numIndicesInFrame;
@@ -33,6 +30,7 @@ class Batch(T)
 	alias BindShaderStorageCallback = void function();
 	private BindShaderStorageCallback bindShaderStorage;
 	private int order;
+	private ShaderPipeline shaderPipeline;
 
 	@property renderOrder()
 	{
@@ -42,6 +40,7 @@ class Batch(T)
 	{
 		this.order = order;
 		this.topology = topology;
+		shaderPipeline = new ShaderPipeline;
 		vao.create();
 		vertexBuffer.create();
 		elementBuffer.create();
@@ -53,8 +52,9 @@ class Batch(T)
 		maxElementsInFrame = 0;
 		numVerticesInFrame = 0;
 		this.program = program;
-		
-		
+		shaderPipeline.create();
+		shaderPipeline.useProgramStages(ShaderProgramStages.VERTEX_STAGE,program);
+		shaderPipeline.useProgramStages(ShaderProgramStages.FRAGMENT_STAGE,program);
 		
 	}
 
@@ -72,6 +72,10 @@ class Batch(T)
 
 	}
 
+	@property pipeline()
+	{
+		return shaderPipeline;
+	}
 
 	void initialize(uint initialElements,uint numFaces)
 	{
@@ -156,10 +160,6 @@ class Batch(T)
 		numIndicesInFrame+=faces.length;
 		material.writeUniformData();
 		textureAtlases~=material.getTextureAtlas();
-		
-
-
-
 	}
 
 	void drawBatch(bool renderShadows = true,PrimitiveShape shape = PrimitiveShape.TRIANGLE)()
@@ -171,9 +171,10 @@ class Batch(T)
 			
 			
 			int cmdTypeSize = cast(int)DrawElementsIndirectCommand.sizeof;
-			bindBuffers();
-			bindAttributes();
 			program.use();
+			bindBuffers();
+			//bindAttributes();
+			
 			uint offset = cmdBufferBase * (maxElementsInFrame * cmdTypeSize);
 
 			foreach(i,texture; textureAtlases.enumerate(0))
@@ -201,10 +202,15 @@ class Batch(T)
 			{
 				bindShaderStorage();
 			}
-
-
+			program.unbind();
+			
+			
+			shaderPipeline.bind();
+			shaderPipeline.validate();
 			//writeln(offset);
 			GraphicsSubsystem.drawMultiElementsIndirect!(shape)(offset, numElementsInFrame);
+			shaderPipeline.unbind();
+			resetPipeline();
 			unbindBuffers();
 		}
 		
@@ -216,6 +222,12 @@ class Batch(T)
 		numVerticesInFrame = 0;
 		numIndicesInFrame = 0;
 		textureAtlases.length = 0;
+		
+	}
+
+	void resetPipeline()
+	{
+		shaderPipeline.useProgramStages(ShaderProgramStages.VERTEX_STAGE | ShaderProgramStages.FRAGMENT_STAGE,program);
 		
 	}
 

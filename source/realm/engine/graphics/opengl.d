@@ -308,6 +308,48 @@ class GShader
 
 
 
+class GShaderPipeline
+{
+    mixin OpenGLObject;
+
+    void create()
+    out
+	{
+        assert(id > 0, "Failed to create program pipeline");
+	}
+    do
+	{
+        glGenProgramPipelines(1, &id);
+	}
+
+    void useProgramStages(GShaderProgramStages stages, GShaderProgram program)
+    in(program.id >0,"Cannot use stages from invalid program")
+	{
+        glUseProgramStages(id,stages,program);
+	}
+    void bind()
+	{
+        glBindProgramPipeline(id);
+	}
+    void unbind()
+	{
+        glBindProgramPipeline(0);
+	}
+
+    void clearStages(GShaderProgramStages stages)
+	{
+        glUseProgramStages(id,stages,0);
+	}
+
+    void validate()
+	{
+        glValidateProgramPipeline(id);
+	}
+
+
+}
+
+
 class GShaderProgram
 {
     mixin OpenGLObject;
@@ -347,20 +389,21 @@ class GShaderProgram
     this(GShader vertex, GShader fragment, string name)
     {
         id = glCreateProgram();
+        glProgramParameteri(id,GL_PROGRAM_SEPARABLE,GL_TRUE);
         this.name = name;
 
         shaders[0] = vertex;
         shaders[1] = fragment;
         foreach (shader; shaders)
-        {
-            glAttachShader(this, shader);
+		{
+			glAttachShader(this, shader);
 
-        }
+		}
         ubyte[] binaryCache = checkCache(vertex,fragment,name);
         if(binaryCache.length > 0)
         {
             
-            loadProgramBinary(&binaryCache);
+           loadProgramBinary(&binaryCache);
            
         }
         else
@@ -369,12 +412,11 @@ class GShaderProgram
             shaders[0].compile();
             shaders[1].compile();
             
+			
+
             glLinkProgram(this);
             
-            foreach (shader; shaders)
-            {
-                glDeleteShader(shader);
-            }
+           
             
             auto md5 = new MD5Digest();
             string nameHash = toHexString(md5.digest(name));
@@ -389,11 +431,16 @@ class GShaderProgram
         }
         char[256] result;
         int success;
+		foreach (shader; shaders)
+		{
+			glDetachShader(this,shader);
+			glDeleteShader(shader);
+		}
         glGetProgramiv(this, GL_LINK_STATUS, &success);
-        if (!success)
+        if (success == 0)
         {
             glGetProgramInfoLog(this, 256, null, result.ptr);
-            Logger.Assert(true,"Could not link program: %s\nError:%s",name, result);
+            Logger.LogError("Could not link program: %s\nError:%s",name, result);
         }
         else
         {
@@ -417,6 +464,7 @@ class GShaderProgram
                 samplerUniformCache[fromStringz(uniformName).idup] = location;
             }
         }
+
     
 
     }
@@ -484,6 +532,11 @@ class GShaderProgram
     {
         glUniform1i(loc, value);
     }
+
+    static void unbind()
+	{
+        glUseProgram(0);
+	}
 
 }
 
@@ -992,6 +1045,12 @@ enum GShaderType : GLenum
 
 }
 
+enum GShaderProgramStages : GLenum
+{
+    VERTEX_STAGE = GL_VERTEX_SHADER_BIT,
+    FRAGMENT_STAGE = GL_FRAGMENT_SHADER_BIT,
+    COMPUTE_STAGE = GL_COMPUTE_SHADER_BIT
+}
 enum GFrameBufferAttachmentType : GLenum
 {
     COLOR_ATTACHMENT = GL_COLOR_ATTACHMENT0,

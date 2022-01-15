@@ -48,7 +48,8 @@ class Renderer
 	private __gshared Renderer _instance;
 	private QueryObject!() queryDevice;
 	private RenderInfo _info;
-	
+	private ShaderPipeline rendererPipeline;
+
 	static Renderer get()
 	{
 		if(!_instantiated)
@@ -108,6 +109,7 @@ class Renderer
 
 		RealmUI.initialize();
 		queryDevice.create();
+		lightSpaceShaderProgram = loadShaderProgram("$EngineAssets/Shaders/lightSpace.shader","lightSpace");
 		
 
 
@@ -229,8 +231,11 @@ class Renderer
 		
 		foreach(batch; orderedBatches)
 		{
+			batch.pipeline.useProgramStages(ShaderProgramStages.FRAGMENT_STAGE,lightSpaceShaderProgram);
 			batch.drawBatch!(false)();
+			//batch.resetPipeline();
 		}
+		
 		mainDirLight.shadowFrameBuffer.unbind(FrameBufferTarget.FRAMEBUFFER);
 		GraphicsSubsystem.setShadowMap(mainDirLight.shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture);
 		cull(CullFace.BACK);
@@ -239,7 +244,7 @@ class Renderer
 	@property void mainLight(DirectionalLight* light)
 	{
 		mainDirLight = light;
-		mainDirLight.createFrameBuffer(2048,2048);
+		mainDirLight.createFrameBuffer(1024,1024);
 	}
 
 	void updateMainLight()
