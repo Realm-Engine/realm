@@ -12,6 +12,7 @@ import realm.ocean;
 import realm.util;
 import realm.entitymanager;
 alias WorldMaterialLayout = Alias!(["heightMap" : UserDataVarTypes.TEXTURE2D,
+									"heightMap2" : UserDataVarTypes.TEXTURE2D,
 									"heightStrength" : UserDataVarTypes.FLOAT,
 									"oceanLevel" : UserDataVarTypes.FLOAT]);
 alias WorldMaterial = Alias!(Material!WorldMaterialLayout);
@@ -25,7 +26,8 @@ class World
 	static vec3[] squarePositions;
 	static vec2[] squareUV;
 	//static uint[] faces;
-	static IFImage heightImg;
+	private IFImage heightImg;
+	private IFImage heightImg2;
 	WorldMaterial material;
 	private Transform transform;
 	private Ocean ocean;
@@ -37,10 +39,11 @@ class World
 	{
 		WorldMaterial.initialze();
 		WorldMaterial.reserve(1);
-		heightImg = readImageBytes("$Assets/Images/noiseTexture.png");
+		heightImg = readImageBytes("$Assets/Images/noiseTexture1.png");
+		heightImg2 = readImageBytes("$Assets/Images/noiseTexture2.png");
 		//setComponent!(Transform)(new Transform);
 		transform = getComponent!(Transform);
-		material = new Material;
+		material = new WorldMaterial;
                 
 
 
@@ -55,6 +58,7 @@ class World
 		material.oceanLevel = 0.7;
 		material.setShaderProgram(shaderProgram);
 		material.textures.heightMap = new Texture2D(&heightImg);
+		material.textures.heightMap2 = new Texture2D(&heightImg2);
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		

@@ -61,7 +61,7 @@ class RealmGame : RealmApp
 		crate = manager.instantiate!(GameEntity)("$Assets/Models/wooden crate.obj");
 		crate.getMaterial().color = vec4(1,1,1,1.0);
 		crate.entityName = "Crate";
-		crate.getComponent!(Transform).position = vec3(0,1,-0.5);
+		crate.getComponent!(Transform).position = vec3(0,1,-7);
 		crate.getComponent!(Transform).scale = vec3(0.25,0.25,0.25);
 		crate.getMaterial().textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		crate.getMaterial().textures.diffuse= new Texture2D(&crateDiffuse);

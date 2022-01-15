@@ -103,7 +103,7 @@ class Renderer
 		enable(State.Blend);
 		blendFunc(BlendFuncType.SRC_ALPHA,BlendFuncType.ONE_MINUS_SRC_ALPHA);
 		
-		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(40,40),-40,40,0);
+		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(20,20),-20,20,0);
 		Debug.initialze();
 
 		RealmUI.initialize();
@@ -219,7 +219,7 @@ class Renderer
 	@property void mainLight(DirectionalLight* light)
 	{
 		mainDirLight = light;
-		mainDirLight.createFrameBuffer(1024,1024);
+		mainDirLight.createFrameBuffer(2048,2048);
 	}
 
 	void updateMainLight()

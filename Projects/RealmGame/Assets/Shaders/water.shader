@@ -50,15 +50,15 @@ vec3 grayToNormal(sampler2D grayTexture, vec2 uv, float delta)
 
 vec4 fragment()
 {
-	float height = texture(objectTexture, samplerUV(getObjectData(heightMap), RESurfaceDataIn.texCoord)).x;
-	height = height * getObjectData(heightStrength);
+	float heightSample = texture(objectTexture, samplerUV(getObjectData(heightMap), RESurfaceDataIn.texCoord)).x;
+	float height = heightSample * getObjectData(heightStrength);
 	vec3 normal =  RESurfaceDataIn.normal;
 
 	vec3 ambient = vec3(0.1);
 	vec3 deepColor = vec3(7,52,207).rgb;
 	vec3 shallowColor = vec3(6,184,207).rgb;
 	
-	vec3 color = smoothstep(normalize(deepColor), normalize(shallowColor), normalize(vec3(height)));
+	vec3 color = mix(normalize(deepColor), normalize(shallowColor), clamp(vec3(height),vec3(0),vec3(1)));
 	vec3 lighting = calculateDiffuse(normal);
-	return vec4(color,height );
+	return vec4(color,1.0 );
 }
