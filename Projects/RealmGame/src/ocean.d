@@ -65,6 +65,6 @@ class Ocean
 
 	void draw(Renderer renderer)
 	{
-		renderer.submitMesh!(WaterMaterial)(*mesh,transform,material);
+		renderer.submitMesh!(WaterMaterial,true)(*mesh,transform,material);
 	}
 }

@@ -31,7 +31,7 @@ class Renderer
 	import std.container.array;
 	import std.stdio;
 	//private Batch!RealmVertex batch;
-	
+	private RealmVertex[][ulong] staticMeshes;
 	private Batch!(RealmVertex)[ulong] batches;
 	private Batch!(RealmVertex) lightSpaceBatch;
 	private static VertexAttribute[] vertex3DAttributes;
@@ -118,39 +118,70 @@ class Renderer
 		return &mainFrameBuffer;
 	}
 
-	void submitMesh(Mat)(Mesh mesh,Transform transform,Mat mat)
+	void submitMesh(Mat, bool isStatic = false)(Mesh mesh,Transform transform,Mat mat)
 	{
 		
 
 		static assert(isMaterial!(Mat));
-		
+		ulong materialId = Mat.materialId();
+
+
 		RealmVertex[] vertexData;
-		vertexData.length = mesh.positions.length;
-		mat4 modelMatrix = transform.transformation;
-		mat4 transInv = modelMatrix.inverse().transposed();
 		vec3[] aabbPoints;
-		for(int i = 0; i < mesh.positions.length;i++)
+		ulong staticId = materialId + mat.instanceId;
+		static if(isStatic)
 		{
-			RealmVertex vertex;
-			
-			vertex.position = vec3( modelMatrix * vec4(mesh.positions[i],1.0));
-			
-			vertex.texCoord = mesh.textureCoordinates[i];
-			vertex.normal =  vec3(transInv * vec4(mesh.normals[i],1.0));
-			vertex.tangent = vec3(modelMatrix * vec4(mesh.tangents[i],1.0));
-			vertex.materialId = mat.instanceId;
-			aabbPoints ~= vertex.position;
-			vertexData[i] = vertex;
-			
+
+			if(staticId in staticMeshes)
+			{
+				vertexData = staticMeshes[staticId];
+				foreach(vertex; vertexData)
+				{
+					aabbPoints ~= vertex.position;
+				}
+				Logger.LogInfo("Drawing mesh statically");
+			}
 		}
+
+		if(!isStatic || (isStatic && staticId !in staticMeshes))
+		{
+			vertexData.length = mesh.positions.length;
+			mat4 modelMatrix = transform.transformation;
+			mat4 transInv = modelMatrix.inverse().transposed();
+
+			for(int i = 0; i < mesh.positions.length;i++)
+			{
+				RealmVertex vertex;
+
+				vertex.position = vec3( modelMatrix * vec4(mesh.positions[i],1.0));
+
+				vertex.texCoord = mesh.textureCoordinates[i];
+				vertex.normal =  vec3(transInv * vec4(mesh.normals[i],1.0));
+				vertex.tangent = vec3(modelMatrix * vec4(mesh.tangents[i],1.0));
+				vertex.materialId = mat.instanceId;
+				aabbPoints ~= vertex.position;
+				vertexData[i] = vertex;
+
+			}
+		}
+		
+		
+		
 		AABB boundingBox = AABB.from_points(aabbPoints);
 		Frustum frustum = Frustum((camera.projection * camera.view) );
 		
 		int intersection = frustum.intersects(boundingBox);
-		ulong materialId = Mat.materialId();
+
+		static if(isStatic)
+		{
+			
+			if(staticId !in staticMeshes)
+			{
+				staticMeshes[staticId] = vertexData;
+			}
+		}
 		
-		
-		if(intersection == INSIDE)
+		if(intersection == INSIDE || intersection == INTERSECT)
 		{
 			
 			if(materialId !in batches)
@@ -164,23 +195,13 @@ class Renderer
 			batch.submitVertices!(Mat)(vertexData,mesh.faces,mat);
 			Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(0,1,0));
 		}
-		else if(intersection == INTERSECT)
-		{
-			if(materialId !in batches)
-			{
-				batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
-				batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
-				batches[materialId].initialize(Mat.allocatedVertices(),Mat.allocatedElements());
-				batches[materialId].reserve(Mat.getNumMaterialInstances());
-			}
-			auto batch = materialId in batches;
-			batch.submitVertices!(Mat)(vertexData,mesh.faces,mat);
-			Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(0,0,1));
-		}
+
 		else
 		{
 			Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(1,0,0));
 		}
+
+
 	}
 
 	void renderLightSpace() 

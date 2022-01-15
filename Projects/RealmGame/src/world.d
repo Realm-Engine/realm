@@ -87,7 +87,7 @@ class World
 	void draw(Renderer renderer)
 	{
 
-		renderer.submitMesh!(WorldMaterial)(meshData,transform,material);
+		renderer.submitMesh!(WorldMaterial,true)(meshData,transform,material);
 		ocean.draw(renderer);
 	}
 
