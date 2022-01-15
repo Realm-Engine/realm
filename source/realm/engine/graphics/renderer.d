@@ -139,7 +139,6 @@ class Renderer
 				{
 					aabbPoints ~= vertex.position;
 				}
-				Logger.LogInfo("Drawing mesh statically");
 			}
 		}
 
