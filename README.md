@@ -34,7 +34,7 @@
   * _Either way you do it be sure to get freetype 2.11_
 ### Process
 1. First clone and get submodules using `-recursive` flag or running <br> `git submodule init` <br> `git submodule update`
-2. If building freetype, its already configured to build a dynamic library
+2. If building freetype, its already configured to build a dynamic library, it is under `external/freetype`
    * See link above for directions
 3. Go to _your_ game project root (for example Projects/RealmGame) and type <br> `dub run` or `dub config --config=realm-executable`
    * To build out to a dynamic library use `dub config --config=realm-dynamiclibrary`
