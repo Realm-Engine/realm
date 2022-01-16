@@ -20,7 +20,7 @@ class Ocean
 
 	mixin RealmEntity!("Ocean",Transform,Mesh);
 	WaterMaterial material;
-	ShaderProgram shaderProgram;
+	StandardShaderModel shaderProgram;
 	private Mesh* mesh;
 	private Transform transform;
 

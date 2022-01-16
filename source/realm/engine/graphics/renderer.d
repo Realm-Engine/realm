@@ -38,7 +38,7 @@ class Renderer
 	private RealmGlobalData _globalData;
 	private Camera* camera;
 	private static FrameBuffer mainFrameBuffer;
-	private ShaderProgram lightSpaceShaderProgram;
+	private StandardShaderModel lightSpaceShaderProgram;
 	private LightSpaceMaterial lightSpaceMaterial;
 	private DirectionalLight* mainDirLight;
 	private Camera lightSpaceCamera;
@@ -112,7 +112,7 @@ class Renderer
 		lightSpaceShaderProgram = loadShaderProgram("$EngineAssets/Shaders/lightSpace.shader","lightSpace");
 		lightSpacePipeline = new ShaderPipeline;
 		lightSpacePipeline.create();
-		lightSpacePipeline.useProgramStages(ShaderProgramStages.VERTEX_STAGE | ShaderProgramStages.FRAGMENT_STAGE, lightSpaceShaderProgram);
+		lightSpacePipeline.useProgramStages(lightSpaceShaderProgram);
 		
 
 

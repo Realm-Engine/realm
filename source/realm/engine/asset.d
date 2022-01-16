@@ -11,7 +11,7 @@ private
 	import std.stdio;
 	import std.file;
 	import std.array;
-	import realm.engine.graphics.core : Shader,ShaderProgram, ShaderType;
+	import realm.engine.graphics.core : Shader, StandardShaderModel , ShaderType;
 	import std.algorithm.comparison : equal;
 	import realm.engine.logging;
 	import realm.engine.core : Mesh;
@@ -278,7 +278,7 @@ Mesh loadMesh(string path)
 
 
 
-ShaderProgram loadShaderProgram(string path,string name)
+StandardShaderModel loadShaderProgram(string path,string name)
 {
 	string sysPath = VirtualFS.getSystemPath(path);
 	enum CurrentProcess
@@ -289,12 +289,12 @@ ShaderProgram loadShaderProgram(string path,string name)
 		None
 	}
 
-	ShaderProgram program;
+	StandardShaderModel shader;
 	//string shader = readText(path);
 	if(!exists(sysPath))
 	{
 		Logger.LogError("Could not find path: %s", path);
-		return program;
+		return shader;
 	}
 	auto file = File(sysPath);
 	auto range = file.byLine();
@@ -358,9 +358,12 @@ ShaderProgram loadShaderProgram(string path,string name)
 
 	Shader vertexShader = new Shader(ShaderType.VERTEX,vertexText, name ~ " Vertex");
 	Shader fragmentShader = new Shader(ShaderType.FRAGMENT,fragmentText,name ~ " Fragment");
-	program = new ShaderProgram(vertexShader,fragmentShader,name);
+	shader = new StandardShaderModel(name);
+	shader.vertexShader = vertexShader;
+	shader.fragmentShader = fragmentShader;
+	shader.compile();
 
-	return program;
+	return shader;
 
 
 

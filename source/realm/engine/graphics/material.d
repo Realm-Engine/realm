@@ -150,7 +150,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0, bool overri
     private UniformLayout.UserData* storageBufferPtr;
 
     private SamplerObject!(TextureType.TEXTURE2D) textureAtlas;
-    private static ShaderProgram program;
+    private static StandardShaderModel program;
     private static Mesh*[] meshes;
     private static uint reservedVertices;
     private static uint reservedElements;
@@ -414,12 +414,12 @@ WriteImage:
         return &this.textureAtlas;
 	}
 
-    static void setShaderProgram(ShaderProgram sp)
+    static void setShaderProgram(StandardShaderModel sp)
 	{
         program = sp;
 	}
 
-    static ShaderProgram getShaderProgram()
+    static StandardShaderModel getShaderProgram()
 	{
         return program;
 	}

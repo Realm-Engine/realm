@@ -19,7 +19,7 @@ import realm.entitymanager;
 class RealmGame : RealmApp
 {
 
-	ShaderProgram program;
+
 
 	Camera cam;
 	//Renderer renderer;

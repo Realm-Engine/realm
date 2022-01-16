@@ -31,7 +31,7 @@ class World
 	WorldMaterial material;
 	private Transform transform;
 	private Ocean ocean;
-	ShaderProgram shaderProgram;
+	StandardShaderModel shaderProgram;
 
 
 

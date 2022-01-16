@@ -16,7 +16,7 @@ class GameEntity
 	
 	mixin RealmEntity!("GameEntity",Transform,Mesh);
 	private SimpleMaterial material;
-	private static ShaderProgram shader;
+	private static StandardShaderModel shader;
 	private static IFImage diffuse;
 	private Transform transform;
 	private Mesh* mesh;
