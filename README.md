@@ -2,7 +2,7 @@
 
 ### Hobby game framework and game in D
 
-<img src="https://github.com/Realm-Engine/realm/blob/main/Docs/Images/engine-preview.png?raw=true" alt="Preview" width="554" height="351"/>
+<img src="https://github.com/Realm-Engine/realm/blob/main/Docs/Images/landscape.png?raw=true" alt="Preview" width="554" height="351"/>
 
 ## Features
 
