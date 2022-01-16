@@ -12,7 +12,7 @@ class Batch(T)
 	import std.algorithm.iteration : fold,map;
 	import std.container.array;
 	import std.stdio;
-	private ShaderProgram program;
+	private StandardShaderModel program;
 	private VertexArrayObject vao;
 	private VertexBuffer!(T,BufferUsage.MappedWrite) vertexBuffer;
 	private ElementBuffer!(BufferUsage.MappedWrite) elementBuffer;
@@ -36,7 +36,7 @@ class Batch(T)
 	{
 		return order;
 	}
-	this(MeshTopology topology,ShaderProgram program,int order)
+	this(MeshTopology topology,StandardShaderModel program,int order)
 	{
 		this.order = order;
 		this.topology = topology;
@@ -53,8 +53,8 @@ class Batch(T)
 		numVerticesInFrame = 0;
 		this.program = program;
 		shaderPipeline.create();
-		shaderPipeline.useProgramStages(ShaderProgramStages.VERTEX_STAGE,program);
-		shaderPipeline.useProgramStages(ShaderProgramStages.FRAGMENT_STAGE,program);
+		shaderPipeline.useProgramStages(program);
+		shaderPipeline.useProgramStages(program);
 		
 	}
 

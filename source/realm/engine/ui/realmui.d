@@ -58,8 +58,8 @@ static class RealmUI
 
 	private static Batch!(RealmVertex) uiBatch;
 	private static Batch!(RealmVertex) textBatch;
-	private static ShaderProgram uiProgram;
-	private static ShaderProgram textProgram;
+	private static StandardShaderModel uiProgram;
+	private static StandardShaderModel textProgram;
 	alias UIMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR,"baseTexture" : UserDataVarTypes.TEXTURE2D]);
 	alias TextMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR,"fontTexture" : UserDataVarTypes.TEXTURE2D]);
 	alias UIMaterial = Alias!(Material!(UIMaterialLayout));

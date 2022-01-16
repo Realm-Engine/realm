@@ -11,7 +11,7 @@ import std.range;
 static class Debug
 {
 	private static Batch!(RealmVertex) debugBatch;
-	private static ShaderProgram debugProgram;
+	private static StandardShaderModel debugProgram;
 	alias DebugMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR]);
 	alias DebugMaterial = Alias!(Material!(DebugMaterialLayout));
 	private static VertexAttribute[] vertex3DAttributes;

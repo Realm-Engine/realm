@@ -16,7 +16,6 @@ alias TextureWrapFunc = GTextureWrapFunc;
 alias TextureType = GTextureType;
 alias ImageFormat = GImageFormat;
 alias Shader = GShader;
-alias ShaderProgram = GShaderProgram;
 alias SamplerObject = GSamplerObject;
 alias QueryObject = GQueryObject;
 alias State = GState;
@@ -25,6 +24,7 @@ alias FrameBufferAttachment = GFrameBufferAttachment;
 alias PixelBuffer = GPixelBuffer;
 alias ShaderPipeline = GShaderPipeline;
 alias FrameBufferTarget = GFrameBufferTarget;
+alias ShaderProgramModel = GShaderProgramModel;
 alias DrawBufferTarget = GDrawBufferTarget;
 alias FrameMask = GFrameMask;
 alias BlendFuncType = GBlendFuncType;
@@ -32,6 +32,7 @@ alias CullFace = GCullFace;
 alias PrimitiveShape = GPrimitiveShape;
 alias QueryTarget = GQueryTarget;
 alias ShaderProgramStages = GShaderProgramStages;
+alias ShaderParameter = GShaderParamater;
 alias blendFunc = gBlendFunc;
 alias blendFuncSeperate = gBlendFuncSeperate;
 alias enable =gEnable;
@@ -42,6 +43,10 @@ alias setViewport = gSetViewport;
 alias readBuffer = gReadBuffer;
 alias bindAttribute = gBindAttribute;
 alias enableDebugging = gEnableDebugging;
+
+alias StandardShaderModel = ShaderProgramModel!(ShaderType.VERTEX,ShaderType.FRAGMENT);
+alias ComputeShader = ShaderProgramModel!(ShaderType.COMPUTE);
+
 enum VertexType : int
 {
 	FLOAT = 0x4011,

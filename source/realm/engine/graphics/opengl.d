@@ -322,16 +322,23 @@ class GShaderPipeline
         glGenProgramPipelines(1, &id);
 	}
 
-    void useProgramStages(GShaderProgramStages stages, GShaderProgram program)
-    in(program.id >0,"Cannot use stages from invalid program, use clearStages() to clear a shader stage")
-    in(id > 0, "Pipeline object not created")
-	{
-        glUseProgramStages(id,stages,program);
-	}
     void bind()
 	{
         glBindProgramPipeline(id);
 	}
+
+    void useProgramStages(Args...)(Args models)
+	{
+        
+        foreach(model; models)
+		{
+            GLenum stage =  model.getShaderStageBits();
+            glUseProgramStages(id,stage,model);
+		}
+        
+	}
+        
+
     void unbind()
 	{
         glBindProgramPipeline(0);
@@ -347,36 +354,205 @@ class GShaderPipeline
         glValidateProgramPipeline(id);
 	}
 
-    void activateProgramUniforms(GShaderProgram program)
+
+}
+
+mixin template ParameterQuery(T)
+{
+    V getParameter(V)(T param)
 	{
-        glActiveShaderProgram(this,program);
+        V result;
+        static if(__traits(isArithmetic,T))
+		{
+			static if(__traits(isIntegral,V))
+			{
+				static if(T.sizeof == 4)
+				{
+					glGetIntegerv(param,&result);
+				}
+				static if(T.sizeof == 8)
+				{
+					glGetInteger64v(param,&result);
+				}
+			}
+			static if(__traits(isFloating,V))
+			{
+				static if(T.sizeof == 4)
+				{
+					glGetFloatv(param,&result);
+				}
+				static if(T.sizeof == 8)
+				{
+					glGetDoublev(param,&result);
+				}
+			}
+		}
+
+        static if(!__traits(isArithmetic,T))
+		{
+            glGetBooleanv(param,&result);
+		}
+        return result;
+
+	}
+
+	V getParameter(V)(T param,uint index)
+	{
+        V result;
+        static if(__traits(isArithmetic,T))
+		{
+			static if(__traits(isIntegral,V))
+			{
+				static if(T.sizeof == 4)
+				{
+					glGetIntegeri_v(param,index,&result);
+				}
+				static if(T.sizeof == 8)
+				{
+					glGetInteger64i_v(param,index,&result);
+				}
+			}
+			static if(__traits(isFloating,V))
+			{
+				static if(T.sizeof == 4)
+				{
+					glGetFloati_v(param,index,&result);
+				}
+				static if(T.sizeof == 8)
+				{
+					glGetDoublei_v(param,index,&result);
+				}
+			}
+		}
+
+        static if(!__traits(isArithmetic,T))
+		{
+            glGetBooleani_v(param,index,&result);
+		}
+        return result;
+
 	}
 
 
 }
 
 
-class GShaderProgram
+class GShaderProgramModel(T...)
 {
+    int[string] samplerUniformCache;
     mixin OpenGLObject;
 
-    private string name;
-    private GShader[2] shaders;
-    int[string] samplerUniformCache;
+    private GShader[GShaderType] _shaders;
 
-    void use()
-    {
-        glUseProgram(this);
-    }
+    static foreach(Type; T)
+	{
+        static assert(isValidShaderType!(Type) == true);
+        static if(Type == GShaderType.VERTEX)
+		{
+            private GShader _vertexShader;
+            @property vertexShader(GShader shader)
+			{
+                _shaders[Type] = shader;
+			}
+		}
+		static if(Type == GShaderType.FRAGMENT)
+		{
+            private GShader _fragmentShader;
+            @property fragmentShader(GShader shader)
+			{
+                 _shaders[Type] = shader;
+			}
+		}
+		static if(Type == GShaderType.COMPUTE)
+		{
+            private GShader _computeShader;
+            @property computeShader(GShader shader)
+			{
+                 _shaders[Type] = shader;
+			}
+		}
+	}
+
+    private string _name;
+
+    this(string name)
+	{
+        _name = name;
+		id = glCreateProgram();
+        glProgramParameteri(id,GL_PROGRAM_SEPARABLE,GL_TRUE);
+       
+	}
+
+    void compile()
+	{
+        auto md5 = new MD5Digest;
+        string nameHash = toHexString(md5.digest(_name));
+        string sourceHash = "";
+		foreach(shader;_shaders)
+		{
+			sourceHash ~= toHexString(md5.digest(shader.sourceHash));
+		}
+		ubyte[] binaryCache = checkCache(nameHash,sourceHash);
+        if(binaryCache.length > 0)
+        {
+
+			loadProgramBinary(&binaryCache);
+			foreach (shader; _shaders)
+			{
+				glAttachShader(this, shader);
+
+			}
+        }
+
+        else
+		{
+			foreach(shader; _shaders)
+			{
+				shader.compile();
+				glAttachShader(this,shader);
+			}
+
+            
+            string fileName = "Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
+            if(!exists(fileName))
+            {
+                Logger.LogInfo("Writing program binary %s to cache",_name);
+                ubyte[] binary = getBinary();
+                std.file.write(fileName,binary);
+            }
+		}
+
+
+        glLinkProgram(this);
+        foreach(shader; _shaders)
+		{
+			glDetachShader(this,shader);
+			glDeleteShader(shader);
+		}
+
+		char[256] result;
+        int success;
+        glGetProgramiv(this, GL_LINK_STATUS, &success);
+        if (success == 0)
+        {
+            glGetProgramInfoLog(this, 256, null, result.ptr);
+            Logger.LogError("Could not link program: %s\nError:%s",_name, result);
+        }
+        else
+        {
+            Logger.LogInfo("Program %s linked", _name);
+        }
+	}
 
     void loadProgramBinary(ubyte[]* binary)
+    do
     {
         int numFormats = getNumSupportedProgramBinaryFormats();
         ubyte[] result;
         if(numFormats <= 0)
         {
             Logger.LogError("Loading program binary not supported on system");
-            
+
         }
         else 
         {
@@ -387,114 +563,23 @@ class GShaderProgram
             formats.length = numFormats;
             int size;
             glGetIntegerv(GL_PROGRAM_BINARY_FORMATS,formats.ptr);
-            Logger.LogInfo("Loading program %s from binary", name);
+            Logger.LogInfo("Loading program %s from binary", _name);
             glProgramBinary(id,cast(GLenum)formats[0],cast(void*)binary.ptr,cast(int)binary.length);
         }
     }
 
-    this(GShader vertex, GShader fragment, string name)
+	ubyte[] checkCache(string nameHash,string sourceHash)
     {
-        id = glCreateProgram();
-        glProgramParameteri(id,GL_PROGRAM_SEPARABLE,GL_TRUE);
-        this.name = name;
-
-        shaders[0] = vertex;
-        shaders[1] = fragment;
-
-        ubyte[] binaryCache = checkCache(vertex,fragment,name);
-        if(binaryCache.length > 0)
-        {
-            
-           loadProgramBinary(&binaryCache);
-			foreach (shader; shaders)
-			{
-				glAttachShader(this, shader);
-
-			}
-        }
-        else
-        {
-            
-            shaders[0].compile();
-            shaders[1].compile();
-            
-			foreach (shader; shaders)
-			{
-				glAttachShader(this, shader);
-
-			}
-    
-            glBindFragDataLocation(this,0,"FragColor");
-
-            glLinkProgram(this);
-            
-           
-            
-            auto md5 = new MD5Digest();
-            string nameHash = toHexString(md5.digest(name));
-            string sourceHash = toHexString(md5.digest(vertex.sourceHash ~ fragment.sourceHash));
-            string fileName = "Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
-            if(!exists(fileName))
-            {
-                Logger.LogInfo("Writing program binary %s to cache",name);
-                ubyte[] binary = getBinary();
-                std.file.write(fileName,binary);
-            }
-        }
-        char[256] result;
-        int success;
-		foreach (shader; shaders)
-		{
-			glDetachShader(this,shader);
-			glDeleteShader(shader);
-		}
-        glGetProgramiv(this, GL_LINK_STATUS, &success);
-        if (success == 0)
-        {
-            glGetProgramInfoLog(this, 256, null, result.ptr);
-            Logger.LogError("Could not link program: %s\nError:%s",name, result);
-        }
-        else
-        {
-            Logger.LogInfo("Program %s linked", name);
-        }
-        
-        int numUniforms = 0;
-        glGetProgramiv(this, GL_ACTIVE_UNIFORMS, &numUniforms);
-        for (uint i = 0; i < numUniforms; i++)
-        {
-            int type;
-            glGetActiveUniformsiv(this, 1, &i, GL_UNIFORM_TYPE, &type);
-            if (type == GL_SAMPLER_2D)
-            {
-                GLint nameLen = 0;
-                glGetActiveUniformsiv(this, 1, &i, GL_UNIFORM_NAME_LENGTH, &nameLen);
-                char[64] uniformName;
-                name.length = nameLen + 1;
-                glGetActiveUniformName(this, i, nameLen, &nameLen, uniformName.ptr);
-                GLint location = glGetUniformLocation(this, uniformName.ptr);
-                samplerUniformCache[fromStringz(uniformName).idup] = location;
-            }
-        }
-
-    
-
-    }
-
-    ubyte[] checkCache(GShader vertex, GShader fragment, string name)
-    {
-        auto md5 = new MD5Digest();
-        string nameHash = toHexString(md5.digest(name));
-        string sourceHash = toHexString(md5.digest(vertex.sourceHash ~ fragment.sourceHash));
+       
         string fileName = "Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
         ubyte[] result;
         if(exists(fileName))
         {
-            
+
             result = cast(ubyte[])read(fileName);
-            Logger.LogInfo("Binary for program %s found",name);
+            Logger.LogInfo("Binary for program %s found",_name);
         }
-        
+
         return result;
     }
 
@@ -517,16 +602,40 @@ class GShaderProgram
         glGetIntegerv(GL_PROGRAM_BINARY_FORMATS,formats.ptr);
         glGetProgramBinary(id,cast(int)result.length,&size,cast(GLenum*)&formats[0],cast(void*)result.ptr);
         return result;
-        
+
     }
 
-    static int getNumSupportedProgramBinaryFormats()
-    {
-        int result;
-        glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS,&result);
+    void use()
+	{
+        glUseProgram(this);
+	}
+    void unbind()
+	{
+        glUseProgram(0);
+	}
+
+    private GLenum getShaderStageBits()
+	{
+        GLenum result;
+        static foreach(Type; T)
+		{
+            static if(Type == GL_VERTEX_SHADER)
+			{
+                result |= GL_VERTEX_SHADER_BIT;
+			}
+            static if(Type == GL_FRAGMENT_SHADER)
+			{
+                result |= GL_FRAGMENT_SHADER_BIT;
+			}
+            static if(Type == GL_COMPUTE_SHADER)
+			{
+                result |= GL_COMPUTE_SHADER_BIT;
+			}
+		}
         return result;
-    }
-    int uniformLocation(string uniform)
+	}
+
+	int uniformLocation(string uniform)
     {
         int* loc = (uniform in samplerUniformCache);
         if (loc !is null)
@@ -544,13 +653,14 @@ class GShaderProgram
     {
         glUniform1i(loc, value);
     }
+	static int getNumSupportedProgramBinaryFormats()
+    {
+        int result;
+        glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS,&result);
+        return result;
+    }
 
-    static void unbind()
-	{
-        glUseProgram(0);
-	}
-
-
+    mixin ParameterQuery!(GShaderParamater);
 
 }
 
@@ -1079,9 +1189,12 @@ struct VertexArrayObject
 enum GShaderType : GLenum
 {
     VERTEX = GL_VERTEX_SHADER,
-    FRAGMENT = GL_FRAGMENT_SHADER
+    FRAGMENT = GL_FRAGMENT_SHADER,
+    COMPUTE= GL_COMPUTE_SHADER
 
 }
+
+enum bool isValidShaderType(GLenum T) = (T == GL_VERTEX_SHADER || T == GL_FRAGMENT_SHADER || T == GL_COMPUTE_SHADER);
 
 enum GShaderProgramStages : GLenum
 {
@@ -1182,6 +1295,12 @@ enum GBlendFuncType : GLenum
     ONE_MINUS_CONSTANT_COLOR = GL_ONE_MINUS_CONSTANT_COLOR,
     CONSTANT_ALPHA = GL_CONSTANT_ALPHA,
     ONE_MINUS_CONSTANT_ALPHA = GL_ONE_MINUS_CONSTANT_ALPHA
+}
+
+enum GShaderParamater : GLenum
+{
+    COMPUTE_WORK_GROUP_COUNT = GL_MAX_COMPUTE_WORK_GROUP_COUNT,
+    COMPUTE_WORK_GROUP_SIZE = GL_MAX_COMPUTE_WORK_GROUP_SIZE
 }
 
 enum GPrimitiveShape
