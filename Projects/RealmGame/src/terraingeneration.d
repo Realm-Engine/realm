@@ -8,6 +8,7 @@ import realm.engine.logging;
 class TerrainGeneration
 {
 	private ComputeShader _heightMapProgram;
+	private SamplerObject!(TextureType.TEXTURE2D) _heightMap;
 
 	this()
 	{
@@ -21,7 +22,16 @@ class TerrainGeneration
 		workGroupCount[1] = _heightMapProgram.getParameter!(int)(ShaderParameter.COMPUTE_WORK_GROUP_COUNT,1);
 		workGroupCount[2] = _heightMapProgram.getParameter!(int)(ShaderParameter.COMPUTE_WORK_GROUP_COUNT,2);
 		Logger.LogInfo("Max compute work counts: X: %d, Y: %d, Z: %d",workGroupCount[0],workGroupCount[1],workGroupCount[2]);
+		//_heightMap.textureDesc = TextureDesc(ImageFormat.)
+		//_heightMap.store(2048,2048);
+		//computeJob(&_heightMap,_heightMapProgram);
+		
 
+	}
+
+	void computeJob(SamplerObject!(TextureType.TEXTURE2D)* output, ComputeShader shader)
+	{
+		
 	}
 }
 

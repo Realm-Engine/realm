@@ -511,19 +511,20 @@ class GShaderProgramModel(T...)
 				shader.compile();
 				glAttachShader(this,shader);
 			}
-
+            glLinkProgram(this);
             
             string fileName = "Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
             if(!exists(fileName))
             {
                 Logger.LogInfo("Writing program binary %s to cache",_name);
+                
                 ubyte[] binary = getBinary();
                 std.file.write(fileName,binary);
             }
 		}
 
 
-        glLinkProgram(this);
+        
         foreach(shader; _shaders)
 		{
 			glDetachShader(this,shader);
@@ -1251,15 +1252,28 @@ enum GTextureType : GLenum
 
 enum GImageFormat : GLenum
 {
-    RED = GL_RED,
-    SRGB = GL_RGB,
-    RGB = GL_RGB,
-    RGBA8 = GL_RGBA,
-    DEPTH_STENCIL = GL_DEPTH_STENCIL,
-    DEPTH = GL_DEPTH_COMPONENT,
-    SRGB_ALPHA = GL_RGBA
+	RED = GL_RED,
+	SRGB = GL_RGB,
+	RGB = GL_RGB,
+	RGBA8 = GL_RGBA,
+	DEPTH_STENCIL = GL_DEPTH_STENCIL,
+	DEPTH = GL_DEPTH_COMPONENT,
+	SRGB_ALPHA = GL_RGBA
 
-    
+
+
+}
+
+enum GSizedImageFormat : GLenum
+{
+    RED8 = GL_R8,
+    R16 = GL_R16,
+    RGB8 = GL_RGB8,
+    RGBA8 = GL_RGBA8,
+    RGBA16 = GL_RGBA16,
+    RGBA32F = GL_RGBA32F,
+    SRGB8 = GL_SRGB8,
+    SRGBA8 = GL_SRGB8_ALPHA8
 
 }
 
