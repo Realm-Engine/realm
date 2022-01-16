@@ -23,6 +23,7 @@ alias State = GState;
 alias FrameBuffer = GFrameBuffer;
 alias FrameBufferAttachment = GFrameBufferAttachment;
 alias PixelBuffer = GPixelBuffer;
+alias ShaderPipeline = GShaderPipeline;
 alias FrameBufferTarget = GFrameBufferTarget;
 alias DrawBufferTarget = GDrawBufferTarget;
 alias FrameMask = GFrameMask;
@@ -30,6 +31,7 @@ alias BlendFuncType = GBlendFuncType;
 alias CullFace = GCullFace;
 alias PrimitiveShape = GPrimitiveShape;
 alias QueryTarget = GQueryTarget;
+alias ShaderProgramStages = GShaderProgramStages;
 alias blendFunc = gBlendFunc;
 alias blendFuncSeperate = gBlendFuncSeperate;
 alias enable =gEnable;
@@ -39,6 +41,7 @@ alias cull = gCull;
 alias setViewport = gSetViewport;
 alias readBuffer = gReadBuffer;
 alias bindAttribute = gBindAttribute;
+alias enableDebugging = gEnableDebugging;
 enum VertexType : int
 {
 	FLOAT = 0x4011,

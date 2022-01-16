@@ -17,10 +17,7 @@ class Batch(T)
 	private VertexBuffer!(T,BufferUsage.MappedWrite) vertexBuffer;
 	private ElementBuffer!(BufferUsage.MappedWrite) elementBuffer;
 	private DrawIndirectCommandBuffer!(BufferUsage.MappedWrite) cmdBuffer;
-	
 	//private ShaderStorage!(BufferUsage.MappedWrite) perObjectData;
-	
-
 	private uint numElementsInFrame;
 	private uint numVerticesInFrame;
 	private uint numIndicesInFrame;
@@ -33,6 +30,7 @@ class Batch(T)
 	alias BindShaderStorageCallback = void function();
 	private BindShaderStorageCallback bindShaderStorage;
 	private int order;
+	private ShaderPipeline shaderPipeline;
 
 	@property renderOrder()
 	{
@@ -42,6 +40,7 @@ class Batch(T)
 	{
 		this.order = order;
 		this.topology = topology;
+		shaderPipeline = new ShaderPipeline;
 		vao.create();
 		vertexBuffer.create();
 		elementBuffer.create();
@@ -53,8 +52,9 @@ class Batch(T)
 		maxElementsInFrame = 0;
 		numVerticesInFrame = 0;
 		this.program = program;
-		
-		
+		shaderPipeline.create();
+		shaderPipeline.useProgramStages(ShaderProgramStages.VERTEX_STAGE,program);
+		shaderPipeline.useProgramStages(ShaderProgramStages.FRAGMENT_STAGE,program);
 		
 	}
 
@@ -72,6 +72,10 @@ class Batch(T)
 
 	}
 
+	@property pipeline()
+	{
+		return shaderPipeline;
+	}
 
 	void initialize(uint initialElements,uint numFaces)
 	{
@@ -156,13 +160,48 @@ class Batch(T)
 		numIndicesInFrame+=faces.length;
 		material.writeUniformData();
 		textureAtlases~=material.getTextureAtlas();
-		
-
-
-
 	}
 
-	void drawBatch(bool renderShadows = true,PrimitiveShape shape = PrimitiveShape.TRIANGLE)()
+
+	private uint setupDraw(bool renderShadows)()
+	{
+		int cmdTypeSize = cast(int)DrawElementsIndirectCommand.sizeof;
+		program.use();
+		bindBuffers();
+		//bindAttributes();
+
+		uint offset = cmdBufferBase * (maxElementsInFrame * cmdTypeSize);
+
+		foreach(i,texture; textureAtlases.enumerate(0))
+		{
+			texture.setActive();
+			program.setUniformInt(3 + i,texture.slot);
+
+		}
+		SamplerObject!(TextureType.TEXTURE2D)* cameraDepth;
+		SamplerObject!(TextureType.TEXTURE2D)* cameraScreen;
+		cameraDepth =&Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture;
+		cameraDepth.setActive(0);
+		program.setUniformInt(0,0);
+		cameraScreen = &Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.COLOR_ATTACHMENT].texture;
+		cameraScreen.setActive(1);
+		program.setUniformInt(1,1);
+		if(renderShadows)
+		{
+			GraphicsSubsystem.getShadowMap().setActive(2);
+
+
+			program.setUniformInt(2,2);
+		}
+		if(bindShaderStorage !is null)
+		{
+			bindShaderStorage();
+		}
+		program.unbind();
+		return offset;
+	}
+
+	void drawBatch(bool renderShadows = true,PrimitiveShape shape = PrimitiveShape.TRIANGLE, ShaderPipeline pipelineOverride = null)()
 	{
 		
 	
@@ -170,45 +209,42 @@ class Batch(T)
 		{
 			
 			
-			int cmdTypeSize = cast(int)DrawElementsIndirectCommand.sizeof;
-			bindBuffers();
-			bindAttributes();
-			program.use();
-			uint offset = cmdBufferBase * (maxElementsInFrame * cmdTypeSize);
+			uint offset = setupDraw!(renderShadows)();
+			
 
-			foreach(i,texture; textureAtlases.enumerate(0))
-			{
-				texture.setActive();
-				program.setUniformInt(3 + i,texture.slot);
-
-			}
-			SamplerObject!(TextureType.TEXTURE2D)* cameraDepth;
-			SamplerObject!(TextureType.TEXTURE2D)* cameraScreen;
-			cameraDepth =&Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture;
-			cameraDepth.setActive(0);
-			program.setUniformInt(0,0);
-			cameraScreen = &Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.COLOR_ATTACHMENT].texture;
-			cameraScreen.setActive(1);
-			program.setUniformInt(1,1);
-			if(renderShadows)
-			{
-				GraphicsSubsystem.getShadowMap().setActive(2);
-
-
-				program.setUniformInt(2,2);
-			}
-			if(bindShaderStorage !is null)
-			{
-				bindShaderStorage();
-			}
-
-
+			shaderPipeline.bind();
+			shaderPipeline.validate();
 			//writeln(offset);
 			GraphicsSubsystem.drawMultiElementsIndirect!(shape)(offset, numElementsInFrame);
+			shaderPipeline.unbind();
 			unbindBuffers();
 		}
 		
 	}
+
+	void drawBatch(bool renderShadows = true,PrimitiveShape shape = PrimitiveShape.TRIANGLE)(ShaderPipeline pipelineOverride)
+	{
+
+
+		if(numVerticesInFrame > 0)
+		{
+
+
+			uint offset = setupDraw!(renderShadows)();
+
+
+			pipelineOverride.bind();
+			pipelineOverride.validate();
+			//writeln(offset);
+			GraphicsSubsystem.drawMultiElementsIndirect!(shape)(offset, numElementsInFrame);
+			pipelineOverride.unbind();
+			unbindBuffers();
+		}
+
+	}
+
+
+
 	void resetBatch()
 	{
 		cmdBufferBase = (cmdBufferBase + 1) % bufferAmount;
@@ -218,6 +254,8 @@ class Batch(T)
 		textureAtlases.length = 0;
 		
 	}
+
+
 
 }
 

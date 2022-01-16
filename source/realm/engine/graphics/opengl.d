@@ -308,6 +308,54 @@ class GShader
 
 
 
+class GShaderPipeline
+{
+    mixin OpenGLObject;
+
+    void create()
+    out
+	{
+        assert(id > 0, "Failed to create program pipeline");
+	}
+    do
+	{
+        glGenProgramPipelines(1, &id);
+	}
+
+    void useProgramStages(GShaderProgramStages stages, GShaderProgram program)
+    in(program.id >0,"Cannot use stages from invalid program, use clearStages() to clear a shader stage")
+    in(id > 0, "Pipeline object not created")
+	{
+        glUseProgramStages(id,stages,program);
+	}
+    void bind()
+	{
+        glBindProgramPipeline(id);
+	}
+    void unbind()
+	{
+        glBindProgramPipeline(0);
+	}
+
+    void clearStages(GShaderProgramStages stages)
+	{
+        glUseProgramStages(id,stages,0);
+	}
+
+    void validate()
+	{
+        glValidateProgramPipeline(id);
+	}
+
+    void activateProgramUniforms(GShaderProgram program)
+	{
+        glActiveShaderProgram(this,program);
+	}
+
+
+}
+
+
 class GShaderProgram
 {
     mixin OpenGLObject;
@@ -347,21 +395,22 @@ class GShaderProgram
     this(GShader vertex, GShader fragment, string name)
     {
         id = glCreateProgram();
+        glProgramParameteri(id,GL_PROGRAM_SEPARABLE,GL_TRUE);
         this.name = name;
 
         shaders[0] = vertex;
         shaders[1] = fragment;
-        foreach (shader; shaders)
-        {
-            glAttachShader(this, shader);
 
-        }
         ubyte[] binaryCache = checkCache(vertex,fragment,name);
         if(binaryCache.length > 0)
         {
             
-            loadProgramBinary(&binaryCache);
-           
+           loadProgramBinary(&binaryCache);
+			foreach (shader; shaders)
+			{
+				glAttachShader(this, shader);
+
+			}
         }
         else
         {
@@ -369,12 +418,17 @@ class GShaderProgram
             shaders[0].compile();
             shaders[1].compile();
             
+			foreach (shader; shaders)
+			{
+				glAttachShader(this, shader);
+
+			}
+    
+            glBindFragDataLocation(this,0,"FragColor");
+
             glLinkProgram(this);
             
-            foreach (shader; shaders)
-            {
-                glDeleteShader(shader);
-            }
+           
             
             auto md5 = new MD5Digest();
             string nameHash = toHexString(md5.digest(name));
@@ -389,11 +443,16 @@ class GShaderProgram
         }
         char[256] result;
         int success;
+		foreach (shader; shaders)
+		{
+			glDetachShader(this,shader);
+			glDeleteShader(shader);
+		}
         glGetProgramiv(this, GL_LINK_STATUS, &success);
-        if (!success)
+        if (success == 0)
         {
             glGetProgramInfoLog(this, 256, null, result.ptr);
-            Logger.Assert(true,"Could not link program: %s\nError:%s",name, result);
+            Logger.LogError("Could not link program: %s\nError:%s",name, result);
         }
         else
         {
@@ -417,6 +476,7 @@ class GShaderProgram
                 samplerUniformCache[fromStringz(uniformName).idup] = location;
             }
         }
+
     
 
     }
@@ -484,6 +544,13 @@ class GShaderProgram
     {
         glUniform1i(loc, value);
     }
+
+    static void unbind()
+	{
+        glUseProgram(0);
+	}
+
+
 
 }
 
@@ -992,6 +1059,16 @@ enum GShaderType : GLenum
 
 }
 
+enum GShaderProgramStages : GLenum
+{
+    VERTEX_STAGE = GL_VERTEX_SHADER_BIT,
+    FRAGMENT_STAGE = GL_FRAGMENT_SHADER_BIT,
+    COMPUTE_STAGE = GL_COMPUTE_SHADER_BIT,
+    TESSELATION_CONTROL = GL_TESS_CONTROL_SHADER_BIT,
+    TESSELATION_EVALUATION = GL_TESS_EVALUATION_SHADER_BIT,
+    GEOMETRY_STAGE = GL_GEOMETRY_SHADER_BIT,
+    ALL_STAGES = GL_ALL_SHADER_BITS
+}
 enum GFrameBufferAttachmentType : GLenum
 {
     COLOR_ATTACHMENT = GL_COLOR_ATTACHMENT0,
@@ -1266,4 +1343,30 @@ in(width >0,"Viewport width must be positive")
 in(height >0,"Viewport width must be positive")
 {
     glViewport(x,y,width,height);
+}
+version(Windows)
+{
+    extern(Windows) private void debugOutput(GLenum source, GLenum type, uint id, GLenum severity,int length, const char* message, const void* userParam) nothrow 
+	{
+       printf("Error: %s\n",message );
+        
+	}
+}
+
+
+void gEnableDebugging()
+in
+{
+	int flags;
+    glGetIntegerv(GL_CONTEXT_FLAGS,&flags);
+    assert((flags & GL_CONTEXT_FLAG_DEBUG_BIT) == GL_CONTEXT_FLAG_DEBUG_BIT,"Enable GLFW window hint 'GLFW_OPENGL_DEBUG_CONTEXT'");
+}
+do
+{
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(&debugOutput,null);
+    glDebugMessageControl(GL_DEBUG_SOURCE_API,GL_DEBUG_TYPE_ERROR,GL_DEBUG_SEVERITY_HIGH,0,null,GL_TRUE);
+
+
 }

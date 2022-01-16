@@ -5,6 +5,11 @@ layout(location =2) in vec3 v_Normal;
 layout(location =3) in vec3 v_Tangent;
 layout(location =4) in int v_MaterialID;
 
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+
 layout (std430,binding = 1) buffer _perObjectData
 {
 	Material data[];
@@ -50,6 +55,8 @@ mat3 calculateTBN()
 
 #define objectTexture atlasTextures[v_MaterialID]
 #define getObjectData(v) IN.material.v
+
+
 
 void main()
 {

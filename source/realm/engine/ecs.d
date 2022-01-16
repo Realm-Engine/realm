@@ -21,45 +21,31 @@ mixin template EntityRegistry(T...)
     }
     static foreach (Type; T)
     {
-        pragma(msg,"Registering " ~ Type.stringof ~ " entity\nInternal name: "~  toLower(Type.mangleof) ~ "\n");
+        pragma(msg,"Registering " ~ Type.stringof ~ " entity\nInternal name: "~  Type.mangleof ~ "\n");
         static assert(isEntity!(Type), Type.stringof ~ " is not a valid entity");
-        mixin("private %s[UUID] %s;".format(Type.stringof, toLower(Type.mangleof)));
+        mixin("private %s[UUID] %s;".format(Type.stringof, Type.mangleof));
     }
-    E instantiate(E, T...)(T t)
+    E instantiate(E, Args...)(Args args)
     in 
 	{
         static assert(isEntity!(E),"Object type to instantiate needs to be entity");
+        static assert(__traits(hasMember,this,E.mangleof),"Entity type" ~ E.stringof ~ " has to be registered to be instantiated");
 	}
     do
     {
         UUID uuid = randomUUID();
         E entity = new E(uuid);
         //entity.construct(uuid);
-        entity.start(t);
-        mixin("%s[uuid] = entity;".format(toLower(E.mangleof)));
+        entity.start(args);
+        mixin("%s[uuid] = entity;".format(E.mangleof));
         return entity;
     }
-    E instantiate(E)(E e)
-    in
-	{
-        static assert(isEntity!(E),"Object type to instantiate needs to be entity");
-        static assert(__traits(hasCopyConstructor,E) == true, "Entity needs copy constructor to use this overload");
-        static assert(__traits(isCopyable,E) == true,"Entity needs to be copyable to use this overload");
-	}
-    do
-	{
-        E entity = new E(e);
-        UUID uuid = randomUUID();
-		entity.construct(uuid);
 
-        mixin("%s[uuid] = entity;".format(toLower(E.mangleof)));
-        return entity;
-	}
     void updateEntities()
 	{
         static foreach(Type; T)
 		{
-            foreach(entity; __traits(getMember,this,toLower(Type.mangleof)))
+            foreach(entity; __traits(getMember,this,Type.mangleof))
 			{
                 if(entity.active)
 				{
@@ -72,7 +58,7 @@ mixin template EntityRegistry(T...)
 	}
     E[] getEntities(E)()
 	{
-        mixin("return " ~ toLower(E.mangleof) ~ ".values;");
+        mixin("return " ~ E.mangleof ~ ".values;");
 	}
 
 
@@ -160,30 +146,6 @@ mixin template RealmEntity(string eName, T...)
     private UUID _id;
     private bool _active;
 
-    void construct(UUID id)
-    {
-        import core.memory :GC;
-        import core.stdc.stdlib : malloc;
-        import std.conv : emplace;
-        
-        this._id = id;
-        _active = true;
-        static foreach(Type; T)
-		{
-            static if(!__traits(isZeroInit,Type))
-			{
-				const (void)[] init = typeid(Type).initializer();
-				void* ptr = malloc(init.length);
-				ptr[0..init.length] = init[];
-				__traits(getMember,this,componentName!(Type)) = cast(Type)ptr;
-                GC.addRange(ptr.ptr,init.length);
-
-			}
-
-
-
-		}
-    }
 
     this(UUID id)
 	{

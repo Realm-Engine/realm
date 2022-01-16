@@ -11,11 +11,7 @@ class Stack(T)
 	}
 
 	void push(T val)
-	in
-	{
-		assert(index < cast(long)arr.length);
-	}
-	do
+	in(index < cast(long)arr.length)
 	{
 		index++;
 		arr[index] = val;
