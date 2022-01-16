@@ -163,7 +163,7 @@ static class RealmUI
 		sampler.width = totalWidth;
 		sampler.height = height;
 
-		sampler.store(totalWidth,height);
+		sampler.uploadImage(0,0,null);
 		sampler.clear(0,[0]);
 		foreach(tup; chars)
 		{

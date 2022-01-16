@@ -37,6 +37,7 @@ class RealmApp
         Logger.LogInfo("Starting GLFW");
         auto result = glfwInit();
         Logger.Assert(result == 1,"Failed to initialze GLFW");
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT,true);
         window = glfwCreateWindow(width, height, title, null, null);
         Logger.Assert(window !is null,"Could not create GLFW window");
         DerelictGL3.load();
@@ -44,7 +45,7 @@ class RealmApp
         
         GLVersion glVer = DerelictGL3.reload(GLVersion.GL43, GLVersion.GL45);
         Logger.LogInfo("Loaded OpenGL Version %d",glVer);
-
+        
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         InputManager.initialze(window);
     }

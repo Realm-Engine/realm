@@ -6,6 +6,7 @@ private
 	import std.format;
 	import std.stdio;
 	import std.meta;
+	import std.string;
 }
 
 class Logger
@@ -50,6 +51,15 @@ class Logger
 			assert(cond);
 		}
 
+	}
+
+	static void LogWarningUnsafe(string fmt, ...) nothrow
+	{
+		import core.vararg;
+		const char* cStr = toStringz(fmt);
+		char[256] formated;
+		sprintf(formated.ptr,cStr,_arguments.ptr,_argptr);
+		
 	}
 
 

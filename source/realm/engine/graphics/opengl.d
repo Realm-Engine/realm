@@ -323,7 +323,8 @@ class GShaderPipeline
 	}
 
     void useProgramStages(GShaderProgramStages stages, GShaderProgram program)
-    in(program.id >0,"Cannot use stages from invalid program")
+    in(program.id >0,"Cannot use stages from invalid program, use clearStages() to clear a shader stage")
+    in(id > 0, "Pipeline object not created")
 	{
         glUseProgramStages(id,stages,program);
 	}
@@ -344,6 +345,11 @@ class GShaderPipeline
     void validate()
 	{
         glValidateProgramPipeline(id);
+	}
+
+    void activateProgramUniforms(GShaderProgram program)
+	{
+        glActiveShaderProgram(this,program);
 	}
 
 
@@ -394,17 +400,17 @@ class GShaderProgram
 
         shaders[0] = vertex;
         shaders[1] = fragment;
-        foreach (shader; shaders)
-		{
-			glAttachShader(this, shader);
 
-		}
         ubyte[] binaryCache = checkCache(vertex,fragment,name);
         if(binaryCache.length > 0)
         {
             
            loadProgramBinary(&binaryCache);
-           
+			foreach (shader; shaders)
+			{
+				glAttachShader(this, shader);
+
+			}
         }
         else
         {
@@ -412,7 +418,13 @@ class GShaderProgram
             shaders[0].compile();
             shaders[1].compile();
             
-			
+			foreach (shader; shaders)
+			{
+				glAttachShader(this, shader);
+
+			}
+    
+            glBindFragDataLocation(this,0,"FragColor");
 
             glLinkProgram(this);
             
@@ -537,6 +549,8 @@ class GShaderProgram
 	{
         glUseProgram(0);
 	}
+
+
 
 }
 
@@ -1049,7 +1063,11 @@ enum GShaderProgramStages : GLenum
 {
     VERTEX_STAGE = GL_VERTEX_SHADER_BIT,
     FRAGMENT_STAGE = GL_FRAGMENT_SHADER_BIT,
-    COMPUTE_STAGE = GL_COMPUTE_SHADER_BIT
+    COMPUTE_STAGE = GL_COMPUTE_SHADER_BIT,
+    TESSELATION_CONTROL = GL_TESS_CONTROL_SHADER_BIT,
+    TESSELATION_EVALUATION = GL_TESS_EVALUATION_SHADER_BIT,
+    GEOMETRY_STAGE = GL_GEOMETRY_SHADER_BIT,
+    ALL_STAGES = GL_ALL_SHADER_BITS
 }
 enum GFrameBufferAttachmentType : GLenum
 {
@@ -1325,4 +1343,30 @@ in(width >0,"Viewport width must be positive")
 in(height >0,"Viewport width must be positive")
 {
     glViewport(x,y,width,height);
+}
+version(Windows)
+{
+    extern(Windows) private void debugOutput(GLenum source, GLenum type, uint id, GLenum severity,int length, const char* message, const void* userParam) nothrow 
+	{
+       printf("Error: %s\n",message );
+        
+	}
+}
+
+
+void gEnableDebugging()
+in
+{
+	int flags;
+    glGetIntegerv(GL_CONTEXT_FLAGS,&flags);
+    assert((flags & GL_CONTEXT_FLAG_DEBUG_BIT) == GL_CONTEXT_FLAG_DEBUG_BIT,"Enable GLFW window hint 'GLFW_OPENGL_DEBUG_CONTEXT'");
+}
+do
+{
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(&debugOutput,null);
+    glDebugMessageControl(GL_DEBUG_SOURCE_API,GL_DEBUG_TYPE_ERROR,GL_DEBUG_SEVERITY_HIGH,0,null,GL_TRUE);
+
+
 }

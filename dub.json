@@ -16,8 +16,6 @@
 	"description": "A minimal D application.",
 	"extraDependencyFiles": [
 		"./Assets/Shaders/*.shader",
-		"./src/engine/Assets/Shaders/*.shader",
-		"./src/engine/Assets/Shaders/*.glsl",
 		"./Assets/Models/*.obj"
 	],
 	"license": "proprietary",

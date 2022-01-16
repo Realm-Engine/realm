@@ -40,9 +40,8 @@ class RealmGame : RealmApp
 	this(int width, int height, const char* title)
 	{
 		
-		currentChar ='`';
 		super(width,height,title);
-		
+		//enableDebugging();
 		manager = new EntityManager;
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),0.1,200,60);
 		Renderer.get.activeCamera = &cam;

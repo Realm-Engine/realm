@@ -48,7 +48,7 @@ class Renderer
 	private __gshared Renderer _instance;
 	private QueryObject!() queryDevice;
 	private RenderInfo _info;
-	private ShaderPipeline rendererPipeline;
+	private ShaderPipeline lightSpacePipeline;
 
 	static Renderer get()
 	{
@@ -110,6 +110,9 @@ class Renderer
 		RealmUI.initialize();
 		queryDevice.create();
 		lightSpaceShaderProgram = loadShaderProgram("$EngineAssets/Shaders/lightSpace.shader","lightSpace");
+		lightSpacePipeline = new ShaderPipeline;
+		lightSpacePipeline.create();
+		lightSpacePipeline.useProgramStages(ShaderProgramStages.VERTEX_STAGE | ShaderProgramStages.FRAGMENT_STAGE, lightSpaceShaderProgram);
 		
 
 
@@ -231,9 +234,7 @@ class Renderer
 		
 		foreach(batch; orderedBatches)
 		{
-			batch.pipeline.useProgramStages(ShaderProgramStages.FRAGMENT_STAGE,lightSpaceShaderProgram);
-			batch.drawBatch!(false)();
-			//batch.resetPipeline();
+			batch.drawBatch!(false)(lightSpacePipeline);
 		}
 		
 		mainDirLight.shadowFrameBuffer.unbind(FrameBufferTarget.FRAMEBUFFER);
