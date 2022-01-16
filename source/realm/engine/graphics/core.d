@@ -32,6 +32,7 @@ alias CullFace = GCullFace;
 alias PrimitiveShape = GPrimitiveShape;
 alias QueryTarget = GQueryTarget;
 alias ShaderProgramStages = GShaderProgramStages;
+alias ShaderParameter = GShaderParamater;
 alias blendFunc = gBlendFunc;
 alias blendFuncSeperate = gBlendFuncSeperate;
 alias enable =gEnable;

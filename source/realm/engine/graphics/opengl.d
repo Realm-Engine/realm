@@ -322,12 +322,6 @@ class GShaderPipeline
         glGenProgramPipelines(1, &id);
 	}
 
-	//void useProgramStages(GShaderProgramStages stages, GShaderProgram program)
-	//in(program.id >0,"Cannot use stages from invalid program, use clearStages() to clear a shader stage")
-	//in(id > 0, "Pipeline object not created")
-	//{
-	//    glUseProgramStages(id,stages,program);
-	//}
     void bind()
 	{
         glBindProgramPipeline(id);
@@ -362,6 +356,86 @@ class GShaderPipeline
 
 
 }
+
+mixin template ParameterQuery(T)
+{
+    V getParameter(V)(T param)
+	{
+        V result;
+        static if(__traits(isArithmetic,T))
+		{
+			static if(__traits(isIntegral,V))
+			{
+				static if(T.sizeof == 4)
+				{
+					glGetIntegerv(param,&result);
+				}
+				static if(T.sizeof == 8)
+				{
+					glGetInteger64v(param,&result);
+				}
+			}
+			static if(__traits(isFloating,V))
+			{
+				static if(T.sizeof == 4)
+				{
+					glGetFloatv(param,&result);
+				}
+				static if(T.sizeof == 8)
+				{
+					glGetDoublev(param,&result);
+				}
+			}
+		}
+
+        static if(!__traits(isArithmetic,T))
+		{
+            glGetBooleanv(param,&result);
+		}
+        return result;
+
+	}
+
+	V getParameter(V)(T param,uint index)
+	{
+        V result;
+        static if(__traits(isArithmetic,T))
+		{
+			static if(__traits(isIntegral,V))
+			{
+				static if(T.sizeof == 4)
+				{
+					glGetIntegeri_v(param,index,&result);
+				}
+				static if(T.sizeof == 8)
+				{
+					glGetInteger64i_v(param,index,&result);
+				}
+			}
+			static if(__traits(isFloating,V))
+			{
+				static if(T.sizeof == 4)
+				{
+					glGetFloati_v(param,index,&result);
+				}
+				static if(T.sizeof == 8)
+				{
+					glGetDoublei_v(param,index,&result);
+				}
+			}
+		}
+
+        static if(!__traits(isArithmetic,T))
+		{
+            glGetBooleani_v(param,index,&result);
+		}
+        return result;
+
+	}
+
+
+}
+
 
 class GShaderProgramModel(T...)
 {
@@ -586,6 +660,7 @@ class GShaderProgramModel(T...)
         return result;
     }
 
+    mixin ParameterQuery!(GShaderParamater);
 
 }
 
@@ -1220,6 +1295,12 @@ enum GBlendFuncType : GLenum
     ONE_MINUS_CONSTANT_COLOR = GL_ONE_MINUS_CONSTANT_COLOR,
     CONSTANT_ALPHA = GL_CONSTANT_ALPHA,
     ONE_MINUS_CONSTANT_ALPHA = GL_ONE_MINUS_CONSTANT_ALPHA
+}
+
+enum GShaderParamater : GLenum
+{
+    COMPUTE_WORK_GROUP_COUNT = GL_MAX_COMPUTE_WORK_GROUP_COUNT,
+    COMPUTE_WORK_GROUP_SIZE = GL_MAX_COMPUTE_WORK_GROUP_SIZE
 }
 
 enum GPrimitiveShape

@@ -11,6 +11,7 @@ import std.stdio;
 import realm.ocean;
 import realm.util;
 import realm.entitymanager;
+import realm.terraingeneration;
 alias WorldMaterialLayout = Alias!(["heightMap" : UserDataVarTypes.TEXTURE2D,
 									"heightMap2" : UserDataVarTypes.TEXTURE2D,
 									"heightStrength" : UserDataVarTypes.FLOAT,
@@ -32,11 +33,13 @@ class World
 	private Transform transform;
 	private Ocean ocean;
 	StandardShaderModel shaderProgram;
+	TerrainGeneration terrainGeneration;
 
 
 
 	void start(EntityManager manager)
 	{
+
 		WorldMaterial.initialze();
 		WorldMaterial.reserve(1);
 		heightImg = readImageBytes("$Assets/Images/noiseTexture1.png");
@@ -44,7 +47,7 @@ class World
 		//setComponent!(Transform)(new Transform);
 		transform = getComponent!(Transform);
 		material = new WorldMaterial;
-                
+		terrainGeneration = new TerrainGeneration;
 
 
 
