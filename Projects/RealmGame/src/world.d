@@ -48,7 +48,7 @@ class World
 
 
 
-		meshData = generateFace(vec3(0,1,0),24);
+		meshData = generateFace(vec3(0,1,0),20);
 		WorldMaterial.allocate(&meshData);
 		transform.position = vec3(0,-2,0);
 		transform.scale = vec3(20,1,15);

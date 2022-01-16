@@ -76,15 +76,20 @@ class UIMenu
 	void update()
 	{
 		import std.stdio;
-		double mouseX = InputManager.getMouseAxis(MouseAxis.X);
-		double mouseY = InputManager.getMouseAxis(MouseAxis.Y);
-		auto windowSize = RealmApp.getWindowSize();
-		//mouseY -= ( * cast(double)windowSize[1]);
-		mouseY = ((1 - (mouseY/cast(double)windowSize[1])) * windowSize[1]);
+		if(active)
+		{	
+			
+			double mouseX = InputManager.getMouseAxis(MouseAxis.X);
+			double mouseY = InputManager.getMouseAxis(MouseAxis.Y);
+			auto windowSize = RealmApp.getWindowSize();
+			//mouseY -= ( * cast(double)windowSize[1]);
+			mouseY = ((1 - (mouseY/cast(double)windowSize[1])) * windowSize[1]);
 
-		RealmUI.drawTextString(cameraInfo,vec4(0,0,0,1),color, RealmUI.TextLayout(4,6,24),"Camera X: %.2f Y: %.2f Z: %.2f",camera.position.x,camera.position.y,camera.position.z);
-		RealmUI.drawTextString(mouseInfo,vec4(0,0,0,1),color, RealmUI.TextLayout(4,6,24),"Mouse X: %.2f Y: %.2f",mouseX,mouseY);
-		drawInfoPanel();
+			RealmUI.drawTextString(cameraInfo,vec4(0,0,0,1),color, RealmUI.TextLayout(4,6,24),"Camera X: %.2f Y: %.2f Z: %.2f",camera.position.x,camera.position.y,camera.position.z);
+			RealmUI.drawTextString(mouseInfo,vec4(0,0,0,1),color, RealmUI.TextLayout(4,6,24),"Mouse X: %.2f Y: %.2f",mouseX,mouseY);
+			drawInfoPanel();
+		}
+
 
 	}
 

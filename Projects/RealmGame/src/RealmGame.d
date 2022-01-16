@@ -49,6 +49,7 @@ class RealmGame : RealmApp
 		player = manager.instantiate!(Player)(&cam);
 		world = manager.instantiate!(World)(manager);
 		menu = manager.instantiate!(UIMenu)(cam,manager);
+		menu.active = false;
 		mainLight.transform = new Transform;
 		writeln(mainLight.transform.front);
 		mainLight.color = vec3(1.0,1.0,1.0);
@@ -74,7 +75,7 @@ class RealmGame : RealmApp
 		plane.getMaterial().textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		plane.getMaterial.textures.diffuse = Vector!(ubyte,4)(255);
 		plane.getMaterial.textures.normal = Vector!(ubyte,4)(0);
-		
+		plane.active = false;
 		
 		plane.getMaterial.packTextureAtlas();
 		

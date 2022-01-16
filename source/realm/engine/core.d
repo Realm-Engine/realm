@@ -303,7 +303,8 @@ struct DirectionalLight
 	{
 
 		shadowFrameBuffer.create!([FrameBufferAttachmentType.DEPTH_ATTACHMENT])(width,height);
-
+		shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture.wrap = TextureWrapFunc.CLAMP_TO_BORDER;
+		shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture.border = [1.0,1.0,1.0,1.0];
 	}
 
 }

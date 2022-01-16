@@ -735,6 +735,30 @@ struct GSamplerObject(GTextureType target)
         assert(mipLevels >= 0, "Mipmap count must be positive");
 	}
 
+    @property filter(GTextureFilterFunc func)
+	{
+        glBindTexture(target,id);
+        filterFunc = func;
+		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, func);
+        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, func);
+        glBindTexture(0,id);
+	}
+    @property wrap(GTextureWrapFunc func)
+	{
+		glBindTexture(target,id);
+        wrapFunc = func;
+		glTexParameteri(target, GL_TEXTURE_WRAP_S, func);
+        glTexParameteri(target, GL_TEXTURE_WRAP_T, func);
+        glBindTexture(0,id);
+	}
+
+    @property border(float[4] borderColor)
+	{
+		glBindTexture(target,id);
+		glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, borderColor.ptr);
+        glBindTexture(0,id);
+	}
+
 
     static if (is3dTexture)
     {
