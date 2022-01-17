@@ -204,7 +204,7 @@ static class RealmUI
 		TextElements.transforms[element] = UIElements.transforms[element];
 		material = TextElements.materials[element];
 		SamplerObject!(TextureType.TEXTURE2D)* materialAtlas = material.getTextureAtlas();
-		materialAtlas.textureDesc = TextureDesc(ImageFormat.RED,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+		materialAtlas.textureDesc = TextureDesc(ImageFormat.RED8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 
 		packStringTexture(materialAtlas,text.format(t),layout);
 		material.fontTexture = vec4(1,1,0,0);

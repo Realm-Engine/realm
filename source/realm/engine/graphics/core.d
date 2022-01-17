@@ -14,7 +14,7 @@ alias FrameBufferAttachmentType = GFrameBufferAttachmentType;
 alias TextureFilterfunc = GTextureFilterFunc;
 alias TextureWrapFunc = GTextureWrapFunc;
 alias TextureType = GTextureType;
-alias ImageFormat = GImageFormat;
+alias BaseImageFormat = GBaseImageFormat;
 alias Shader = GShader;
 alias SamplerObject = GSamplerObject;
 alias QueryObject = GQueryObject;
@@ -33,6 +33,7 @@ alias PrimitiveShape = GPrimitiveShape;
 alias QueryTarget = GQueryTarget;
 alias ShaderProgramStages = GShaderProgramStages;
 alias ShaderParameter = GShaderParamater;
+alias SizedImageFormat = GSizedImageFormat;
 alias blendFunc = gBlendFunc;
 alias blendFuncSeperate = gBlendFuncSeperate;
 alias enable =gEnable;
@@ -166,6 +167,29 @@ class Texture2D
 
 }
 
+
+struct ImageFormatData
+{
+	BaseImageFormat baseFormat;
+	SizedImageFormat sizedFormat;
+	uint channels;
+	uint bpc;
+
+
+}
+
+enum ImageFormat : ImageFormatData
+{
+	RGBA8 = ImageFormatData(BaseImageFormat.RGBA,SizedImageFormat.RGBA8,4,8),
+	RGB8 = ImageFormatData(BaseImageFormat.RGB, SizedImageFormat.RGB8,3,8),
+	DEPTH = ImageFormatData(BaseImageFormat.DEPTH,SizedImageFormat.DEPTH,1,8),
+	DEPTH_STENCIL = ImageFormatData(BaseImageFormat.DEPTH_STENCIL,SizedImageFormat.DEPTH_STENCIL,2,32),
+	RED8 = ImageFormatData(BaseImageFormat.RED,SizedImageFormat.RED8,1,8),
+	RGBA32F = ImageFormatData(BaseImageFormat.RGBA,SizedImageFormat.RGBA32F,4,32),
+	RGBA16 = ImageFormatData(BaseImageFormat.RGBA,SizedImageFormat.RGBA16,4,16),
+	RED32F = ImageFormatData(BaseImageFormat.RED,SizedImageFormat.RED32F,1,32)
+
+}
 
 
 struct RealmGlobalData

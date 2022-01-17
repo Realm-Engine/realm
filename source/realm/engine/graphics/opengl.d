@@ -470,6 +470,11 @@ class GShaderProgramModel(T...)
 			{
                  _shaders[Type] = shader;
 			}
+
+            void dispatch(uint groupsX, uint groupsY, uint groupsZ)
+			{
+                glDispatchCompute(groupsX,groupsY,groupsZ);
+			}
 		}
 	}
 
@@ -661,6 +666,20 @@ class GShaderProgramModel(T...)
         return result;
     }
 
+    void bindImageWrite(GSamplerObject!(TextureType.TEXTURE2D)* sampler,int level,int location,bool layered = false, int layer = 0)
+	{
+
+        glBindImageTexture(location,sampler.ID,level,layered ? GL_TRUE : GL_FALSE,layer,GL_WRITE_ONLY,sampler.internalFormat);
+	}
+
+    void waitImageWriteComplete()
+	{
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	}
+
+
+
+
     mixin ParameterQuery!(GShaderParamater);
 
 }
@@ -676,17 +695,17 @@ struct GFrameBufferAttachment
         desc.filter = GTextureFilterFunc.LINEAR;
         if(type == GFrameBufferAttachmentType.COLOR_ATTACHMENT)
         {
-            desc.fmt = GImageFormat.RGB;
+            desc.fmt = ImageFormat.RGB8;
             
         }
         else if(type == GFrameBufferAttachmentType.DEPTH_ATTACHMENT)
         {
-            desc.fmt = GImageFormat.DEPTH;
+            desc.fmt = ImageFormat.DEPTH;
 
         }
         else if(type == GFrameBufferAttachmentType.DEPTH_STENCIL_ATTACHMENT)
         {
-            desc.fmt = GImageFormat.DEPTH_STENCIL;
+            desc.fmt = ImageFormat.DEPTH_STENCIL;
         }
         texture.textureDesc = desc;
         texture.store(width,height);
@@ -880,9 +899,9 @@ struct GSamplerObject(GTextureType target)
         glBindTexture(target, id);
         wrapFunc = desc.wrap;
         filterFunc = desc.filter;
-        internalFormat = imageFormatToInternalFormat(desc.fmt);
-        dataType = imageFormatToGLDataType(desc.fmt);
-        format = desc.fmt;
+        internalFormat = desc.fmt.sizedFormat;
+        dataType = imageFormatToGLDataType(desc.fmt.baseFormat);
+        format = desc.fmt.baseFormat;
         mipLevels = 3;
         
         glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapFunc);
@@ -978,25 +997,7 @@ struct GSamplerObject(GTextureType target)
             glBindTexture(target,0);
 		}
 
-		//void clear(Args...)(int level, int xoffset,int yoffset, int width, int height, Args args)
-		//{
-		//    glBindTexture(target, id);
-		//    glClearTexSubImage(this,level,xoffset,yoffset,0,width,height,0,format,dataType,args);
-		//    glBindTexture(target,0);
-		//}
-		//
-		//void clear(T,Args...)(int level,Args args)
-		//{
-		//    glBindTexture(target,id);
-		//    T[] colorData;
-		//    foreach(value; AliasSeq!(args))
-		//    {
-		//        colorData ~= cast(T)value;
-		//    }
-		//    glClearTexImage(this,level,format,dataType,colorData.ptr);
-		//    glBindTexture(target,0);
-		//}
-        
+	
         void uploadSubImage(int level, int xoffset, int yoffset, int width, int height, ubyte* data)
         //in(data !is null)
         {
@@ -1250,16 +1251,16 @@ enum GTextureType : GLenum
 
 
 
-enum GImageFormat : GLenum
+enum GBaseImageFormat : GLenum
 {
 	RED = GL_RED,
 	SRGB = GL_RGB,
 	RGB = GL_RGB,
-	RGBA8 = GL_RGBA,
+	RGBA = GL_RGBA,
 	DEPTH_STENCIL = GL_DEPTH_STENCIL,
 	DEPTH = GL_DEPTH_COMPONENT,
 	SRGB_ALPHA = GL_RGBA
-
+    
 
 
 }
@@ -1273,7 +1274,10 @@ enum GSizedImageFormat : GLenum
     RGBA16 = GL_RGBA16,
     RGBA32F = GL_RGBA32F,
     SRGB8 = GL_SRGB8,
-    SRGBA8 = GL_SRGB8_ALPHA8
+    SRGBA8 = GL_SRGB8_ALPHA8,
+    DEPTH = GL_DEPTH_COMPONENT,
+    DEPTH_STENCIL = GL_DEPTH_STENCIL,
+    RED32F = GL_R32F
 
 }
 
@@ -1330,59 +1334,7 @@ enum GCullFace : GLenum
     BACK = GL_BACK
 }
 
-GLenum imageFormatToInternalFormat(ImageFormat format)
-{
-    GLenum result;
-    switch (format)
-    {
 
-    case GImageFormat.RGB:
-        result = GL_RGB8;
-        break;
-    case GImageFormat.RGBA8:
-        
-        result = GL_RGBA8;
-        break;
-
-    case GImageFormat.DEPTH_STENCIL:
-        result = GL_DEPTH_STENCIL;
-        break;
-    case GImageFormat.DEPTH:
-        result = GL_DEPTH_COMPONENT;
-        break;
-    case GImageFormat.RED:
-        result = GL_R8;
-        break;
-
-    default:
-        writeln("Unknown format");
-        result = GL_RGB;
-        break;
-
-    }
-    return result;
-
-}
-
-GLenum imageFormatToGLDataType(GImageFormat fmt)
-{
-
-    switch (fmt)
-    {
-    case GImageFormat.RGB:
-        return GL_UNSIGNED_BYTE;
-    case GImageFormat.RGBA8:
-        return GL_UNSIGNED_BYTE;
-    case GImageFormat.RED:
-        return GL_UNSIGNED_BYTE;
-    case GImageFormat.DEPTH_STENCIL:
-        return GL_DEPTH24_STENCIL8;
-    case GImageFormat.DEPTH:
-        return GL_FLOAT;
-    default:
-        return GL_FLOAT;
-    }
-}
 
 void gBindAttribute(VertexAttribute attr, uint stride = 0)
 {
@@ -1439,6 +1391,26 @@ void bindAttribute(alias T)(int index,int offset,int stride )
     
     
 	
+}
+
+GLenum imageFormatToGLDataType(GBaseImageFormat fmt)
+{
+
+    switch (fmt)
+    {
+		case GBaseImageFormat.RGB:
+			return GL_UNSIGNED_BYTE;
+		case GBaseImageFormat.RGBA:
+			return GL_UNSIGNED_BYTE;
+		case GBaseImageFormat.RED:
+			return GL_UNSIGNED_BYTE;
+		case GBaseImageFormat.DEPTH_STENCIL:
+			return GL_DEPTH24_STENCIL8;
+		case GBaseImageFormat.DEPTH:
+			return GL_FLOAT;
+		default:
+			return GL_FLOAT;
+    }
 }
 
 void drawIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)()
