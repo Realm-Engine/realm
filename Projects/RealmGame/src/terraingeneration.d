@@ -23,8 +23,8 @@ class TerrainGeneration
 		workGroupCount[2] = _heightMapProgram.getParameter!(int)(ShaderParameter.COMPUTE_WORK_GROUP_COUNT,2);
 		Logger.LogInfo("Max compute work counts: X: %d, Y: %d, Z: %d",workGroupCount[0],workGroupCount[1],workGroupCount[2]);
 		_heightMap.create();
-		_heightMap.textureDesc = TextureDesc(ImageFormat.RGBA32F,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
-		_heightMap.store(2048,2048);
+		_heightMap.textureDesc = TextureDesc(ImageFormat.RED32F,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
+		_heightMap.store(256,256);
 		computeJob(&_heightMap,_heightMapProgram);
 		
 
