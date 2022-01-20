@@ -674,7 +674,7 @@ class GShaderProgramModel(T...)
 
     void waitImageWriteComplete()
 	{
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT |GL_TEXTURE_UPDATE_BARRIER_BIT);
 	}
 
 
@@ -855,6 +855,8 @@ struct GSamplerObject(GTextureType target)
     private GLenum dataType;
     private int mipLevels;
     private int texSlot;
+    private int channels;
+    private int bpc;
     int width;
     int height;
     bool destroyed;
@@ -903,7 +905,8 @@ struct GSamplerObject(GTextureType target)
         dataType = imageFormatToGLDataType(desc.fmt.baseFormat);
         format = desc.fmt.baseFormat;
         mipLevels = 3;
-        
+        channels = desc.fmt.channels;
+        bpc = desc.fmt.bpc;
         glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapFunc);
         glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapFunc);
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterFunc);
@@ -1014,6 +1017,8 @@ struct GSamplerObject(GTextureType target)
                     format, dataType, data);
             glBindTexture(target, 0);
         }
+
+
     }
     static if (target == GTextureType.TEXTURE2DARRAY || target == GTextureType.TEXTURE3D)
     {
@@ -1057,6 +1062,17 @@ struct GSamplerObject(GTextureType target)
             ids ~= texture.ID;
 		}
         glDeleteTextures(cast(int)textures.length,cast(const uint*)ids.ptr);
+	}
+
+	ubyte[] readPixels(int level)
+	{
+		ubyte[] result;
+        size_t len =  (width * height) * channels * bpc;
+        result.length = len;
+        bind();
+		glGetTexImage(target,level,format,dataType,cast(void*)result.ptr);
+        unbind();
+        return result;
 	}
 
 }

@@ -66,6 +66,19 @@ class Renderer
 		return _instance;
 	}
 
+	static void init()
+	in(!_instantiated,"Renderer has already been instantiated")
+	{
+		synchronized(Renderer.classinfo)
+		{
+			if(!_instance)
+			{
+				_instance = new Renderer;
+			}
+			_instantiated = true;
+		}
+	}
+
 	@property activeCamera(Camera* cam)
 	{
 		camera = cam;
@@ -211,35 +224,38 @@ class Renderer
 	void renderLightSpace() 
 	{
 	
-		
-		FrameBuffer* shadowFramebuffer = &mainDirLight.shadowFrameBuffer;
-		setViewport(0,0,shadowFramebuffer.width, shadowFramebuffer.height);
-		mainDirLight.shadowFrameBuffer.bind(FrameBufferTarget.FRAMEBUFFER);
-
-		//mainDirLight.shadowFrameBuffer.refresh();
-		GraphicsSubsystem.clearScreen();
-
-		cull(CullFace.FRONT);
-		//lightSpaceCamera.update();
-		
-		mat4 view = mat4.look_at(-mainDirLight.transform.front,vec3(0,0,0),vec3(0,1,0));
-		mat4 lightSpaceMatrix = lightSpaceCamera.projection * view;
-		lightSpaceMatrix.transpose();
-		_globalData.vp[0..$] = lightSpaceMatrix.value_ptr[0..16].dup;
-		_globalData.lightSpaceMatrix[0..$] =  lightSpaceMatrix.value_ptr[0..16].dup;
-		GraphicsSubsystem.updateGlobalData(&_globalData);
-
-		
-		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
-		
-		foreach(batch; orderedBatches)
+		if(mainDirLight !is null)
 		{
-			batch.drawBatch!(false)(lightSpacePipeline);
+			FrameBuffer* shadowFramebuffer = &mainDirLight.shadowFrameBuffer;
+			setViewport(0,0,shadowFramebuffer.width, shadowFramebuffer.height);
+			mainDirLight.shadowFrameBuffer.bind(FrameBufferTarget.FRAMEBUFFER);
+
+			//mainDirLight.shadowFrameBuffer.refresh();
+			GraphicsSubsystem.clearScreen();
+
+			cull(CullFace.FRONT);
+			//lightSpaceCamera.update();
+
+			mat4 view = mat4.look_at(-mainDirLight.transform.front,vec3(0,0,0),vec3(0,1,0));
+			mat4 lightSpaceMatrix = lightSpaceCamera.projection * view;
+			lightSpaceMatrix.transpose();
+			_globalData.vp[0..$] = lightSpaceMatrix.value_ptr[0..16].dup;
+			_globalData.lightSpaceMatrix[0..$] =  lightSpaceMatrix.value_ptr[0..16].dup;
+			GraphicsSubsystem.updateGlobalData(&_globalData);
+
+
+			auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
+
+			foreach(batch; orderedBatches)
+			{
+				batch.drawBatch!(false)(lightSpacePipeline);
+			}
+
+			mainDirLight.shadowFrameBuffer.unbind(FrameBufferTarget.FRAMEBUFFER);
+			GraphicsSubsystem.setShadowMap(mainDirLight.shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture);
+			cull(CullFace.BACK);
 		}
 		
-		mainDirLight.shadowFrameBuffer.unbind(FrameBufferTarget.FRAMEBUFFER);
-		GraphicsSubsystem.setShadowMap(mainDirLight.shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture);
-		cull(CullFace.BACK);
 	}
 
 	@property void mainLight(DirectionalLight* light)

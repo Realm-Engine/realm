@@ -73,10 +73,6 @@ static class RealmUI
 	private static UIElement parentContainer;
 	static void initialize()
 	{
-		
-	
-
-
 		panelImage = readImageBytes("$EngineAssets/Images/ui-panel.png");
 		pressedButtonImage = readImageBytes("$EngineAssets/images/ui-button-pressed.png");
 		panelMesh = loadMesh("$EngineAssets/Models/ui-panel.obj");
@@ -84,12 +80,12 @@ static class RealmUI
 		uiProgram = loadShaderProgram("$EngineAssets/Shaders/ui.shader","UI");
 		textProgram = loadShaderProgram("$EngineAssets/Shaders/text.shader","Text");
 		UIMaterial.initialze();
-		UIMaterial.reserve(16);
+		UIMaterial.reserve(32);
 		UIMaterial.allocate(512,512);
 		uiBatch = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,uiProgram,11);
 		uiBatch.setShaderStorageCallback(&(UIMaterial.bindShaderStorage));
 		uiBatch.initialize(UIMaterial.allocatedVertices(),UIMaterial.allocatedElements());
-		uiBatch.reserve(16);
+		uiBatch.reserve(32);
 		TextMaterial.initialze();
 		TextMaterial.reserve(16);
 		TextMaterial.allocate(512,512);
@@ -116,6 +112,23 @@ static class RealmUI
 		material.setShaderProgram(uiProgram);
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.textures.baseTexture = new Texture2D(&panelImage);
+		material.color = vec4(1,1,1,1);
+		material.packTextureAtlas();
+		Transform transform = new Transform(position ,rotation,scale);		
+		UIElement element = {randomUUID()};
+		UIElements.transforms[element] = transform;
+		UIElements.materials[element] = material;
+		return element;
+
+	}
+
+	static UIElement createElement(vec3 position, vec3 scale, vec3 rotation,Texture2D texture,TextureDesc desc)
+	{
+
+		UIMaterial material = new UIMaterial;
+		material.setShaderProgram(uiProgram);
+		material.textures.settings = desc;
+		material.textures.baseTexture = texture;
 		material.color = vec4(1,1,1,1);
 		material.packTextureAtlas();
 		Transform transform = new Transform(position ,rotation,scale);		
@@ -300,6 +313,9 @@ static class RealmUI
 
 	}
 
+
+
+	
 	static void containerPush(UIElement element)
 	{
 		
@@ -356,11 +372,4 @@ static class RealmUI
 		textBatch.resetBatch();
 		GraphicsSubsystem.enableDepthTest();
 	}
-
-	
-
-
-
-
-
 }

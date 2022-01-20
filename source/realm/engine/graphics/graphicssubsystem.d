@@ -32,7 +32,7 @@ class GraphicsSubsystem
 
 	static SamplerObject!(TextureType.TEXTURE2D) getShadowMap()
 	{
-		Logger.Assert(shadowMap.ID > 0, "No shadow map");
+		
 		return shadowMap;
 	}
 

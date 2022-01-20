@@ -22,7 +22,7 @@ class World
 {
 	private Mesh meshData;
 
-	mixin RealmEntity!("World",Transform);
+	mixin RealmEntity!("World",Transform,TerrainGeneration);
 
 	static vec3[] squarePositions;
 	static vec2[] squareUV;
@@ -33,7 +33,6 @@ class World
 	private Transform transform;
 	private Ocean ocean;
 	StandardShaderModel shaderProgram;
-	TerrainGeneration terrainGeneration;
 
 
 
@@ -42,12 +41,10 @@ class World
 
 		WorldMaterial.initialze();
 		WorldMaterial.reserve(1);
-		heightImg = readImageBytes("$Assets/Images/noiseTexture1.png");
 		heightImg2 = readImageBytes("$Assets/Images/noiseTexture2.png");
 		//setComponent!(Transform)(new Transform);
 		transform = getComponent!(Transform);
 		material = new WorldMaterial;
-		terrainGeneration = new TerrainGeneration;
 
 
 
@@ -57,10 +54,10 @@ class World
 		transform.scale = vec3(20,1,15);
 		shaderProgram = loadShaderProgram("$Assets/Shaders/world.shader","World");
 		
-		material.heightStrength = 1.5;
-		material.oceanLevel = 0.7;
+		material.heightStrength = 2;
+		material.oceanLevel = 0.5;
 		material.setShaderProgram(shaderProgram);
-		material.textures.heightMap = new Texture2D(&heightImg);
+		material.textures.heightMap = new Texture2D(getComponent!(TerrainGeneration).getHeightMap());
 		material.textures.heightMap2 = new Texture2D(&heightImg2);
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
@@ -73,7 +70,7 @@ class World
 		scope(exit)
 		{
 
-			heightImg.free();
+			heightImg2.free();
 		}
 
 	}

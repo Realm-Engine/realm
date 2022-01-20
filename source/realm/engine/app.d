@@ -6,6 +6,7 @@ import std.conv;
 import std.meta;
 import realm.engine.core;
 import std.typecons;
+
 class RealmApp
 {
 
@@ -48,6 +49,7 @@ class RealmApp
         
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         InputManager.initialze(window);
+
     }
     
     abstract void update();

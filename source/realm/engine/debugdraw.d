@@ -117,10 +117,4 @@ static class Debug
 		debugBatch.resetBatch();
 		DebugMaterial.resetInstanceCount();
 	}
-
-
-	
-
-
-
 }

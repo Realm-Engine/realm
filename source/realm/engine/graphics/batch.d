@@ -175,7 +175,7 @@ class Batch(T)
 		foreach(i,texture; textureAtlases.enumerate(0))
 		{
 			texture.setActive();
-			program.setUniformInt(3 + i,texture.slot);
+			program.setUniformInt(texture.slot,texture.slot);
 
 		}
 		SamplerObject!(TextureType.TEXTURE2D)* cameraDepth;
@@ -186,7 +186,7 @@ class Batch(T)
 		cameraScreen = &Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.COLOR_ATTACHMENT].texture;
 		cameraScreen.setActive(1);
 		program.setUniformInt(1,1);
-		if(renderShadows)
+		if(renderShadows && GraphicsSubsystem.getShadowMap().ID >0)
 		{
 			GraphicsSubsystem.getShadowMap().setActive(2);
 

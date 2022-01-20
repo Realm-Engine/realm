@@ -23,7 +23,7 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
         {
             static foreach (uniform; uniforms.keys)
             {
-
+                pragma(msg, "Uniform: " ~ uniform);
                 //string type;
                 static if (uniforms[uniform] == UserDataVarTypes.FLOAT)
                 {
@@ -464,6 +464,7 @@ WriteImage:
         program.use();
 	}
 
+   
 
 
 }

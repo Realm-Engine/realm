@@ -33,14 +33,16 @@ class RealmGame : RealmApp
 	static IFImage crateDiffuse;
 	static IFImage planeDiffuse;
 	static IFImage crateNormal;
-	private RealmUI.UIElement panel;
+
 	private EntityManager manager;
 	private char currentChar;
-	
+
+
 	this(int width, int height, const char* title)
 	{
 		
 		super(width,height,title);
+		
 		//enableDebugging();
 		manager = new EntityManager;
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),0.1,200,60);
@@ -49,7 +51,6 @@ class RealmGame : RealmApp
 		player = manager.instantiate!(Player)(&cam);
 		world = manager.instantiate!(World)(manager);
 		menu = manager.instantiate!(UIMenu)(cam,manager);
-		menu.active = false;
 		mainLight.transform = new Transform;
 		writeln(mainLight.transform.front);
 		mainLight.color = vec3(1.0,1.0,1.0);
@@ -94,6 +95,7 @@ class RealmGame : RealmApp
 
 	static this()
 	{
+		
 		VirtualFS.registerPath!("Projects/RealmGame/Assets")("Assets");
 		crateDiffuse = readImageBytes("$Assets/Images/crate/crate_BaseColor.png");
 		//planeDiffuse = readImageBytes("./Assets/Images/texture_0.png");
