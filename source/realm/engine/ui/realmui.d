@@ -71,6 +71,7 @@ static class RealmUI
 	private static Font font;
 	private static Stack!(UIElement) containerStack;
 	private static UIElement parentContainer;
+	private static InputEvent _currentEvent;
 	static void initialize()
 	{
 		panelImage = readImageBytes("$EngineAssets/Images/ui-panel.png");
@@ -102,7 +103,13 @@ static class RealmUI
 
 		containerStack = new Stack!(UIElement)(32);
 		containerPush(parentContainer);
+		InputManager.registerInputEventCallback(&inputEvent);
 
+	}
+
+	static void inputEvent(InputEvent event)
+	{
+		_currentEvent = event;
 	}
 
 	static UIElement createElement(vec3 position, vec3 scale, vec3 rotation)
@@ -241,9 +248,9 @@ static class RealmUI
 		RealmVertex[] panelVertices = panelVertices!(UIMaterial)(transform,material);
 		AABB panelAABB = AABB.from_points(panelVertices.map!(v => vec3(v.position)).array);
 		ButtonState result = ButtonState.NONE;
-		if((mouseX >= panelAABB.min.x && mouseX <= panelAABB.max.x) && (mouseY >= panelAABB.min.y && mouseY <= panelAABB.max.y) )
+		if((mouseX >= panelAABB.min.x && mouseX <= panelAABB.max.x) && (mouseY >= panelAABB.min.y && mouseY <= panelAABB.max.y) && _currentEvent.action == InputActionType.MouseAction)
 		{
-			if(InputManager.getMouseButton(RealmMouseButton.ButtonLeft) == KeyState.Press)
+			if(_currentEvent.mouseEvent.state == KeyState.Press)
 			{
 				material.updateAtlas(pressedButtonImage,&material.baseTexture);
 				result = ButtonState.PRESSED;
@@ -371,5 +378,7 @@ static class RealmUI
 		uiBatch.resetBatch();
 		textBatch.resetBatch();
 		GraphicsSubsystem.enableDepthTest();
+		_currentEvent.action = InputActionType.None;
+		
 	}
 }

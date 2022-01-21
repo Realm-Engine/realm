@@ -1,23 +1,86 @@
 module realm.engine.input;
 import glfw3.api;
 import core.stdc.stdio;
+import realm.engine.container.queue;
+enum InputActionType
+{
+	KeyAction,
+	MouseAction,
+	None
+
+
+}
+
+struct KeyActionEvent
+{
+	RealmKey key;
+	KeyState state;
+
+
+}
+
+struct MouseActionEvent
+{
+	RealmMouseButton mouseButton;
+	KeyState state;
+	double x;
+	double y;
+
+}
+
+struct InputEvent
+{
+	InputActionType action;
+	union
+	{
+		KeyActionEvent keyEvent;
+		MouseActionEvent mouseEvent;
+	}
+	
+	void opAssign(KeyActionEvent event) nothrow @nogc
+	{
+		action = InputActionType.KeyAction;
+		keyEvent = event;
+	}
+	void opAssign(MouseActionEvent event)nothrow @nogc
+	{
+		action = InputActionType.MouseAction;
+		mouseEvent = event;
+	}
+	bool opCast(KeyActionEvent)()
+	{
+		return action == InputActionType.KeyAction;
+	}
+	bool opCast(MouseActionEvent)()
+	{
+		return action == InputActionType.MouseAction;
+	}
+
+}
 
 class InputManager
 {
     import std.stdio;
     private static GLFWwindow* window;
 
+	mixin template InputEventCallback(alias T)
+	{
+		mixin ("void %s(InputEvent event)");
+	}
+
 
     
-
-    
-
-    alias KeyCallback = void function(KeyState action, int key) nothrow @nogc;
+	
+	alias InputEventCallbackDelegate = void delegate(InputEvent event);
+	alias InputEventCallbackFunction = void function(InputEvent event);
 	alias ScrollCallback = void function(double xoffset, double yoffset) nothrow @nogc;
-    private static KeyCallback keyEvent;
+    private static InputEventCallbackDelegate[] inputEventDelegates;
+	private static InputEventCallbackFunction[] inputEventFunctions;
 	private static ScrollCallback scrollEvent;
 	private static double scrollX;
 	private static double scrollY;
+	private static Queue!(InputEvent) _eventQueue;
+	private static InputEvent _lastEvent;
 	static this()
 	{
 		scrollX = 0;
@@ -39,7 +102,7 @@ class InputManager
 
 	}
 
-	static double getMouseAxis(MouseAxis axis)
+	static double getMouseAxis(MouseAxis axis) nothrow @nogc
 	{
 		double x;
 		double y;
@@ -90,6 +153,24 @@ class InputManager
 		
 	}
 
+	extern (C) static void internalKeyCallback(GLFWwindow* window,int key, int scancode, int action, int mods) nothrow @nogc
+	{
+		InputEvent event;
+		event = KeyActionEvent(cast(RealmKey) key,cast(KeyState)action);
+		_eventQueue.enqueue(event);
+
+
+
+	}
+
+	extern(C) static void internalMouseButtonCallback(GLFWwindow* window, int button, int action,int mods) nothrow @nogc
+	{
+		InputEvent event;
+		double x = getMouseAxis(MouseAxis.X);
+		double y = getMouseAxis(MouseAxis.Y);
+		event = MouseActionEvent(cast(RealmMouseButton) button, cast(KeyState)action,x,y);
+		_eventQueue.enqueue(event);
+	}
 
 	void setScrollCallback(ScrollCallback cb)
 	{
@@ -100,15 +181,45 @@ class InputManager
     static void initialze(GLFWwindow* w)
     {
 		window = w;
+		_eventQueue = new Queue!(InputEvent)(64);
 		glfwSetScrollCallback(w,&internalScrollCallback);
+		glfwSetKeyCallback(w,&internalKeyCallback);
+		glfwSetMouseButtonCallback(w,&internalMouseButtonCallback);
     }
+
+	static void tick()
+	{
+		if(!_eventQueue.empty)
+		{
+			InputEvent event = _eventQueue.dequeue();
+			foreach(callback; inputEventDelegates)
+			{
+				
+				callback(event);
+			}
+			foreach(f ; inputEventFunctions)
+			{
+				f(event);
+			}
+			_lastEvent = event;
+		}
+	}
+
+	static void registerInputEventCallback(InputEventCallbackDelegate cb)
+	{
+		inputEventDelegates ~= cb;
+	}
+	static void registerInputEventCallback(InputEventCallbackFunction cb)
+	{
+		inputEventFunctions ~= cb;
+	}
 
 }
 
 enum KeyState
 {
-	Press,
-	Release
+	Press = GLFW_PRESS,
+	Release = GLFW_RELEASE
 }
 
 enum MouseAxis

@@ -14,7 +14,9 @@ import std.math.constants : PI;
 import glfw3.api;
 import gl3n.math;
 import realm.entitymanager;
-
+import realm.fsm.statemachine;
+import realm.fsm.gamestate;
+import realm.mainstate;
 //import realm.engine.graphics.core;
 class RealmGame : RealmApp
 {
@@ -23,83 +25,33 @@ class RealmGame : RealmApp
 
 	Camera cam;
 	//Renderer renderer;
-	Player player;
-	World world;	
-	Ocean ocean;
-	UIMenu menu;
-	DirectionalLight mainLight;
-	GameEntity plane;
-	GameEntity crate;
-	static IFImage crateDiffuse;
-	static IFImage planeDiffuse;
-	static IFImage crateNormal;
+
 
 	private EntityManager manager;
 	private char currentChar;
-
+	private StateMachine _stateMachine;
 
 	this(int width, int height, const char* title)
 	{
 		
 		super(width,height,title);
-		
+
 		//enableDebugging();
 		manager = new EntityManager;
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),0.1,200,60);
 		Renderer.get.activeCamera = &cam;
-
-		player = manager.instantiate!(Player)(&cam);
-		world = manager.instantiate!(World)(manager);
-		menu = manager.instantiate!(UIMenu)(cam,manager);
-		mainLight.transform = new Transform;
-		writeln(mainLight.transform.front);
-		mainLight.color = vec3(1.0,1.0,1.0);
-
-		SimpleMaterial.initialze();
-		SimpleMaterial.reserve(2);
-
-		Renderer.get.mainLight(&mainLight);
-		crate = manager.instantiate!(GameEntity)("$Assets/Models/wooden crate.obj");
-		crate.getMaterial().color = vec4(1,1,1,1.0);
-		crate.entityName = "Crate";
-		crate.getComponent!(Transform).position = vec3(0,1,-6);
-		crate.getComponent!(Transform).scale = vec3(0.25,0.25,0.25);
-		crate.getMaterial().textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
-		crate.getMaterial().textures.diffuse= new Texture2D(&crateDiffuse);
-		crate.getMaterial().textures.normal= new Texture2D(&crateNormal);
-		crate.getMaterial().packTextureAtlas();
-
-		plane = manager.instantiate!(GameEntity)("$EngineAssets/Models/ui-panel.obj");
-		plane.entityName = "Plane";
-		plane.getComponent!(Transform).position = vec3(0,0.5,0);
-		plane.getComponent!(Transform).rotation = vec3(90,0,0);
-		plane.getMaterial().textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
-		plane.getMaterial.textures.diffuse = Vector!(ubyte,4)(255);
-		plane.getMaterial.textures.normal = Vector!(ubyte,4)(0);
-		plane.active = false;
-		
-		plane.getMaterial.packTextureAtlas();
-		
+		VirtualFS.registerPath!("Projects/RealmGame/Assets")("Assets");
 		
 
-		scope(exit)
-		{
-			crateDiffuse.free();
-			planeDiffuse.free();
-			crateNormal.free();
-		}
-		
-		
-		
+
+		_stateMachine = new StateMachine();
+		_stateMachine.pushState(new MainState(manager,cam));
 	}
 
 	static this()
 	{
 		
-		VirtualFS.registerPath!("Projects/RealmGame/Assets")("Assets");
-		crateDiffuse = readImageBytes("$Assets/Images/crate/crate_BaseColor.png");
-		//planeDiffuse = readImageBytes("./Assets/Images/texture_0.png");
-		crateNormal = readImageBytes("$Assets/Images/crate/crate_Normal.png");
+		
 	}
 	
 	
@@ -120,15 +72,11 @@ class RealmGame : RealmApp
 		import core.thread.osthread;
 		import core.time;
 		import std.format;
-		double time = glfwGetTime();
-		double radians = glfwGetTime() *radians(150);
-		double sinT =  sin(time) ;
 		
-		mainLight.transform.rotation =  vec3(-20,radians,0);
+		
+		
 		manager.updateEntities();
-		world.draw(Renderer.get);
-		crate.draw(Renderer.get);
-		plane.draw(Renderer.get);
+		_stateMachine.top().update();
 		Renderer.get.update();
 
 	}

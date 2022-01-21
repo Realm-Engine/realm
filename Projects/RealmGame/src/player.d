@@ -27,6 +27,7 @@ class Player
         //camera.update();
        // setComponent!(Transform)(new Transform);
         transform = getComponent!(Transform);
+        InputManager.registerInputEventCallback(&inputEvent);
         
 
     }
@@ -36,6 +37,12 @@ class Player
         Tuple!(int, int) windowSize = RealmApp.getWindowSize();
         return vec2(mouse.x * 2.0f / windowSize[0] - 1.0f, 1.0f - 2.0f * mouse.y / windowSize[1]);
     }
+
+    void inputEvent(InputEvent event)
+	{
+
+
+	}
 
     void processInput()
     {

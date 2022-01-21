@@ -49,6 +49,7 @@ class RealmApp
         
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         InputManager.initialze(window);
+        glfwSwapInterval(1);
 
     }
     
@@ -59,6 +60,7 @@ class RealmApp
         start();
         while (!shutdown)
         {
+            InputManager.tick();
             update();
             glfwPollEvents();
             if (glfwWindowShouldClose(window))
