@@ -19,5 +19,5 @@ void grayToNormal(ivec2 uv,float delta)
 
 void main()
 {
-	grayToNormal(ivec2(gl_GlobalInvocationID.xy),14);
+	grayToNormal(ivec2(gl_GlobalInvocationID.xy),10);
 }

@@ -156,7 +156,6 @@ void main()
 
     vec3 uv = vec3(gl_GlobalInvocationID.xyz) / vec3(imageSize(img_output),1);
     vec4 simplexVal = vec4(0);
-    float persistence =0.5;
     float amplitude = 1;
     float maxAmp = 0;
     float frequencey = 2;
@@ -171,10 +170,21 @@ void main()
     }
 
     simplexVal /= maxAmp;
-    
+    amplitude = 1;
+    maxAmp = 0;
+    frequencey = 4;
 
-    simplexVal = (simplexVal * 255) / (255-0);
-    vec3 voronoiVal = voronoi(uv.xy * 8);
+    vec3 voronoiVal = vec3(0);
+    
+    for(int i = 0; i < 3; i++)
+    {
+         voronoiVal += voronoi(uv.xy * frequencey) * amplitude;
+         frequencey *= 2;
+         maxAmp += amplitude;
+         amplitude *= 0.5;
+    }
+    voronoiVal /= maxAmp;
+
 	vec4 pixel = vec4(vec3(voronoiVal.z + simplexVal.w),1);
 	ivec2 coords = ivec2(gl_GlobalInvocationID.xy);
 	imageStore(img_output,coords,pixel);
