@@ -85,6 +85,11 @@ class Renderer
                 
 	}
 
+	@property Camera* activeCamera()
+	{
+		return camera;
+	}
+
 	@property RealmGlobalData* globalData()
 	{
 		return &_globalData;

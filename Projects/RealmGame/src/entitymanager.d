@@ -7,6 +7,7 @@ public
 	import realm.world;
 	import realm.player;
 	import realm.uimenu;
+	import realm.fsm.statemachine;
 }
 private
 {
@@ -14,6 +15,6 @@ private
 }
 class EntityManager
 {
-	mixin EntityRegistry!(World,GameEntity,Ocean,Player,UIMenu);
+	mixin EntityRegistry!(World,GameEntity,Ocean,Player,UIMenu,StateMachine);
 
 }

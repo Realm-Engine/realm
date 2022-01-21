@@ -1,11 +1,13 @@
 module realm.fsm.statemachine;
 import realm.engine.container.stack;
 import realm.fsm.gamestate;
+import realm.engine.ecs;
 class StateMachine
 {
 	private Stack!(GameState) _stack;
-	
-	this()
+	mixin RealmEntity!("StateMachine");
+
+	void start()
 	{
 		_stack = new Stack!(GameState)(16);
 	}
@@ -42,6 +44,14 @@ class StateMachine
 			return _stack.peek();
 		}
 		return null;
+	}
+
+	void update()
+	{
+		if(!_stack.empty)
+		{
+			_stack.peek().update();
+		}
 	}
 
 }

@@ -27,10 +27,10 @@ class MainState : GameState
 	private static IFImage crateNormal;
 	private EntityManager manager;
 	private Camera cam;
-	this(EntityManager manager, Camera mainCamera)
+	this(EntityManager manager)
 	{
 		this.manager = manager;
-		this.cam = mainCamera;
+		this.cam = *Renderer.get.activeCamera;
 	}
 
 	override void enter()

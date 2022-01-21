@@ -17,6 +17,7 @@ import realm.entitymanager;
 import realm.fsm.statemachine;
 import realm.fsm.gamestate;
 import realm.mainstate;
+import realm.mainmenu;
 //import realm.engine.graphics.core;
 class RealmGame : RealmApp
 {
@@ -44,8 +45,9 @@ class RealmGame : RealmApp
 		
 
 
-		_stateMachine = new StateMachine();
-		_stateMachine.pushState(new MainState(manager,cam));
+		_stateMachine = manager.instantiate!(StateMachine)();
+		//_stateMachine.pushState(new MainState(manager,cam));
+		_stateMachine.pushState(new MainMenu(manager));
 	}
 
 	static this()
@@ -76,7 +78,7 @@ class RealmGame : RealmApp
 		
 		
 		manager.updateEntities();
-		_stateMachine.top().update();
+		//_stateMachine.top().update();
 		Renderer.get.update();
 
 	}

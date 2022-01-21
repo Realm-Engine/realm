@@ -60,6 +60,7 @@ struct Font
     void setPixelSize(uint width, uint height)
     {
         FT_Set_Pixel_Sizes(face, width, height);
+        glyphCache.clear();
     }
 
     IFImage getChar(char c)
