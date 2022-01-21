@@ -172,11 +172,11 @@ void main()
     simplexVal /= maxAmp;
     amplitude = 1;
     maxAmp = 0;
-    frequencey = 4;
+    frequencey = 2;
 
     vec3 voronoiVal = vec3(0);
     
-    for(int i = 0; i < 3; i++)
+    for(int i = 0; i <4; i++)
     {
          voronoiVal += voronoi(uv.xy * frequencey) * amplitude;
          frequencey *= 2;

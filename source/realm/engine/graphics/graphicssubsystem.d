@@ -25,7 +25,11 @@ class GraphicsSubsystem
 		{
 			color /= 255;
 		}
-		
+		vec3 gamma(vec3 c)
+		{
+			return vec3(pow(c.x,2.2),pow(c.y,2.2),pow(c.z,2.2));
+		}
+		color = gamma(color);
 		glClearColor(color.x,color.y,color.z,0.0);
 
 	}

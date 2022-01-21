@@ -14,10 +14,10 @@ void grayToNormal(ivec2 uv,float delta)
 	float ab = graySample.x-sampleX.x;
 	float ac = graySample.x-sampleY.x;
 	vec3 result = cross(vec3(1,0,ab),vec3(0,1,ac));
-	imageStore(imgOutput,uv,vec4(result,1));
+	imageStore(imgOutput,uv,vec4(result,graySample.r));
 }
 
 void main()
 {
-	grayToNormal(ivec2(gl_GlobalInvocationID.xy),10);
+	grayToNormal(ivec2(gl_GlobalInvocationID.xy),14);
 }

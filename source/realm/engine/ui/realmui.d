@@ -110,7 +110,7 @@ static class RealmUI
 
 		UIMaterial material = new UIMaterial;
 		material.setShaderProgram(uiProgram);
-		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+		material.textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.textures.baseTexture = new Texture2D(&panelImage);
 		material.color = vec4(1,1,1,1);
 		material.packTextureAtlas();

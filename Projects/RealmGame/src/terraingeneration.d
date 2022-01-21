@@ -63,17 +63,15 @@ class TerrainGeneration
 		normalMapImage.c = 4;
 		normalMapImage.bpc = 8;
 		
-
+		_heightMap.free();
+		_normalMap.free();
+		//heightMapImage.free();
 
 		
 		
 
 	}
 
-	IFImage* getHeightMap()
-	{
-		return &heightMapImage;
-	}
 
 	IFImage* getNormalMap()
 	{

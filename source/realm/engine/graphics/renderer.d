@@ -126,6 +126,7 @@ class Renderer
 		lightSpacePipeline = new ShaderPipeline;
 		lightSpacePipeline.create();
 		lightSpacePipeline.useProgramStages(lightSpaceShaderProgram);
+		enable(State.FrameBufferSRGB);
 		
 
 

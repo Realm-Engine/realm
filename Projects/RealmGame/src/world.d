@@ -12,8 +12,7 @@ import realm.ocean;
 import realm.util;
 import realm.entitymanager;
 import realm.terraingeneration;
-alias WorldMaterialLayout = Alias!(["heightMap" : UserDataVarTypes.TEXTURE2D,
-									"normalMap" : UserDataVarTypes.TEXTURE2D,
+alias WorldMaterialLayout = Alias!(["normalHeightMap" : UserDataVarTypes.TEXTURE2D,
 									"heightStrength" : UserDataVarTypes.FLOAT,
 									"oceanLevel" : UserDataVarTypes.FLOAT]);
 alias WorldMaterial = Alias!(Material!WorldMaterialLayout);
@@ -56,12 +55,12 @@ class World
 		material.heightStrength = 1.5;
 		material.oceanLevel = 0.3;
 		material.setShaderProgram(shaderProgram);
-		material.textures.heightMap = new Texture2D(getComponent!(TerrainGeneration).getHeightMap());
-		material.textures.normalMap = new Texture2D(getComponent!(TerrainGeneration).getNormalMap());
+		//material.textures.heightMap = new Texture2D(getComponent!(TerrainGeneration).getHeightMap());
+		material.textures.normalHeightMap = new Texture2D(getComponent!(TerrainGeneration).getNormalMap());
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		
-		ocean = manager.instantiate!(Ocean)(material.oceanLevel,material.textures.heightMap.texture,material.heightStrength);
+		ocean = manager.instantiate!(Ocean)(material.oceanLevel,material.textures.normalHeightMap.texture,material.heightStrength);
 		ocean.getComponent!(Transform).scale = getComponent!(Transform).scale;
 		
 		

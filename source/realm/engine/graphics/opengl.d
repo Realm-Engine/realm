@@ -59,6 +59,7 @@ enum GState : GLenum
 {
     DepthTest = GL_DEPTH_TEST,
     Blend = GL_BLEND,
+    FrameBufferSRGB = GL_FRAMEBUFFER_SRGB,
     None
 }
 
@@ -695,7 +696,7 @@ struct GFrameBufferAttachment
         desc.filter = GTextureFilterFunc.LINEAR;
         if(type == GFrameBufferAttachmentType.COLOR_ATTACHMENT)
         {
-            desc.fmt = ImageFormat.SRGB8;
+            desc.fmt = ImageFormat.RGB8;
             
         }
         else if(type == GFrameBufferAttachmentType.DEPTH_ATTACHMENT)

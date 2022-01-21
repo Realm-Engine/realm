@@ -64,7 +64,7 @@ class RealmGame : RealmApp
 		crate.entityName = "Crate";
 		crate.getComponent!(Transform).position = vec3(0,1,-6);
 		crate.getComponent!(Transform).scale = vec3(0.25,0.25,0.25);
-		crate.getMaterial().textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+		crate.getMaterial().textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		crate.getMaterial().textures.diffuse= new Texture2D(&crateDiffuse);
 		crate.getMaterial().textures.normal= new Texture2D(&crateNormal);
 		crate.getMaterial().packTextureAtlas();
@@ -73,7 +73,7 @@ class RealmGame : RealmApp
 		plane.entityName = "Plane";
 		plane.getComponent!(Transform).position = vec3(0,0.5,0);
 		plane.getComponent!(Transform).rotation = vec3(90,0,0);
-		plane.getMaterial().textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+		plane.getMaterial().textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		plane.getMaterial.textures.diffuse = Vector!(ubyte,4)(255);
 		plane.getMaterial.textures.normal = Vector!(ubyte,4)(0);
 		plane.active = false;
