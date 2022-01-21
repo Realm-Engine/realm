@@ -187,7 +187,9 @@ enum ImageFormat : ImageFormatData
 	RED8 = ImageFormatData(BaseImageFormat.RED,SizedImageFormat.RED8,1,8),
 	RGBA32F = ImageFormatData(BaseImageFormat.RGBA,SizedImageFormat.RGBA32F,4,32),
 	RGBA16 = ImageFormatData(BaseImageFormat.RGBA,SizedImageFormat.RGBA16,4,16),
-	RED32F = ImageFormatData(BaseImageFormat.RED,SizedImageFormat.RED32F,1,32)
+	RED32F = ImageFormatData(BaseImageFormat.RED,SizedImageFormat.RED32F,1,32),
+	RGB32F = ImageFormatData(BaseImageFormat.RGB,SizedImageFormat.RGB32F,3,32),
+	SRGB8 = ImageFormatData(BaseImageFormat.RGB,SizedImageFormat.SRGB8,3,8)
 
 }
 

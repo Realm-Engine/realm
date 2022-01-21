@@ -305,7 +305,9 @@ WriteImage:
                 if(materialTexture.isTexture)
 				{
                     Texture2D tex = cast(Texture2D) *materialTexture;
+                    
                     textureAtlas.uploadSubImage(0,rowWidth,totalHeight,width,height,tex.buf8.ptr);
+                    
 				}
                 else
 				{

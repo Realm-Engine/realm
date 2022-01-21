@@ -13,7 +13,7 @@ import realm.util;
 import realm.entitymanager;
 import realm.terraingeneration;
 alias WorldMaterialLayout = Alias!(["heightMap" : UserDataVarTypes.TEXTURE2D,
-									"heightMap2" : UserDataVarTypes.TEXTURE2D,
+									"normalMap" : UserDataVarTypes.TEXTURE2D,
 									"heightStrength" : UserDataVarTypes.FLOAT,
 									"oceanLevel" : UserDataVarTypes.FLOAT]);
 alias WorldMaterial = Alias!(Material!WorldMaterialLayout);
@@ -41,7 +41,6 @@ class World
 
 		WorldMaterial.initialze();
 		WorldMaterial.reserve(1);
-		heightImg2 = readImageBytes("$Assets/Images/noiseTexture2.png");
 		//setComponent!(Transform)(new Transform);
 		transform = getComponent!(Transform);
 		material = new WorldMaterial;
@@ -54,23 +53,22 @@ class World
 		transform.scale = vec3(20,1,15);
 		shaderProgram = loadShaderProgram("$Assets/Shaders/world.shader","World");
 		
-		material.heightStrength = 2;
-		material.oceanLevel = 0.5;
+		material.heightStrength = 1.5;
+		material.oceanLevel = 0.3;
 		material.setShaderProgram(shaderProgram);
 		material.textures.heightMap = new Texture2D(getComponent!(TerrainGeneration).getHeightMap());
-		material.textures.heightMap2 = new Texture2D(&heightImg2);
+		material.textures.normalMap = new Texture2D(getComponent!(TerrainGeneration).getNormalMap());
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		
 		ocean = manager.instantiate!(Ocean)(material.oceanLevel,material.textures.heightMap.texture,material.heightStrength);
 		ocean.getComponent!(Transform).scale = getComponent!(Transform).scale;
-
+		
 		
 
 		scope(exit)
 		{
-
-			heightImg2.free();
+			
 		}
 
 	}

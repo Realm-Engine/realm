@@ -695,7 +695,7 @@ struct GFrameBufferAttachment
         desc.filter = GTextureFilterFunc.LINEAR;
         if(type == GFrameBufferAttachmentType.COLOR_ATTACHMENT)
         {
-            desc.fmt = ImageFormat.RGB8;
+            desc.fmt = ImageFormat.SRGB8;
             
         }
         else if(type == GFrameBufferAttachmentType.DEPTH_ATTACHMENT)
@@ -902,7 +902,7 @@ struct GSamplerObject(GTextureType target)
         wrapFunc = desc.wrap;
         filterFunc = desc.filter;
         internalFormat = desc.fmt.sizedFormat;
-        dataType = imageFormatToGLDataType(desc.fmt.baseFormat);
+        dataType = sizeFormatToGLDataType(desc.fmt.sizedFormat);
         format = desc.fmt.baseFormat;
         mipLevels = 3;
         channels = desc.fmt.channels;
@@ -1003,6 +1003,14 @@ struct GSamplerObject(GTextureType target)
 	
         void uploadSubImage(int level, int xoffset, int yoffset, int width, int height, ubyte* data)
         //in(data !is null)
+        {
+            //assert(data != null);
+            glBindTexture(target, id);
+            glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, dataType, data);
+            glBindTexture(target, 0);
+        }
+		void uploadSubImage(int level, int xoffset, int yoffset, int width, int height, ushort* data)
+			//in(data !is null)
         {
             //assert(data != null);
             glBindTexture(target, id);
@@ -1293,7 +1301,8 @@ enum GSizedImageFormat : GLenum
     SRGBA8 = GL_SRGB8_ALPHA8,
     DEPTH = GL_DEPTH_COMPONENT,
     DEPTH_STENCIL = GL_DEPTH_STENCIL,
-    RED32F = GL_R32F
+    RED32F = GL_R32F,
+    RGB32F = GL_RGB32F
 
 }
 
@@ -1427,6 +1436,39 @@ GLenum imageFormatToGLDataType(GBaseImageFormat fmt)
 		default:
 			return GL_FLOAT;
     }
+}
+
+
+
+GLenum sizeFormatToGLDataType(GSizedImageFormat fmt)
+{
+	switch (fmt)
+    {
+		case GSizedImageFormat.RED8 :
+			return GL_UNSIGNED_BYTE;
+        case  GSizedImageFormat.RGB8:
+            return GL_UNSIGNED_BYTE;
+		case  GSizedImageFormat.RGBA8:
+            return GL_UNSIGNED_BYTE;
+		case  GSizedImageFormat.SRGB8:
+            return GL_UNSIGNED_BYTE;
+		case  GSizedImageFormat.SRGBA8:
+            return GL_UNSIGNED_BYTE;
+		case GSizedImageFormat.R16 :
+			return GL_UNSIGNED_SHORT;
+        case GSizedImageFormat.RGBA16:
+			return GL_UNSIGNED_SHORT;
+        case GSizedImageFormat.RGBA32F | GSizedImageFormat.RED32F:
+            return GL_FLOAT;
+		case GSizedImageFormat.DEPTH_STENCIL:
+			return GL_DEPTH24_STENCIL8;
+		case GSizedImageFormat.DEPTH:
+			return GL_FLOAT;
+		default:
+			return GL_FLOAT;
+    }
+
+
 }
 
 void drawIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)()

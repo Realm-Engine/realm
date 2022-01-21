@@ -1,7 +1,12 @@
 
 #version 430
 layout(local_size_x = 1, local_size_y = 1) in;
-layout(rgba8, binding = 0) uniform image2D img_output;
+layout(rgba8, binding = 0) writeonly uniform image2D img_output;
+
+float rand(vec2 co){
+    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
 vec4 permute(vec4 t) {
     return t * (t * 34.0 + 133.0);
 }
@@ -90,28 +95,89 @@ vec4 openSimplex2SDerivatives_ImproveXY(vec3 X) {
     return vec4(result.xyz * orthonormalMap, result.w);
 }
 
+vec3 voronoi(vec2 t)
+{
+    vec2 baseCell = floor(t);
+
+    float minDistToCell = 10;
+    vec2 closestCell;
+    vec2 toClosestCell;
+    for(int x = -1; x <= 1; x++)
+    {
+        for(int y = -1; y <= 1; y++)
+        {
+            vec2 cell = baseCell + vec2(x,y);
+            vec2 cellPos = cell + rand(cell);
+            vec2 toCell = cellPos - t;
+            float dist = length(toCell);
+            if(dist < minDistToCell)
+            {
+                minDistToCell = dist;
+                closestCell = cell;
+                toClosestCell = toCell;
+            }
+            
+        
+        }
+    
+    }
+    float minEdgeDistance = 10;
+    for(int x = -1; x <= 1; x++)
+    {
+        for(int y = -1; y <= 1; y++)
+        {
+            vec2 cell = baseCell + vec2(x,y);
+            vec2 cellPos = cell + rand(cell);
+            vec2 toCell = cellPos - t;
+            vec2 diffToClosestCell = abs(closestCell - cell);
+            bool isClosestCell = diffToClosestCell .x + diffToClosestCell.y < 0.1;
+            if(!isClosestCell)
+            {
+                vec2 toCenter = (toClosestCell + toCell) *0.5;
+                vec2 cellDifference = normalize(toCell - toClosestCell);
+                float edgeDistance = dot(toCenter, cellDifference);
+                minEdgeDistance = min(minEdgeDistance,edgeDistance);
+            
+            }
+        }
+    }
+
+    float random = rand(closestCell);
+    
+
+    return vec3(minDistToCell,random,minEdgeDistance);
+
+}
+
+
+
 void main()
 {
 
-    vec3 uv = vec3(gl_GlobalInvocationID.xyz);
+    vec3 uv = vec3(gl_GlobalInvocationID.xyz) / vec3(imageSize(img_output),1);
     vec4 simplexVal = vec4(0);
     float persistence =0.5;
     float amplitude = 1;
     float maxAmp = 0;
-    float frequencey = 0.005;
+    float frequencey = 2;
     for (int i = 0; i <6; i++)
     {
         simplexVal += openSimplex2SDerivatives_Conventional(uv * frequencey) * amplitude;
-        maxAmp += amplitude;
-        amplitude *= persistence;
-
+        
         frequencey *= 2;
-    }
-    simplexVal /= maxAmp;
-    //simplexVal = simplexVal * (255 - 0) / 2 + (255) / 2;
+        maxAmp += amplitude;
+        amplitude *= 0.5;
 
-	vec4 pixel = vec4(vec3(simplexVal.w),1);
+    }
+
+    simplexVal /= maxAmp;
+    
+
+    simplexVal = (simplexVal * 255) / (255-0);
+    vec3 voronoiVal = voronoi(uv.xy * 8);
+	vec4 pixel = vec4(vec3(voronoiVal.z + simplexVal.w),1);
 	ivec2 coords = ivec2(gl_GlobalInvocationID.xy);
 	imageStore(img_output,coords,pixel);
+
 
 }

@@ -3,7 +3,7 @@
 struct Material
 {
 	vec4 heightMap;
-	vec4 heightMap2;
+	vec4 normalMap;
 	float heightStrength;
 	float packing1;
 	float oceanLevel;
@@ -17,9 +17,7 @@ vec4 vertex(REVertexData IN)
 {
 	
 	vec4 heightSample =texture(objectTexture,samplerUV(IN.material.heightMap,IN.texCoord));
-	vec4 heightSample2 = texture(objectTexture, samplerUV(IN.material.heightMap2, IN.texCoord));
-	float height = (heightSample.x + heightSample2.x);
-	height = height;
+	float height = (heightSample.x) * getObjectData(heightStrength);
 	IN.material.height = height;
 	vec3 position = v_Position + vec3(0,height,0);
 	RESurfaceDataOut.TBN = calculateTBN();
@@ -64,9 +62,7 @@ vec4 fragment()
 	vec3 terrainColor = mix(normalize(vec3(177, 185, 40)), normalize(vec3(25, 93, 0)), dist);
 
 	//outColor = vec4(height,1-height,0,1.0);
-	vec3 normal = grayToNormal(objectTexture,samplerUV(getObjectData(heightMap),RESurfaceDataIn.texCoord),0.0071358);
-	vec3 normal2 = grayToNormal(objectTexture, samplerUV(getObjectData(heightMap2), RESurfaceDataIn.texCoord), 0.007135);
-	normal += normal2;
+	vec3 normal = SAMPLE_TEXTURE(normalMap, RESurfaceDataIn.texCoord).rgb;
 	normal = normal * 2;
 	normal = normalize(RESurfaceDataIn.TBN * normal);
 

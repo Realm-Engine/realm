@@ -106,25 +106,14 @@ IFImage readImageBytes(string path)
 	return img;
 }
 
-Image readImage(string path)
+void writeImageBytes(IFImage* image,string path)
 {
-	File source = File(path);
-	Image texture;
-	long fmtIndix = lastIndexOf(path,'.');
-	string fmt = path[fmtIndix+1..path.length];
-	switch(fmt)
-	{
-		case "png":
-			texture = PNG.load(source);
-			break;
-		case "tga":
-			texture = TGA.load(source);
-			break;
-		default:
-			writeln("Unsupported image format");
-			break;
-	}
-	return texture;
+	string sysPath = VirtualFS.getSystemPath(path);
+	IFImage img = read_image(sysPath,4);
+	long fmtIndix = lastIndexOf(sysPath,'.');
+	string fmt = sysPath[fmtIndix+1..sysPath.length];
+
+
 }
 
 
