@@ -17,6 +17,7 @@ class UIMenu
 	private RealmUI.UIElement nextEntity;
 	private RealmUI.UIElement lastEntity;
 	private RealmUI.UIElement toggleActive;
+	private RealmUI.UIElement generateMapButton;
 	private EntityManager entityManager;
 	private int currentEntity;
 	private vec4 color = vec4(24,24,25,1);
@@ -35,6 +36,7 @@ class UIMenu
 		nextEntity = RealmUI.createElement(vec3(50,100,0),vec3(50,25,1),vec3(0));
 		lastEntity = RealmUI.createElement(vec3(-50,100,0),vec3(50,25,1),vec3(0));
 		toggleActive = RealmUI.createElement(vec3(0,50,0),vec3(100,25,1),vec3(0));
+		generateMapButton = RealmUI.createElement(vec3(600,50,0),vec3(100,50,1),vec3(0));
 
 	}
 
@@ -44,7 +46,7 @@ class UIMenu
 		RealmUI.drawPanel(infoPanel,color);
 		RealmUI.containerPush(infoPanel);
 		GameEntity[] gameEntities = entityManager.getEntities!(GameEntity)();
-		
+		World gameWorld = entityManager.getEntities!(World)()[0];
 
 		if(RealmUI.button(button,vec4(0,0,0,1),vec4(1),"Press me!",RealmUI.TextLayout(4,6,24)) == RealmUI.ButtonState.PRESSED)
 		{
@@ -71,6 +73,10 @@ class UIMenu
 		}
 		RealmUI.drawTextString(entityName,vec4(0,0,0,1),color,RealmUI.TextLayout(4,6,16),entity.entityName);
 		RealmUI.containerPop();
+		if(RealmUI.button(generateMapButton,vec4(0,0,0,1),color,"Generate",RealmUI.TextLayout(4,6,16)) == RealmUI.ButtonState.PRESSED)
+		{
+			gameWorld.generateWorld();
+		}
 	}
 
 	void update()

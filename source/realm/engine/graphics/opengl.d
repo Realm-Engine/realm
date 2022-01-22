@@ -660,6 +660,15 @@ class GShaderProgramModel(T...)
     {
         glUniform1i(loc, value);
     }
+    
+    void setUniformFloat(int loc, float value)
+    in(loc >= 0, "Must use valid uniform location")
+	{
+        glUniform1f(loc,value);
+
+
+	}
+
 	static int getNumSupportedProgramBinaryFormats()
     {
         int result;

@@ -56,9 +56,9 @@ class World
 		material.oceanLevel = 0.3;
 		material.setShaderProgram(shaderProgram);
 		//material.textures.heightMap = new Texture2D(getComponent!(TerrainGeneration).getHeightMap());
-		material.textures.normalHeightMap = new Texture2D(getComponent!(TerrainGeneration).getNormalMap());
+		
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
-		material.packTextureAtlas();
+		generateWorld();
 		
 		ocean = manager.instantiate!(Ocean)(material.oceanLevel,material.textures.normalHeightMap.texture,material.heightStrength);
 		ocean.getComponent!(Transform).scale = getComponent!(Transform).scale;
@@ -77,6 +77,12 @@ class World
 		squareUV = [vec2(0,0),vec2(1,0),vec2(1,1),vec2(0,1)];
 		
 
+	}
+
+	void generateWorld()
+	{
+		material.textures.normalHeightMap = new Texture2D(getComponent!(TerrainGeneration).generateMap());
+		material.packTextureAtlas();
 	}
 
 	

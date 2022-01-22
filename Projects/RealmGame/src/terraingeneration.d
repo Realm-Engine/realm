@@ -7,6 +7,7 @@ import realm.engine.logging;
 import realm.engine.ui.realmui;
 import realm.engine.core;
 import std.conv;
+import realm.engine.app;
 class TerrainGeneration
 {
 	private ComputeShader _heightMapProgram;
@@ -16,6 +17,9 @@ class TerrainGeneration
 	//private RealmUI.UIElement outputPanel;
 	private IFImage heightMapImage;
 	private IFImage normalMapImage;
+
+
+
 	private Texture2D texture;
 	this()
 	{
@@ -38,11 +42,22 @@ class TerrainGeneration
 		_normalMap.create();
 		_normalMap.textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
 		_normalMap.store(2048,2048);
+		
+		
+		//heightMapImage.free();
+
+		
+		
+
+	}
+
+	IFImage* generateMap()
+	{
 		computeJob(&_heightMap,_heightMapProgram);
 		Logger.LogInfo("Generating height map...");
 
 		ubyte[] heightData = _heightMap.readPixels(0);
-		
+
 		heightMapImage.buf8.length = heightData.length ;
 
 		heightMapImage.buf8 = heightData;
@@ -52,23 +67,21 @@ class TerrainGeneration
 		heightMapImage.c = 4;
 		heightMapImage.bpc = 8;
 		computeJob(&_normalMap,&_heightMap,_normalMapProgram);
+
+
 		Logger.LogInfo("Generating normal map...");
 		ubyte[] normalData = _normalMap.readPixels(0);
 		normalMapImage.buf8.length = normalData.length;
 		normalMapImage.buf8 = normalData;
-		
+
 		normalMapImage.w = _normalMap.width;
 		normalMapImage.h = _normalMap.height;
 		normalMapImage.c = 4;
 		normalMapImage.bpc = 8;
-		
+
 		_heightMap.free();
 		_normalMap.free();
-		//heightMapImage.free();
-
-		
-		
-
+		return &normalMapImage;
 	}
 
 
@@ -80,8 +93,10 @@ class TerrainGeneration
 
 	void computeJob(SamplerObject!(TextureType.TEXTURE2D)* output, ComputeShader shader)
 	{
+		import std.traits;
 		shader.bindImageWrite(output,0,0);
 		shader.use();
+		shader.setUniformFloat(0,RealmApp.getTicks());
 		shader.waitImageWriteComplete();
 		shader.dispatch(output.width,output.height,1);
 		shader.unbind();
@@ -93,6 +108,7 @@ class TerrainGeneration
 	{
 		shader.bindImageWrite(output,0,0);
 		shader.bindImageWrite(input,0,1);
+		
 		shader.use();
 		shader.waitImageWriteComplete();
 		shader.dispatch(output.width,output.height,1);

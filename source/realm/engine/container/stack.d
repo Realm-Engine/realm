@@ -4,8 +4,10 @@ class Stack(T)
 {
 	private T[] arr;
 	private int index;
-	this(size_t len)
+	private double growthFactor;
+	this(size_t len,double growthFactor = 1.5)
 	{
+		this.growthFactor = growthFactor;
 		arr.length = len;
 		index = -1;
 	}
@@ -15,6 +17,8 @@ class Stack(T)
 	{
 		index++;
 		arr[index] = val;
+		
+
 		
 	}
 
@@ -39,7 +43,7 @@ class Stack(T)
 		return index < 0;
 	}
 
-
+	
 
 
 

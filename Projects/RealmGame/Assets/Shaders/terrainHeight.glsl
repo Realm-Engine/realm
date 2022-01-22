@@ -2,18 +2,20 @@
 #version 430
 layout(local_size_x = 1, local_size_y = 1) in;
 layout(rgba8, binding = 0) writeonly uniform image2D img_output;
+layout(location = 0) uniform float u_seed;
+
 
 float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
 vec4 permute(vec4 t) {
-    return t * (t * 34.0 + 133.0);
+    return (t + u_seed) * ((t + u_seed) * 34.0 + 133.0);
 }
 
 // Gradient set is a normalized expanded rhombic dodecahedron
 vec3 grad(float hash) {
-    
+    hash += u_seed;
     // Random vertex of a cube, +/- 1 each
     vec3 cube = mod(floor(hash / vec3(1.0, 2.0, 4.0)), 2.0) * 2.0 - 1.0;
     
@@ -107,7 +109,7 @@ vec3 voronoi(vec2 t)
         for(int y = -1; y <= 1; y++)
         {
             vec2 cell = baseCell + vec2(x,y);
-            vec2 cellPos = cell + rand(cell);
+            vec2 cellPos = cell + rand(cell );
             vec2 toCell = cellPos - t;
             float dist = length(toCell);
             if(dist < minDistToCell)
@@ -127,7 +129,7 @@ vec3 voronoi(vec2 t)
         for(int y = -1; y <= 1; y++)
         {
             vec2 cell = baseCell + vec2(x,y);
-            vec2 cellPos = cell + rand(cell);
+            vec2 cellPos = cell + rand(cell );
             vec2 toCell = cellPos - t;
             vec2 diffToClosestCell = abs(closestCell - cell);
             bool isClosestCell = diffToClosestCell .x + diffToClosestCell.y < 0.1;
@@ -142,7 +144,7 @@ vec3 voronoi(vec2 t)
         }
     }
 
-    float random = rand(closestCell);
+    float random = rand(closestCell );
     
 
     return vec3(minDistToCell,random,minEdgeDistance);

@@ -12,7 +12,8 @@
 		"realm": "~main"
 	},
 	"extraDependencyFiles": [
-		"./Assets/Shaders/*.shader"
+		"./Assets/Shaders/*.shader",
+		"./Assets/Shaders/*.glsl"
 	],
 	"configurations": [
 		{
