@@ -36,6 +36,7 @@ static class RealmUI
 	{
 		static TextMaterial[UUID] materials;
 		static Transform[UUID] transforms;
+		static string[UUID] strings;
 	}
 
 	
@@ -228,6 +229,7 @@ static class RealmUI
 
 	static void drawTextString(T...)(UIElement element, vec4 textColor, vec4 panelColor, TextLayout layout ,string text,T t )
 	{
+		import std.algorithm.comparison;
 		import std.format : format;
 		font.setPixelSize(0,layout.fontSize);
 		drawPanel(element,panelColor);
@@ -242,8 +244,21 @@ static class RealmUI
 		material = TextElements.materials[element];
 		SamplerObject!(TextureType.TEXTURE2D)* materialAtlas = material.getTextureAtlas();
 		materialAtlas.textureDesc = TextureDesc(ImageFormat.RED8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
-
-		packStringTexture(materialAtlas,text.format(t),layout);
+		string formatted = text.format(t);
+		TextElements.strings.update(element,
+									{
+										
+										packStringTexture(materialAtlas,formatted,layout);
+										return formatted;
+									},
+									(string s)
+									 {
+										if(cmp(formatted,s) != 0)
+										{
+											packStringTexture(materialAtlas,formatted,layout);
+										}
+										return formatted;
+									 });
 		material.fontTexture = vec4(1,1,0,0);
 		material.color = textColor;
 		UIElements.transforms[element].updateTransformation();

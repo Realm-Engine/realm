@@ -52,7 +52,7 @@ class MainState : GameState
 		world = manager.instantiate!(World)(manager);
 		menu = manager.instantiate!(UIMenu)(cam,manager);
 		crate = manager.instantiate!(GameEntity)("$Assets/Models/wooden crate.obj");
-		menu.active = false;
+		//menu.active = false;
 		crate.getMaterial().color = vec4(1,1,1,1.0);
 		crate.entityName = "Crate";
 		crate.getComponent!(Transform).position = vec3(0,1,-6);

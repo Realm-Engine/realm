@@ -65,7 +65,7 @@ class GameEntity
 	{
 		if(active)
 		{
-			renderer.submitMesh!(SimpleMaterial)(*mesh,transform,material);
+			renderer.submitMesh!(SimpleMaterial,true)(*mesh,transform,material);
 		}
 
 
