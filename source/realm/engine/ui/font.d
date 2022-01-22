@@ -44,9 +44,11 @@ static this()
 struct Font
 {
 
+    import std.typecons;
     private FT_Face face;
-    private IFImage[char] glyphCache;
-
+    private IFImage[Tuple!(uint,uint,char)] glyphCache;
+    private uint currentWidth;
+    private uint currentHeight;
     static Font load(string fontPath)
     {
         Font font;
@@ -60,32 +62,23 @@ struct Font
     void setPixelSize(uint width, uint height)
     {
         FT_Set_Pixel_Sizes(face, width, height);
-        glyphCache.clear();
+        currentWidth = width;
+        currentHeight = height;
+        //glyphCache.clear();
+        
     }
 
-    IFImage getChar(char c)
-    {
+    private IFImage loadChar(char c)
+	{
         IFImage result;
-        FT_Bitmap bitmap;
-        if (c in glyphCache)
-        {
-            return glyphCache[c];
-        }
-        else
-        {
-            if (FT_Error err = FT_Load_Char(face, cast(uint)c, FT_LOAD_RENDER) != 0)
-            {
-                Logger.LogError("Could not load glyph %s\nError: %s", c,FT_Error_String(err));
-                return result;
-            }
-            else
-            {
-                bitmap = face.glyph.bitmap;
-                
-            }
-        }
+        if (FT_Error err = FT_Load_Char(face, cast(uint)c, FT_LOAD_RENDER) != 0)
+		{
+			Logger.LogError("Could not load glyph %s\nError: %s", c,FT_Error_String(err));
+			return result;
+		}
 
-        result.w = bitmap.width;
+	    FT_Bitmap bitmap = face.glyph.bitmap;
+		result.w = bitmap.width;
         result.h = bitmap.rows;
         if (bitmap.pixel_mode in pixelModeChannelMap)
         {
@@ -119,9 +112,14 @@ struct Font
 		{
             result.buf8 = cast(ubyte[]) bitmap.buffer[0 .. arrayLength].dup;
 		}
-        glyphCache[c] = result;
         return result;
+		
+	}
 
+    IFImage getChar(char c)
+    {
+        
+        return glyphCache.require(tuple(currentWidth,currentHeight,c),loadChar(c));
     }
 
 }

@@ -864,7 +864,11 @@ struct GSamplerObject(GTextureType target)
     
     invariant()
 	{
-        assert(texSlot >= 0,"Texture slot must be positive");
+        if(!destroyed)
+		{
+            assert(texSlot >= 0,"Texture slot must be positive");
+		}
+
         assert(mipLevels >= 0, "Mipmap count must be positive");
 	}
 
@@ -1061,6 +1065,8 @@ struct GSamplerObject(GTextureType target)
         glDeleteTextures(1,&id);
         destroyed = true;
 	}
+
+ 
 
     void freeTextures(GSamplerObject!(target)*[]textures)
 	{

@@ -31,10 +31,7 @@ class TerrainGeneration
 		_normalMapProgram.computeShader = normalMapShader;
 		_normalMapProgram.compile();
 		int[3] workGroupCount;
-		workGroupCount[0] = _heightMapProgram.getParameter!(int)(ShaderParameter.COMPUTE_WORK_GROUP_COUNT,0);
-		workGroupCount[1] = _heightMapProgram.getParameter!(int)(ShaderParameter.COMPUTE_WORK_GROUP_COUNT,1);
-		workGroupCount[2] = _heightMapProgram.getParameter!(int)(ShaderParameter.COMPUTE_WORK_GROUP_COUNT,2);
-		Logger.LogInfo("Max compute work counts: X: %d, Y: %d, Z: %d",workGroupCount[0],workGroupCount[1],workGroupCount[2]);
+
 		_heightMap.create();
 		_heightMap.textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
 		_heightMap.store(2048,2048);
@@ -42,7 +39,8 @@ class TerrainGeneration
 		_normalMap.textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
 		_normalMap.store(2048,2048);
 		computeJob(&_heightMap,_heightMapProgram);
-		
+		Logger.LogInfo("Generating height map...");
+
 		ubyte[] heightData = _heightMap.readPixels(0);
 		
 		heightMapImage.buf8.length = heightData.length ;
@@ -54,6 +52,7 @@ class TerrainGeneration
 		heightMapImage.c = 4;
 		heightMapImage.bpc = 8;
 		computeJob(&_normalMap,&_heightMap,_normalMapProgram);
+		Logger.LogInfo("Generating normal map...");
 		ubyte[] normalData = _normalMap.readPixels(0);
 		normalMapImage.buf8.length = normalData.length;
 		normalMapImage.buf8 = normalData;

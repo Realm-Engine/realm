@@ -7,7 +7,7 @@ import realm.engine.ui.realmui;
 import gl3n.linalg;
 import realm.engine.app;
 import realm.engine.input;
-
+import realm.engine.logging;
 import realm.mainstate;
 class MainMenu : GameState
 {
@@ -46,6 +46,13 @@ class MainMenu : GameState
 		}
 		RealmUI.containerPop();
 		
+	}
+
+	~this()
+	{
+		RealmUI.deleteElement(mainPanel);
+		RealmUI.deleteElement(startButton);
+		RealmUI.deleteElement(text);
 	}
 
 }

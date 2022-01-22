@@ -23,6 +23,7 @@ static class RealmUI
 	{
 		UUID id;
 		alias id this;
+
 	}
 
 	protected struct UIElements
@@ -146,6 +147,22 @@ static class RealmUI
 
 	}
 
+	static void deleteElement(UIElement element)
+	{
+		if(auto material = element in UIElements.materials)
+		{
+			UIElements.materials.remove(element);
+			UIElements.transforms.remove(element);
+			material.destroy();
+		}
+		if(auto material = element in TextElements.materials)
+		{
+			TextElements.materials.remove(element);
+			TextElements.transforms.remove(element);
+			material.destroy();
+		}
+	}
+
 	static void drawPanel(UIElement element,vec4 color)
 	{
 		drawPanel(UIElements.materials[element],UIElements.transforms[element],color);
@@ -157,7 +174,7 @@ static class RealmUI
 	{
 
 		import std.conv;
-		auto chars = zip(text,text.map!(c => font.getChar(to!char(c))));
+		auto chars = zip(text,text.map!(c => font.getChar(to!char(c)))).take(text.length);
 		int totalWidth = 0;
 		int height = int.min;
 
@@ -305,7 +322,6 @@ static class RealmUI
 		return vertices;
 	}
 
-	
 
 	static void drawPanel(UIMaterial material, Transform transform,vec4 color)
 	{
