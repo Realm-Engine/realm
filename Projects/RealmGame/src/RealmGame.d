@@ -42,7 +42,7 @@ class RealmGame : RealmApp
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height),0.1,200,60);
 		Renderer.get.activeCamera = &cam;
 		VirtualFS.registerPath!("Projects/RealmGame/Assets")("Assets");
-		
+		RealmUI.themePush(RealmUI.UITheme(vec4(1),vec4(0,0,0,1)));
 
 
 		_stateMachine = manager.instantiate!(StateMachine)();

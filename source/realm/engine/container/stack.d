@@ -38,13 +38,26 @@ class Stack(T)
 		return arr[index];
 	}
 
+	T* peekRef() nothrow @nogc
+	in(index >=0 && index < arr.length ,"Stack out of range")
+	{
+		return &arr[index];
+	}
+
 	@property bool empty() nothrow @nogc
 	{
 		return index < 0;
 	}
 
+	@property length() nothrow @nogc
+	{
+		return index + 1;
+	}
 	
-
+	@property capacity() nothrow @nogc
+	{
+		return arr.length;
+	}
 
 
 

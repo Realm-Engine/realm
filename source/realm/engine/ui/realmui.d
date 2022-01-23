@@ -14,8 +14,10 @@ import realm.engine.ui.font;
 import std.algorithm;
 import realm.engine.debugdraw;
 import realm.engine.container.stack;
+import std.string;
 static class RealmUI
 {
+	enum bool isValidUIMaterial(T) = (isMaterial!(T));
 
 	
 
@@ -39,13 +41,20 @@ static class RealmUI
 		static string[UUID] strings;
 	}
 
-	
+	struct UITheme
+	{
+		vec4 panelColor;
+		vec4 textColor;
+		
+
+	}
 
 	struct TextLayout
 	{
 		int charSpacing;
 		int spaceWidth;
 		uint fontSize;
+
 	}
 
 	enum ButtonState
@@ -72,8 +81,12 @@ static class RealmUI
 	private static Mesh panelMesh;
 	private static Font font;
 	private static Stack!(UIElement) containerStack;
+	private static Stack!(UITheme) themeStack;
 	private static UIElement parentContainer;
 	private static InputEvent _currentEvent;
+	private static UIElement focusedElement;
+
+
 	static void initialize()
 	{
 		panelImage = readImageBytes("$EngineAssets/Images/ui-panel.png");
@@ -104,7 +117,9 @@ static class RealmUI
 		parentContainer = createElement(vec3(0),vec3(1),vec3(0));
 
 		containerStack = new Stack!(UIElement)(32);
+		themeStack = new Stack!(UITheme)(8);
 		containerPush(parentContainer);
+		themePush(UITheme(vec4(1),vec4(1)));
 		InputManager.registerInputEventCallback(&inputEvent);
 
 	}
@@ -164,9 +179,9 @@ static class RealmUI
 		}
 	}
 
-	static void drawPanel(UIElement element,vec4 color)
+	static void drawPanel(UIElement element)
 	{
-		drawPanel(UIElements.materials[element],UIElements.transforms[element],color);
+		drawPanel(UIElements.materials[element],UIElements.transforms[element]);
 	}
 
 	private static void packStringTexture(SamplerObject!(TextureType.TEXTURE2D)* sampler, string text,TextLayout layout = TextLayout(4,8,12))
@@ -227,70 +242,86 @@ static class RealmUI
 		}
 	}
 
-	static void drawTextString(T...)(UIElement element, vec4 textColor, vec4 panelColor, TextLayout layout ,string text,T t )
+	static void drawTextString(T...)(UIElement element,TextLayout layout ,string text,T t )
 	{
 		import std.algorithm.comparison;
 		import std.format : format;
 		font.setPixelSize(0,layout.fontSize);
-		drawPanel(element,panelColor);
+		drawPanel(element);
 		TextMaterial material;
+		
 		if(element!in TextElements.materials)
 		{
 			material = new TextMaterial;
 			material.setShaderProgram(textProgram);
+			TextElements.strings[element] = "";
 			TextElements.materials[element] = material;
 		}
 		TextElements.transforms[element] = UIElements.transforms[element];
+		Transform transform = TextElements.transforms[element];
 		material = TextElements.materials[element];
 		SamplerObject!(TextureType.TEXTURE2D)* materialAtlas = material.getTextureAtlas();
 		materialAtlas.textureDesc = TextureDesc(ImageFormat.RED8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		string formatted = text.format(t);
+		int numCharsFit =cast(int)( transform.scale.x / cast(float) layout.fontSize);
+		string justified = rightJustify(formatted,numCharsFit);
 		TextElements.strings.update(element,
 									{
 										
-										packStringTexture(materialAtlas,formatted,layout);
+										packStringTexture(materialAtlas,justified[0..numCharsFit],layout);
 										return formatted;
 									},
 									(string s)
 									 {
 										if(cmp(formatted,s) != 0)
 										{
-											packStringTexture(materialAtlas,formatted,layout);
+											packStringTexture(materialAtlas,justified[0..numCharsFit],layout);
 										}
 										return formatted;
 									 });
 		material.fontTexture = vec4(1,1,0,0);
-		material.color = textColor;
+		applyTheme!(TextMaterial)(material);
 		UIElements.transforms[element].updateTransformation();
 		RealmVertex[] vertices = panelVertices(UIElements.transforms[element],material);
 		textBatch.submitVertices!(TextMaterial)(vertices,panelMesh.faces,material);
 	}
 
-	static ButtonState button(UIElement element,vec4 textColor,vec4 panelColor,string text,TextLayout layout = TextLayout(4,8,12))
+	static bool mouseOverElement(UIElement element, RealmVertex[] vertices)
 	{
-		import std.stdio;
 		double mouseX = InputManager.getMouseAxis(MouseAxis.X);
 		double mouseY = InputManager.getMouseAxis(MouseAxis.Y);
 		auto windowSize = RealmApp.getWindowSize();
 		mouseY = ((1 - (mouseY/cast(double)windowSize[1])) * windowSize[1]);
-		UIMaterial material =UIElements.materials[element];
-		material.color = panelColor;
+		AABB panelAABB = AABB.from_points(vertices.map!(v => vec3(v.position)).array);
+		return (mouseX >= panelAABB.min.x && mouseX <= panelAABB.max.x) && (mouseY >= panelAABB.min.y && mouseY <= panelAABB.max.y);
+	}
+
+	static ButtonState button(UIElement element,string text,TextLayout layout = TextLayout(4,8,12))
+	{
+		import std.stdio;
+		
 		Transform transform = UIElements.transforms[element];
+		UIMaterial material = UIElements.materials[element];
 
 		RealmVertex[] panelVertices = panelVertices!(UIMaterial)(transform,material);
-		AABB panelAABB = AABB.from_points(panelVertices.map!(v => vec3(v.position)).array);
+		
 		ButtonState result = ButtonState.NONE;
-		if((mouseX >= panelAABB.min.x && mouseX <= panelAABB.max.x) && (mouseY >= panelAABB.min.y && mouseY <= panelAABB.max.y) && _currentEvent.action == InputActionType.MouseAction)
+		if(mouseOverElement(element,panelVertices) && _currentEvent.action == InputActionType.MouseAction)
 		{
 			if(_currentEvent.mouseEvent.state == KeyState.Press)
 			{
 				material.updateAtlas(pressedButtonImage,&material.baseTexture);
 				result = ButtonState.PRESSED;
 			}
+			else if(_currentEvent.mouseEvent.state == KeyState.Release)
+			{
+				material.updateAtlas(panelImage,&material.baseTexture);
+				result = ButtonState.RELEASED;
+			}
 			else
 			{
 				result = ButtonState.HOVER;
-				material.updateAtlas(panelImage,&material.baseTexture);
+				//material.updateAtlas(panelImage,&material.baseTexture);
 			}
 			
 		}
@@ -299,8 +330,8 @@ static class RealmUI
 			material.updateAtlas(panelImage,&material.baseTexture);
 		}
 
-		drawPanel(element,panelColor);
-		drawTextString(element,textColor,panelColor,layout,text);
+		drawPanel(element);
+		drawTextString(element,layout,text);
 		
 		return result;
 
@@ -313,6 +344,7 @@ static class RealmUI
 	}
 	do
 	{
+
 		RealmVertex[] vertices;
 		vertices.length = panelMesh.positions.length;
 		Transform parent = UIElements.transforms[containerStack.peek()];
@@ -337,15 +369,35 @@ static class RealmUI
 		return vertices;
 	}
 
+	private static void applyTheme(Mat)(Mat material)
+	in
+	{
+		static assert(isValidUIMaterial!(Mat));
 
-	static void drawPanel(UIMaterial material, Transform transform,vec4 color)
+	}
+	do
+	{
+		UITheme theme = themeStack.peek();
+		static if(is(Mat == UIMaterial))
+		{
+			
+			material.color = theme.panelColor;
+		}
+		static if(is(Mat == TextMaterial))
+		{
+			
+			material.color = theme.textColor;
+		}
+	}
+
+	static void drawPanel(UIMaterial material, Transform transform)
 	{
 		
 
 		
 		
 		RealmVertex[] vertices = panelVertices!(UIMaterial)(transform,material);
-		material.color = color;
+		applyTheme!(UIMaterial)(material);
 		
 		uiBatch.submitVertices!(UIMaterial)(vertices,panelMesh.faces,material);
 
@@ -371,6 +423,55 @@ static class RealmUI
 		
 		containerStack.push(element);
 	}
+
+	static void textBox(UIElement element, TextLayout layout)
+	{
+		
+		Transform transform = UIElements.transforms[element];
+		UIMaterial material = UIElements.materials[element];
+		RealmVertex[] panelVertices = panelVertices!(UIMaterial)(transform,material);
+		if(mouseOverElement(element,panelVertices) && _currentEvent.action == InputActionType.MouseAction)
+		{
+			if(_currentEvent.mouseEvent.state == KeyState.Release)
+			{
+				focusedElement = element;
+			}
+			
+		}
+		TextMaterial textMaterial;
+		if(element !in TextElements.materials)
+		{
+			textMaterial = new TextMaterial;
+			textMaterial.setShaderProgram(textProgram);
+			TextElements.strings[element] = "";
+			TextElements.materials[element] = textMaterial;
+		}
+		TextElements.transforms[element] = UIElements.transforms[element];
+		string text = TextElements.strings[element];
+		int numCharsFit = cast(int)(transform.scale.x / cast(float)layout.fontSize);
+		if(focusedElement == element)
+		{
+			
+			
+			if(_currentEvent.action == InputActionType.KeyAction)
+			{
+				if(_currentEvent.keyEvent.state == KeyState.Press)
+				{
+					if(_currentEvent.keyEvent.character != '\0')
+					{
+						text ~= _currentEvent.keyEvent.character;
+					}
+					
+				}
+				
+			}
+		}
+		
+		
+		//Logger.LogInfo("%s", TextElements.strings[element]);
+		drawTextString(element,layout,text);
+	}
+
 	static void containerPop()
 	{
 		if(containerStack.peek() == parentContainer)
@@ -393,7 +494,19 @@ static class RealmUI
 		
 	}
 
-
+	static void themePush(UITheme theme)
+	{
+		if(themeStack.length > themeStack.capacity)
+		{
+			Logger.LogWarning("Only %d themes can be on stack", themeStack.capacity);
+			return;
+		}
+		themeStack.push(theme);
+	}
+	static UITheme themePop()
+	{
+		return themeStack.pop();
+	}
 
 	static void flush()
 	{

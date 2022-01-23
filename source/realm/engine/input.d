@@ -15,7 +15,7 @@ struct KeyActionEvent
 {
 	RealmKey key;
 	KeyState state;
-
+	char character;
 
 }
 
@@ -156,7 +156,7 @@ class InputManager
 	extern (C) static void internalKeyCallback(GLFWwindow* window,int key, int scancode, int action, int mods) nothrow @nogc
 	{
 		InputEvent event;
-		event = KeyActionEvent(cast(RealmKey) key,cast(KeyState)action);
+		event = KeyActionEvent(cast(RealmKey) key,cast(KeyState)action,'\0');
 		_eventQueue.enqueue(event);
 
 
@@ -172,6 +172,18 @@ class InputManager
 		_eventQueue.enqueue(event);
 	}
 
+	extern(C) static void internalCharCallback(GLFWwindow* window, uint cp) nothrow @nogc
+	{
+		char c = cast(char)cp;
+		if(_eventQueue.peek().action == InputActionType.KeyAction)
+		{
+			InputEvent* event  = _eventQueue.peekRef();
+			event.keyEvent.character = c;
+			//_eventQueue.push(event);
+			
+		}
+	}
+
 	void setScrollCallback(ScrollCallback cb)
 	{
 		scrollEvent = cb;
@@ -185,6 +197,7 @@ class InputManager
 		glfwSetScrollCallback(w,&internalScrollCallback);
 		glfwSetKeyCallback(w,&internalKeyCallback);
 		glfwSetMouseButtonCallback(w,&internalMouseButtonCallback);
+		glfwSetCharCallback(w,&internalCharCallback);
     }
 
 	static void tick()

@@ -37,10 +37,10 @@ class MainMenu : GameState
 	override void update()
 	{
 		
-		RealmUI.drawPanel(mainPanel,vec4(1));
+		RealmUI.drawPanel(mainPanel);
 		RealmUI.containerPush(mainPanel);
-		RealmUI.drawTextString(text,vec4(0,0,0,1),vec4(0),RealmUI.TextLayout(4,6,48),"Realm!");
-		if(RealmUI.button(startButton,vec4(0,0,0,1),vec4(1),"Start",RealmUI.TextLayout(4,6,48)) == RealmUI.ButtonState.PRESSED)
+		RealmUI.drawTextString(text,RealmUI.TextLayout(4,6,48),"Realm!");
+		if(RealmUI.button(startButton,"Start",RealmUI.TextLayout(4,6,48)) == RealmUI.ButtonState.PRESSED)
 		{
 			manager.getEntities!(StateMachine)()[0].changeState(new MainState(manager));
 		}

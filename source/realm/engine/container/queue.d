@@ -28,6 +28,29 @@ class Queue(T)
 		return _stack1.empty && _stack2.empty;
 	}
 
+	T peek() nothrow @nogc
+	{
+		if(_stack2.empty)
+		{
+			while(!_stack1.empty)
+			{
+				_stack2.push(_stack1.pop());
+			}
+		}
+		return _stack2.peek();
+	}
+	T* peekRef() nothrow @nogc
+	{
+		if(_stack2.empty)
+		{
+			while(!_stack1.empty)
+			{
+				_stack2.push(_stack1.pop());
+			}
+		}
+		return _stack2.peekRef();
+	}
+
 	T dequeue() nothrow
 	{
 		if(_stack2.empty)
