@@ -17,7 +17,7 @@ class TerrainGeneration
 	//private RealmUI.UIElement outputPanel;
 	private IFImage heightMapImage;
 	private IFImage normalMapImage;
-
+	int seed;
 
 
 	private Texture2D texture;
@@ -51,8 +51,9 @@ class TerrainGeneration
 
 	}
 
-	IFImage* generateMap()
+	IFImage* generateMap(int seed)
 	{
+		this.seed = seed;
 		computeJob(&_heightMap,_heightMapProgram);
 		Logger.LogInfo("Generating height map...");
 
@@ -96,10 +97,11 @@ class TerrainGeneration
 		import std.traits;
 		shader.bindImageWrite(output,0,0);
 		shader.use();
-		shader.setUniformFloat(0,RealmApp.getTicks());
+		shader.setUniformFloat(0,cast(float)seed);
 		shader.waitImageWriteComplete();
 		shader.dispatch(output.width,output.height,1);
 		shader.unbind();
+		
 
 	}
 	void computeJob(SamplerObject!(TextureType.TEXTURE2D)* output,SamplerObject!(TextureType.TEXTURE2D)* input, ComputeShader shader)

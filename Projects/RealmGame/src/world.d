@@ -32,10 +32,10 @@ class World
 	private Transform transform;
 	private Ocean ocean;
 	StandardShaderModel shaderProgram;
+	private int seed;
 
 
-
-	void start(EntityManager manager)
+	void start(EntityManager manager,int seed)
 	{
 
 		WorldMaterial.initialze();
@@ -43,7 +43,7 @@ class World
 		//setComponent!(Transform)(new Transform);
 		transform = getComponent!(Transform);
 		material = new WorldMaterial;
-
+		this.seed = seed;
 
 
 		meshData = generateFace(vec3(0,1,0),20);
@@ -81,7 +81,7 @@ class World
 
 	void generateWorld()
 	{
-		material.textures.normalHeightMap = new Texture2D(getComponent!(TerrainGeneration).generateMap());
+		material.textures.normalHeightMap = new Texture2D(getComponent!(TerrainGeneration).generateMap(seed));
 		material.packTextureAtlas();
 	}
 

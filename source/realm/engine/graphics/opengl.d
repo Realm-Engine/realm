@@ -678,7 +678,11 @@ class GShaderProgramModel(T...)
 
     void bindImageWrite(GSamplerObject!(TextureType.TEXTURE2D)* sampler,int level,int location,bool layered = false, int layer = 0)
 	{
-
+        if(sampler is null)
+		{
+            glBindImageTexture(location,0,level,layered ? GL_TRUE : GL_FALSE,layer,GL_WRITE_ONLY,sampler.internalFormat);
+            return;
+		}
         glBindImageTexture(location,sampler.ID,level,layered ? GL_TRUE : GL_FALSE,layer,GL_WRITE_ONLY,sampler.internalFormat);
 	}
 

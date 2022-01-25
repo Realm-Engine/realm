@@ -25,6 +25,18 @@ static class RealmUI
 	{
 		UUID id;
 		alias id this;
+		void opAssign(string s)
+		{
+			TextElements.strings.update(id,
+										{
+											TextElements.materials[id] = new TextMaterial;
+											return s;
+										},
+										(string old)
+										{
+											return s;
+										});
+		}
 
 	}
 
@@ -264,7 +276,7 @@ static class RealmUI
 		materialAtlas.textureDesc = TextureDesc(ImageFormat.RED8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		string formatted = text.format(t);
 		int numCharsFit =cast(int)( transform.scale.x / cast(float) layout.fontSize);
-		string justified = rightJustify(formatted,numCharsFit);
+		string justified = leftJustify(formatted,numCharsFit);
 		TextElements.strings.update(element,
 									{
 										
@@ -424,7 +436,7 @@ static class RealmUI
 		containerStack.push(element);
 	}
 
-	static void textBox(UIElement element, TextLayout layout)
+	static string textBox(UIElement element, TextLayout layout)
 	{
 		
 		Transform transform = UIElements.transforms[element];
@@ -470,6 +482,7 @@ static class RealmUI
 		
 		//Logger.LogInfo("%s", TextElements.strings[element]);
 		drawTextString(element,layout,text);
+		return text;
 	}
 
 	static void containerPop()

@@ -27,8 +27,10 @@ class MainState : GameState
 	private static IFImage crateNormal;
 	private EntityManager manager;
 	private Camera cam;
-	this(EntityManager manager)
+	private int worldSeed;
+	this(EntityManager manager,int worldSeed)
 	{
+		this.worldSeed = worldSeed;
 		this.manager = manager;
 		this.cam = *Renderer.get.activeCamera;
 	}
@@ -49,7 +51,7 @@ class MainState : GameState
 		Renderer.get.mainLight(&mainLight);
 
 		player = manager.instantiate!(Player)(&cam);
-		world = manager.instantiate!(World)(manager);
+		world = manager.instantiate!(World)(manager,worldSeed);
 		menu = manager.instantiate!(UIMenu)(cam,manager);
 		crate = manager.instantiate!(GameEntity)("$Assets/Models/wooden crate.obj");
 		//menu.active = false;
