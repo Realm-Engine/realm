@@ -129,12 +129,12 @@ static class RealmUI
 		uiBatch.initialize(UIMaterial.allocatedVertices(),UIMaterial.allocatedElements());
 		uiBatch.reserve(32);
 		TextMaterial.initialze();
-		TextMaterial.reserve(16);
+		TextMaterial.reserve(32);
 		TextMaterial.allocate(512,512);
 		textBatch = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,textProgram,11);
 		textBatch.setShaderStorageCallback(&(TextMaterial.bindShaderStorage));
 		textBatch.initialize(TextMaterial.allocatedVertices(),TextMaterial.allocatedElements());
-		textBatch.reserve(16);
+		textBatch.reserve(32);
 		
 		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
 		uiCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(windowSize[0],windowSize[1]),-1,100,0);
@@ -511,6 +511,10 @@ static class RealmUI
 					if(_currentEvent.keyEvent.character != '\0')
 					{
 						text ~= _currentEvent.keyEvent.character;
+					}
+					if(_currentEvent.keyEvent.key == RealmKey.Backspace)
+					{
+						text = text.chop();
 					}
 					
 				}

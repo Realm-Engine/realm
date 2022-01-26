@@ -10,6 +10,15 @@ import std.conv;
 import realm.engine.app;
 class TerrainGeneration
 {
+
+	struct GenSettings
+	{
+		float oceanLevel;
+		float heightStrength;
+	}
+
+	mixin RealmEntity!("TerrainGeneration");
+
 	private ComputeShader _stage1Program;
 	private ComputeShader _stage2Program;
 	private SamplerObject!(TextureType.TEXTURE2D) _heightMap;
@@ -20,7 +29,7 @@ class TerrainGeneration
 	private IFImage normalMapImage;
 	private IFImage terrainMapImage;
 	int seed;
-
+	GenSettings settings;
 
 	private Texture2D texture;
 
@@ -36,9 +45,9 @@ class TerrainGeneration
 
 
 
-	this()
+	void start(GenSettings settings)
 	{
-		
+		this.settings = settings;
 		_stage1Program = loadComputeShader("$Assets/Shaders/stage1.glsl","Height map compute shader");
 		_stage2Program=   loadComputeShader("$Assets/Shaders/stage2.glsl","Normal map compute shader");
 		_heightMap.create();
@@ -50,15 +59,9 @@ class TerrainGeneration
 		_terrainMap.create();
 		_terrainMap.textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
 		_terrainMap.store(2048,2048);
-		
-		//heightMapImage.free();
-
-		
-		
-
 	}
 
-	void stage1(float oceanLevel, float heightStrength)
+	void stage1()
 	{
 		this.seed = seed;
 	
@@ -67,8 +70,8 @@ class TerrainGeneration
 		_stage1Program.bindImageWrite(&_terrainMap,0,1);
 		_stage1Program.use();
 		_stage1Program.setUniformFloat(0,RealmApp.getTicks);
-		_stage1Program.setUniformFloat(1,oceanLevel);
-		_stage1Program.setUniformFloat(2,heightStrength);
+		_stage1Program.setUniformFloat(1,settings.oceanLevel);
+		_stage1Program.setUniformFloat(2,settings.heightStrength);
 		_stage1Program.waitImageWriteComplete();
 		_stage1Program.dispatch(_heightMap.width,_heightMap.height,1);
 		_stage1Program.unbind();
@@ -84,11 +87,17 @@ class TerrainGeneration
 		
 	}
 
-	IFImage* generateMap(float oceanLevel, float heightStrength)
+
+	void update()
+	{
+
+	}
+
+	void generateMap()
 	{
 		
 
-		stage1( oceanLevel,  heightStrength);
+		stage1();
 
 
 		Logger.LogInfo("Generating normal map...");
@@ -105,7 +114,7 @@ class TerrainGeneration
 		_heightMap.free();
 		_normalMap.free();
 		_terrainMap.free();
-		return &normalMapImage;
+		
 	}
 
 

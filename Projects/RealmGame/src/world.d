@@ -22,7 +22,7 @@ class World
 {
 	private Mesh meshData;
 
-	mixin RealmEntity!("World",Transform,TerrainGeneration);
+	mixin RealmEntity!("World",Transform);
 
 	static vec3[] squarePositions;
 	static vec2[] squareUV;
@@ -34,7 +34,7 @@ class World
 	private Ocean ocean;
 	StandardShaderModel shaderProgram;
 	private int seed;
-
+	TerrainGeneration terrainGenerator;
 
 	void start(EntityManager manager)
 	{
@@ -45,7 +45,7 @@ class World
 		transform = getComponent!(Transform);
 		material = new WorldMaterial;
 		this.seed = seed;
-
+		terrainGenerator = manager.getEntities!(TerrainGeneration)()[0];
 
 		meshData = generateFace(vec3(0,1,0),20);
 		WorldMaterial.allocate(&meshData);
@@ -53,8 +53,8 @@ class World
 		transform.scale = vec3(700,1,700 *0.7) ;
 		shaderProgram = loadShaderProgram("$Assets/Shaders/world.shader","World");
 		
-		material.heightStrength = 50;
-		material.oceanLevel =10;
+		material.heightStrength = terrainGenerator.settings.heightStrength;
+		material.oceanLevel =terrainGenerator.settings.oceanLevel;
 		material.setShaderProgram(shaderProgram);
 		//material.textures.heightMap = new Texture2D(getComponent!(TerrainGeneration).getHeightMap());
 		
@@ -82,8 +82,8 @@ class World
 
 	void generateWorld()
 	{
-		material.textures.normalHeightMap = new Texture2D(getComponent!(TerrainGeneration).generateMap(material.oceanLevel,material.heightStrength));
-		material.textures.terrainDataMap = new Texture2D(getComponent!(TerrainGeneration).getTerrainMap());
+		material.textures.normalHeightMap = new Texture2D(terrainGenerator.getNormalMap());
+		material.textures.terrainDataMap = new Texture2D(terrainGenerator.getTerrainMap());
 		material.packTextureAtlas();
 	}
 
