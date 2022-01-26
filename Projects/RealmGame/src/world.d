@@ -13,6 +13,7 @@ import realm.util;
 import realm.entitymanager;
 import realm.terraingeneration;
 alias WorldMaterialLayout = Alias!(["normalHeightMap" : UserDataVarTypes.TEXTURE2D,
+									"terrainDataMap" : UserDataVarTypes.TEXTURE2D,
 									"heightStrength" : UserDataVarTypes.FLOAT,
 									"oceanLevel" : UserDataVarTypes.FLOAT]);
 alias WorldMaterial = Alias!(Material!WorldMaterialLayout);
@@ -26,8 +27,8 @@ class World
 	static vec3[] squarePositions;
 	static vec2[] squareUV;
 	//static uint[] faces;
-	private IFImage heightImg;
-	private IFImage heightImg2;
+	private IFImage heightNormalMap;
+
 	WorldMaterial material;
 	private Transform transform;
 	private Ocean ocean;
@@ -35,7 +36,7 @@ class World
 	private int seed;
 
 
-	void start(EntityManager manager,int seed)
+	void start(EntityManager manager)
 	{
 
 		WorldMaterial.initialze();
@@ -48,12 +49,12 @@ class World
 
 		meshData = generateFace(vec3(0,1,0),20);
 		WorldMaterial.allocate(&meshData);
-		transform.position = vec3(0,-2,0);
-		transform.scale = vec3(20,1,15);
+		transform.position = vec3(0,0,0);
+		transform.scale = vec3(700,1,700 *0.7) ;
 		shaderProgram = loadShaderProgram("$Assets/Shaders/world.shader","World");
 		
-		material.heightStrength = 1.5;
-		material.oceanLevel = 0.3;
+		material.heightStrength = 50;
+		material.oceanLevel =10;
 		material.setShaderProgram(shaderProgram);
 		//material.textures.heightMap = new Texture2D(getComponent!(TerrainGeneration).getHeightMap());
 		
@@ -62,7 +63,7 @@ class World
 		
 		ocean = manager.instantiate!(Ocean)(material.oceanLevel,material.textures.normalHeightMap.texture,material.heightStrength);
 		ocean.getComponent!(Transform).scale = getComponent!(Transform).scale;
-		
+		//ocean.getComponent!(Transform).position = transform.position;
 		
 
 		scope(exit)
@@ -81,7 +82,8 @@ class World
 
 	void generateWorld()
 	{
-		material.textures.normalHeightMap = new Texture2D(getComponent!(TerrainGeneration).generateMap(seed));
+		material.textures.normalHeightMap = new Texture2D(getComponent!(TerrainGeneration).generateMap(material.oceanLevel,material.heightStrength));
+		material.textures.terrainDataMap = new Texture2D(getComponent!(TerrainGeneration).getTerrainMap());
 		material.packTextureAtlas();
 	}
 

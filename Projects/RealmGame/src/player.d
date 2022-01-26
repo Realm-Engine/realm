@@ -23,7 +23,7 @@ class Player
         this.camera = cam;
         camera.position = vec3(-2, 4, -8);
         
-        camera.turn(vec2(90,-45));
+        camera.turn(vec2(90,-80));
         //camera.update();
        // setComponent!(Transform)(new Transform);
         transform = getComponent!(Transform);
@@ -63,19 +63,19 @@ class Player
         vec3 movementVector = vec3(0);
         if(InputManager.getKey(RealmKey.W) == KeyState.Press)
 		{
-            movementVector += 0.05 * camera.front;
+            movementVector +=camera.front;
 		}
 		else if(InputManager.getKey(RealmKey.S) == KeyState.Press)
 		{
-            movementVector -= 0.05 * camera.front;
+            movementVector -= camera.front;
 		}
 		if(InputManager.getKey(RealmKey.A) == KeyState.Press)
 		{
-            movementVector -= camera.front.cross(vec3(0,1,0)).normalized() * 0.05;
+            movementVector -= camera.front.cross(vec3(0,1,0)).normalized() ;
 		}
 		else if(InputManager.getKey(RealmKey.D) == KeyState.Press)
 		{
-            movementVector += camera.front.cross(vec3(0,1,0)).normalized() * 0.05;
+            movementVector += camera.front.cross(vec3(0,1,0)).normalized() ;
 		}
         camera.position += movementVector;
         float xOffset = x - lastX;

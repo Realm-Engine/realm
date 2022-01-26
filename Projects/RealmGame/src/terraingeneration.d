@@ -10,39 +10,46 @@ import std.conv;
 import realm.engine.app;
 class TerrainGeneration
 {
-	private ComputeShader _heightMapProgram;
-	private ComputeShader _normalMapProgram;
+	private ComputeShader _stage1Program;
+	private ComputeShader _stage2Program;
 	private SamplerObject!(TextureType.TEXTURE2D) _heightMap;
 	private SamplerObject!(TextureType.TEXTURE2D) _normalMap;
+	private SamplerObject!(TextureType.TEXTURE2D) _terrainMap;
 	//private RealmUI.UIElement outputPanel;
-	private IFImage heightMapImage;
+
 	private IFImage normalMapImage;
+	private IFImage terrainMapImage;
 	int seed;
 
 
 	private Texture2D texture;
+
+	ComputeShader loadComputeShader(string path, string name)
+	{
+		string src = readText(VirtualFS.getSystemPath(path));
+		Shader shader = new Shader(ShaderType.COMPUTE,src,name);
+		ComputeShader program = new ComputeShader(name);
+		program.computeShader = shader;
+		program.compile();
+		return program;
+	}
+
+
+
 	this()
 	{
 		
-		string heightMapShaderSrc = readText(VirtualFS.getSystemPath("$Assets/Shaders/terrainHeight.glsl"));
-		string normalMapShaderSrc = readText(VirtualFS.getSystemPath("$Assets/Shaders/terrainNormal.glsl"));
-		Shader heightMapShader = new Shader(ShaderType.COMPUTE,heightMapShaderSrc,"Height map compute shader");
-		Shader normalMapShader=  new Shader(ShaderType.COMPUTE,normalMapShaderSrc,"Normal map compute shader");
-		_heightMapProgram = new ComputeShader("Height map");
-		_normalMapProgram = new ComputeShader("Normal map");
-		_heightMapProgram.computeShader = heightMapShader;
-		_heightMapProgram.compile();
-		_normalMapProgram.computeShader = normalMapShader;
-		_normalMapProgram.compile();
-		int[3] workGroupCount;
-
+		_stage1Program = loadComputeShader("$Assets/Shaders/stage1.glsl","Height map compute shader");
+		_stage2Program=   loadComputeShader("$Assets/Shaders/stage2.glsl","Normal map compute shader");
 		_heightMap.create();
 		_heightMap.textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
 		_heightMap.store(2048,2048);
 		_normalMap.create();
 		_normalMap.textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
 		_normalMap.store(2048,2048);
-		
+		_terrainMap.create();
+		_terrainMap.textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
+		_terrainMap.store(2048,2048);
 		
 		//heightMapImage.free();
 
@@ -51,26 +58,41 @@ class TerrainGeneration
 
 	}
 
-	IFImage* generateMap(int seed)
+	void stage1(float oceanLevel, float heightStrength)
 	{
 		this.seed = seed;
-		computeJob(&_heightMap,_heightMapProgram);
+	
 		Logger.LogInfo("Generating height map...");
+		_stage1Program.bindImageWrite(&_heightMap,0,0);
+		_stage1Program.bindImageWrite(&_terrainMap,0,1);
+		_stage1Program.use();
+		_stage1Program.setUniformFloat(0,RealmApp.getTicks);
+		_stage1Program.setUniformFloat(1,oceanLevel);
+		_stage1Program.setUniformFloat(2,heightStrength);
+		_stage1Program.waitImageWriteComplete();
+		_stage1Program.dispatch(_heightMap.width,_heightMap.height,1);
+		_stage1Program.unbind();
 
-		ubyte[] heightData = _heightMap.readPixels(0);
+		ubyte[] cellData = _terrainMap.readPixels(0);
+		terrainMapImage.buf8.length = cellData.length;
+		terrainMapImage.buf8 = cellData;
 
-		heightMapImage.buf8.length = heightData.length ;
+		terrainMapImage.w = _terrainMap.width;
+		terrainMapImage.h = _terrainMap.height;
+		terrainMapImage.c = 4;
+		terrainMapImage.bpc = 8;
+		
+	}
 
-		heightMapImage.buf8 = heightData;
+	IFImage* generateMap(float oceanLevel, float heightStrength)
+	{
+		
 
-		heightMapImage.w = _heightMap.width;
-		heightMapImage.h = _heightMap.height;
-		heightMapImage.c = 4;
-		heightMapImage.bpc = 8;
-		computeJob(&_normalMap,&_heightMap,_normalMapProgram);
+		stage1( oceanLevel,  heightStrength);
 
 
 		Logger.LogInfo("Generating normal map...");
+		computeJob(&_normalMap,&_heightMap,_stage2Program);
 		ubyte[] normalData = _normalMap.readPixels(0);
 		normalMapImage.buf8.length = normalData.length;
 		normalMapImage.buf8 = normalData;
@@ -82,6 +104,7 @@ class TerrainGeneration
 
 		_heightMap.free();
 		_normalMap.free();
+		_terrainMap.free();
 		return &normalMapImage;
 	}
 
@@ -91,13 +114,19 @@ class TerrainGeneration
 		return &normalMapImage;
 	}
 
+	IFImage* getTerrainMap()
+	{
+		return &terrainMapImage;
+	}
 
-	void computeJob(SamplerObject!(TextureType.TEXTURE2D)* output, ComputeShader shader)
+
+	void computeJob(Args...)(SamplerObject!(TextureType.TEXTURE2D)* output, ComputeShader shader,Args args)
 	{
 		import std.traits;
 		shader.bindImageWrite(output,0,0);
 		shader.use();
-		shader.setUniformFloat(0,cast(float)seed);
+
+		shader.setUniformFloat(0,RealmApp.getTicks);
 		shader.waitImageWriteComplete();
 		shader.dispatch(output.width,output.height,1);
 		shader.unbind();
@@ -122,10 +151,6 @@ class TerrainGeneration
 	{
 		//RealmUI.drawPanel(outputPanel,vec4(1));
 	}
-	void freeTextures()
-	{
-		heightMapImage.free();
 
-	}
 }
 

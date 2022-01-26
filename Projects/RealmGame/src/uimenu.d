@@ -40,6 +40,9 @@ class UIMenu
 		generateMapButton = RealmUI.createElement(vec3(600,50,0),vec3(100,50,1),vec3(0));
 		input = RealmUI.createElement(vec3(0,25,0),vec3(100,25,1),vec3(0));
 
+		button.textLayout = RealmUI.TextLayout(4,6,24);
+		
+
 	}
 
 	void drawInfoPanel()
@@ -50,18 +53,18 @@ class UIMenu
 		GameEntity[] gameEntities = entityManager.getEntities!(GameEntity)();
 		World gameWorld = entityManager.getEntities!(World)()[0];
 
-		if(RealmUI.button(button,"Press me!",RealmUI.TextLayout(4,6,24)) == RealmUI.ButtonState.PRESSED)
+		if(RealmUI.button(button,"Press me!") == RealmUI.ButtonState.PRESSED)
 		{
 			Logger.LogInfo("Button pressed");
 		}
-		if(RealmUI.button(nextEntity,"Next",RealmUI.TextLayout(4,6,12)) == RealmUI.ButtonState.PRESSED )
+		if(RealmUI.button(nextEntity,"Next") == RealmUI.ButtonState.PRESSED )
 		{
 			if(currentEntity < gameEntities.length-1)
 			{
 				currentEntity++;
 			}
 		}
-		if(RealmUI.button(lastEntity,"Prev",RealmUI.TextLayout(4,6,12)) == RealmUI.ButtonState.PRESSED )
+		if(RealmUI.button(lastEntity,"Prev") == RealmUI.ButtonState.PRESSED )
 		{
 			if(currentEntity > 0)
 			{
@@ -69,17 +72,17 @@ class UIMenu
 			}
 		}
 		GameEntity entity = gameEntities[currentEntity];
-		if(RealmUI.button(toggleActive,"Toggle",RealmUI.TextLayout(4,6,12)) == RealmUI.ButtonState.PRESSED)
+		if(RealmUI.button(toggleActive,"Toggle",) == RealmUI.ButtonState.PRESSED)
 		{
 			entity.active = entity.active ^ true;
 		}
-		RealmUI.drawTextString(entityName,RealmUI.TextLayout(4,6,12),entity.entityName);
-		RealmUI.textBox(input,RealmUI.TextLayout(4,6,16));
+		RealmUI.drawTextString(entityName,entity.entityName);
+		RealmUI.textBox(input);
 		RealmUI.containerPop();
-		if(RealmUI.button(generateMapButton,"Generate",RealmUI.TextLayout(4,6,16)) == RealmUI.ButtonState.PRESSED)
-		{
-			gameWorld.generateWorld();
-		}
+		//if(RealmUI.button(generateMapButton,"Generate",) == RealmUI.ButtonState.PRESSED)
+		//{
+		//    gameWorld.generateWorld();
+		//}
 	}
 
 	void update()

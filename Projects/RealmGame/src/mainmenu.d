@@ -27,6 +27,8 @@ class MainMenu : GameState
 		mainPanel = RealmUI.createElement(vec3(windowSize[0] / 2,windowSize[1]/2, 0),vec3(windowSize[0],windowSize[1],1),vec3(0));
 		text = RealmUI.createElement(vec3(0,100,0),vec3(225,100,1),vec3(0));
 		startButton = RealmUI.createElement(vec3(0,-60,0),vec3(125,50,1),vec3(0));
+		text.textLayout = RealmUI.TextLayout(4,6,40);
+		startButton.textLayout = RealmUI.TextLayout(4,6,24);
 
 	}
 
@@ -40,8 +42,8 @@ class MainMenu : GameState
 		
 		RealmUI.drawPanel(mainPanel);
 		RealmUI.containerPush(mainPanel);
-		RealmUI.drawTextString(text,RealmUI.TextLayout(4,6,40),"Realm!");
-		if(RealmUI.button(startButton,"Start",RealmUI.TextLayout(4,6,24)) == RealmUI.ButtonState.PRESSED)
+		RealmUI.drawTextString(text,"Realm!");
+		if(RealmUI.button(startButton,"Start") == RealmUI.ButtonState.PRESSED)
 		{
 			manager.getEntities!(StateMachine)()[0].changeState(new WorldGenMenu(manager));
 		}

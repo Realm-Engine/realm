@@ -3,6 +3,7 @@
 struct Material
 {
 	vec4 normalHeightMap;
+	vec4 terrainDataMap;
 	float heightStrength;
 	float packing1;
 	float oceanLevel;
@@ -56,11 +57,12 @@ vec3 grayToNormal(sampler2D grayTexture,vec2 uv,float delta)
 
 vec4 fragment()
 {
-	float height = getObjectData(height);
-	float dist = distance(height, getObjectData(oceanLevel));
-	float difference = abs(height - getObjectData(oceanLevel));
 
-	vec3 terrainColor = mix(normalize(vec3(177, 185, 40)), normalize(vec3(25, 93, 0)), dist);
+	
+	vec4 terrainData = SAMPLE_TEXTURE(terrainDataMap, RESurfaceDataIn.texCoord);
+	vec3 terrainColor = terrainData.rgb;
+	float border = 1 - terrainData.a;
+	//terrainColor *= border;
 	float gamma = 2.2;
 	terrainColor = pow(terrainColor, vec3(2.2));
 	//outColor = vec4(height,1-height,0,1.0);
@@ -75,8 +77,11 @@ vec4 fragment()
 	
 	vec3 diffuse = calculateDiffuse(normal);
 	
-	vec3 lighting = (ambient + (1.0 - shadow)) *  (( diffuse  + ambient) * terrainColor);
-	return vec4(lighting, 1.0);
+	vec3 lighting = (( diffuse  + ambient) * terrainColor);
+
+	return vec4(vec3(lighting), 1.0);
+	
+	
 	
 	
 

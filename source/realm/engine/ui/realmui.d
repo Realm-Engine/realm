@@ -37,20 +37,34 @@ static class RealmUI
 											return s;
 										});
 		}
+		
+		@property textLayout(TextLayout layout)
+		{
+			TextElements.layouts[id] = layout;
+		}
+
+
+	}
+
+	mixin template UIElementType(Mat)
+	{
+		static assert(isMaterial!(Mat));
+		static Mat[UUID] materials;
+		static Transform[UUID] transforms;
+
 
 	}
 
 	protected struct UIElements
 	{
-		static UIMaterial[UUID] materials;
-		static Transform[UUID] transforms;
+		mixin UIElementType!(UIMaterial);
 	}
 
 	protected struct TextElements
 	{
-		static TextMaterial[UUID] materials;
-		static Transform[UUID] transforms;
+		mixin UIElementType!(TextMaterial);
 		static string[UUID] strings;
+		static TextLayout[UUID] layouts;
 	}
 
 	struct UITheme
@@ -158,6 +172,26 @@ static class RealmUI
 
 	}
 
+	private static void newTextPanel(UIElement element)
+	{
+		TextMaterial material = new TextMaterial;
+		TextElements.materials[element] = material;
+		TextElements.transforms[element] = UIElements.transforms[element];
+		material.setShaderProgram(textProgram);
+		if(element !in TextElements.strings)
+		{
+			TextElements.strings[element] = "";
+		}
+		if(element !in TextElements.layouts)
+		{
+			TextElements.layouts[element] = TextLayout(4,6,12);
+		}
+		
+
+		
+		
+	}
+
 	static UIElement createElement(vec3 position, vec3 scale, vec3 rotation,Texture2D texture,TextureDesc desc)
 	{
 
@@ -254,21 +288,22 @@ static class RealmUI
 		}
 	}
 
-	static void drawTextString(T...)(UIElement element,TextLayout layout ,string text,T t )
+	static void drawTextString(T...)(UIElement element,string text,T t )
 	{
 		import std.algorithm.comparison;
 		import std.format : format;
-		font.setPixelSize(0,layout.fontSize);
+		
 		drawPanel(element);
-		TextMaterial material;
+		
 		
 		if(element!in TextElements.materials)
 		{
-			material = new TextMaterial;
-			material.setShaderProgram(textProgram);
-			TextElements.strings[element] = "";
-			TextElements.materials[element] = material;
+			newTextPanel(element);
+			
 		}
+		TextLayout layout = TextElements.layouts[element];
+		TextMaterial material = TextElements.materials[element];
+		font.setPixelSize(0,layout.fontSize);
 		TextElements.transforms[element] = UIElements.transforms[element];
 		Transform transform = TextElements.transforms[element];
 		material = TextElements.materials[element];
@@ -308,7 +343,9 @@ static class RealmUI
 		return (mouseX >= panelAABB.min.x && mouseX <= panelAABB.max.x) && (mouseY >= panelAABB.min.y && mouseY <= panelAABB.max.y);
 	}
 
-	static ButtonState button(UIElement element,string text,TextLayout layout = TextLayout(4,8,12))
+	
+
+	static ButtonState button(UIElement element,string text)
 	{
 		import std.stdio;
 		
@@ -343,7 +380,7 @@ static class RealmUI
 		}
 
 		drawPanel(element);
-		drawTextString(element,layout,text);
+		drawTextString(element,text);
 		
 		return result;
 
@@ -436,7 +473,10 @@ static class RealmUI
 		containerStack.push(element);
 	}
 
-	static string textBox(UIElement element, TextLayout layout)
+
+
+
+	static string textBox(UIElement element)
 	{
 		
 		Transform transform = UIElements.transforms[element];
@@ -450,14 +490,13 @@ static class RealmUI
 			}
 			
 		}
-		TextMaterial textMaterial;
+		
 		if(element !in TextElements.materials)
 		{
-			textMaterial = new TextMaterial;
-			textMaterial.setShaderProgram(textProgram);
-			TextElements.strings[element] = "";
-			TextElements.materials[element] = textMaterial;
+			newTextPanel(element);
 		}
+		TextMaterial textMaterial = TextElements.materials[element];
+		TextLayout layout = TextElements.layouts[element];
 		TextElements.transforms[element] = UIElements.transforms[element];
 		string text = TextElements.strings[element];
 		int numCharsFit = cast(int)(transform.scale.x / cast(float)layout.fontSize);
@@ -481,7 +520,7 @@ static class RealmUI
 		
 		
 		//Logger.LogInfo("%s", TextElements.strings[element]);
-		drawTextString(element,layout,text);
+		drawTextString(element,text);
 		return text;
 	}
 

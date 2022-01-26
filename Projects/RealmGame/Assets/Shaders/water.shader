@@ -51,7 +51,7 @@ vec3 grayToNormal(sampler2D grayTexture, vec2 uv, float delta)
 vec4 fragment()
 {
 	float heightSample = texture(objectTexture, samplerUV(getObjectData(heightMap), RESurfaceDataIn.texCoord)).a;
-	float height = heightSample * getObjectData(heightStrength);
+	float height = heightSample ;
 	vec3 normal =  RESurfaceDataIn.normal;
 
 	vec3 ambient = vec3(0.1);

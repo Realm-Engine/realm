@@ -28,7 +28,7 @@ class MainState : GameState
 	private EntityManager manager;
 	private Camera cam;
 	private int worldSeed;
-	this(EntityManager manager,int worldSeed)
+	this(EntityManager manager)
 	{
 		this.worldSeed = worldSeed;
 		this.manager = manager;
@@ -51,7 +51,8 @@ class MainState : GameState
 		Renderer.get.mainLight(&mainLight);
 
 		player = manager.instantiate!(Player)(&cam);
-		world = manager.instantiate!(World)(manager,worldSeed);
+		world = manager.instantiate!(World)(manager);
+
 		menu = manager.instantiate!(UIMenu)(cam,manager);
 		crate = manager.instantiate!(GameEntity)("$Assets/Models/wooden crate.obj");
 		//menu.active = false;
@@ -74,6 +75,8 @@ class MainState : GameState
 		plane.active = false;
 
 		plane.getMaterial.packTextureAtlas();
+		
+
 
 		
 

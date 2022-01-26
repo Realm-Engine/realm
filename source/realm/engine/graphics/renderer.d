@@ -267,7 +267,7 @@ class Renderer
 	@property void mainLight(DirectionalLight* light)
 	{
 		mainDirLight = light;
-		mainDirLight.createFrameBuffer(1024,1024);
+		mainDirLight.createFrameBuffer(2048,2048);
 	}
 
 	void updateMainLight()

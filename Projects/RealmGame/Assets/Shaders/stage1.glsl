@@ -2,8 +2,10 @@
 #version 430
 layout(local_size_x = 1, local_size_y = 1) in;
 layout(rgba8, binding = 0) writeonly uniform image2D img_output;
+layout(rgba8, binding = 1) writeonly uniform image2D worldColor;
 layout(location = 0) uniform float u_seed;
-
+layout(location = 1) uniform float u_oceanLevel;
+layout(location = 2) uniform float u_heightStrength;
 
 float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
@@ -17,7 +19,7 @@ float gold_noise(vec2 xy)
 }
 
 vec4 permute(vec4 t) {
-    return (t) * ((t ) * 34.0 + 133.0);
+    return (t * u_seed) * ((t * u_seed) * 34.0 + 133.0);
 }
 
 // Gradient set is a normalized expanded rhombic dodecahedron
@@ -104,6 +106,7 @@ vec4 openSimplex2SDerivatives_ImproveXY(vec3 X) {
     return vec4(result.xyz * orthonormalMap, result.w);
 }
 
+
 vec3 voronoi(vec2 t)
 {
     vec2 baseCell = floor(t);
@@ -160,6 +163,21 @@ vec3 voronoi(vec2 t)
 
 
 
+
+void calculateTerrain(float heightVal,vec2 uv, float cellFrequency)
+{
+    float height = heightVal;
+	float ocean = u_oceanLevel / u_heightStrength;
+	float dist = distance( ocean, height);
+	vec3 terrainColor = mix(normalize(vec3(4, 30, 13)), normalize(vec3(89)), dist );
+    vec3 noise = voronoi(uv * cellFrequency);
+    
+	float isBorder = 1- step(noise.z, 0.0125);
+  
+    imageStore(worldColor,ivec2(gl_GlobalInvocationID.xy),vec4(terrainColor ,isBorder));
+}
+
+
 void main()
 {
 
@@ -193,10 +211,12 @@ void main()
          amplitude *= 0.5;
     }
     voronoiVal /= maxAmp;
-
+    float height = voronoiVal.z + simplexVal.w;
 	vec4 pixel = vec4(vec3(voronoiVal.z + simplexVal.w),1);
 	ivec2 coords = ivec2(gl_GlobalInvocationID.xy);
 	imageStore(img_output,coords,pixel);
+    calculateTerrain(height,uv.xy,16);
 
 
 }
+
