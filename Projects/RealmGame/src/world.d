@@ -13,7 +13,7 @@ import realm.util;
 import realm.entitymanager;
 import realm.terraingeneration;
 alias WorldMaterialLayout = Alias!(["normalHeightMap" : UserDataVarTypes.TEXTURE2D,
-									"terrainDataMap" : UserDataVarTypes.TEXTURE2D,
+									"climateMap" : UserDataVarTypes.TEXTURE2D,
 									"heightStrength" : UserDataVarTypes.FLOAT,
 									"oceanLevel" : UserDataVarTypes.FLOAT]);
 alias WorldMaterial = Alias!(Material!WorldMaterialLayout);
@@ -83,7 +83,7 @@ class World
 	void generateWorld()
 	{
 		material.textures.normalHeightMap = new Texture2D(terrainGenerator.getNormalMap());
-		material.textures.terrainDataMap = new Texture2D(terrainGenerator.getTerrainMap());
+		material.textures.climateMap = new Texture2D(terrainGenerator.getClimateMap());
 		material.packTextureAtlas();
 	}
 
@@ -93,7 +93,7 @@ class World
 	{
 
 		renderer.submitMesh!(WorldMaterial,true)(meshData,transform,material);
-		ocean.draw(renderer);
+		//ocean.draw(renderer);
 	}
 
 	void update()

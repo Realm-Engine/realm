@@ -44,6 +44,7 @@ class WorldGenMenu : GameState
 		worldHeightInput = RealmUI.createElement(vec3(0,100,0),vec3(200,25,1),vec3(0));
 		oceanLevelLabel = RealmUI.createElement(vec3(0,250,0),vec3(200,25,1),vec3(0));
 		worldHeightLabel = RealmUI.createElement(vec3(0,150,0),vec3(200,25,1),vec3(0));
+		
 		//seedInput = "realm!";
 	}
 
@@ -65,7 +66,7 @@ class WorldGenMenu : GameState
 			Logger.LogInfo("Generating world: %s", name);
 			float oceanLevel = parse!float(oceanLevelStr);
 			float worldHeight = parse!float(worldHeightStr);
-			TerrainGeneration generator = manager.instantiate!(TerrainGeneration)(TerrainGeneration.GenSettings(oceanLevel,worldHeight));
+			TerrainGeneration generator = manager.instantiate!(TerrainGeneration)(TerrainGeneration.GenSettings(oceanLevel,worldHeight,0.8,0.5));
 			generator.generateMap();
 			manager.getEntities!(StateMachine)()[0].changeState(new MainState(manager));
 		}

@@ -3,6 +3,8 @@
 layout(local_size_x = 1, local_size_y = 1) in;
 layout(rgba8, binding = 0) writeonly uniform image2D imgOutput;
 layout(rgba8, binding = 1) readonly uniform image2D imgHeight;
+layout(rgba8, binding = 2) uniform image2D climateData;
+layout(location = 0) uniform float heightStrength;
 
 void grayToNormal(ivec2 uv,float delta)
 {
@@ -17,7 +19,40 @@ void grayToNormal(ivec2 uv,float delta)
 	imageStore(imgOutput,uv,vec4(result,graySample.r));
 }
 
+void blurOcean()
+{
+	vec2 size = imageSize(climateData);
+	float offset[5] = float[](0.0, 1.0, 2.0, 3.0, 4.0);
+	float weight[5] = float[](0.2270270270, 0.1945945946, 0.1216216216,
+                                  0.0540540541, 0.0162162162);
+	ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+	vec4 climate = imageLoad(climateData,coord);
+	float moisture = climate.g * weight[0];
+	float heat = climate.r;
+	int passes = int(mix(1,25,heat));
+	for(int j = 1; j < passes;j++)
+	{
+		for(int i = 1; i < 5; i++)
+		{
+			moisture += imageLoad(climateData,coord + ivec2(0.0,offset[i]  )).g * (weight[i]);
+			
+			moisture += imageLoad(climateData,coord - ivec2(0.0,offset[i] )).g *  (weight[i] );
+		
+		}
+
+	
+		imageStore(climateData,coord,vec4(climate.r,moisture,climate.b,climate.a));
+	}
+
+	
+
+}
+
 void main()
 {
 	grayToNormal(ivec2(gl_GlobalInvocationID.xy),14);
+
+	blurOcean();
+	
+	
 }
