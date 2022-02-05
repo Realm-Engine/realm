@@ -1,3 +1,15 @@
+
+
+Layout
+{
+v_Position: vec4;
+
+
+
+
+}
+
+
 #shader shared
 #define OBJECT_DATA
 struct Material

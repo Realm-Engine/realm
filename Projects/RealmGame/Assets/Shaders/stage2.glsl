@@ -27,14 +27,15 @@ void blurOcean()
                                   0.0540540541, 0.0162162162);
 	ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
 	vec4 climate = imageLoad(climateData,coord);
-	float moisture = climate.g * weight[0];
+	
 	float heat = climate.r;
-	int passes = int(mix(1,25,heat));
-	for(int j = 1; j < passes;j++)
+	int passes = int(mix(3,9,heat));
+	for(int j = 1; j < 9;j++)
 	{
+		float moisture = climate.g * weight[0];
 		for(int i = 1; i < 5; i++)
 		{
-			moisture += imageLoad(climateData,coord + ivec2(0.0,offset[i]  )).g * (weight[i]);
+			moisture += imageLoad(climateData,coord + ivec2(0.0,offset[i]  )).g * (weight[i] );
 			
 			moisture += imageLoad(climateData,coord - ivec2(0.0,offset[i] )).g *  (weight[i] );
 		
@@ -48,11 +49,26 @@ void blurOcean()
 
 }
 
+float sampleMoisture(ivec2 coords)
+{
+	return imageLoad(climateData,coords).g;
+
+}
+
+void distToOcean()
+{
+	float distance = 0;
+
+	
+
+
+}
+
 void main()
 {
 	grayToNormal(ivec2(gl_GlobalInvocationID.xy),14);
 
-	blurOcean();
+	//blurOcean();
 	
 	
 }

@@ -67,17 +67,26 @@ vec3 calculateWaterColor()
 
 vec3 calculateBiome()
 {
+
+	float distanceFromWater =  getObjectData(height) / getObjectData(heightStrength);
 	vec4 climateData = SAMPLE_TEXTURE(climateMap, RESurfaceDataIn.texCoord);
 	float heat = climateData.r;
+	float shoreDistance = climateData.b;
 	float moisture = climateData.g;
 	int isMoist = int(step(0.5, moisture));
-	int isHot = int(step(0.1, heat));
+	int isHot = int(step(0.9, heat));
 	int isWater = int(step(1, moisture));
-	int isIce = int(step(0.98, 1 - heat));
+	int isIce = int(step(0.95, 1 - heat));
 	int isDry = 1 - isMoist;
 	int isCold = 1 -isHot;
-	vec3 biome = mix(vec3(0), vec3(0, 102, 0),  isHot & isMoist);
 	
+	int isDesert = int(step(1.0, heat));
+
+
+	vec3 biome = vec3(0);
+	biome = mix(vec3(31, 85, 42), vec3(64, 69, 46), distanceFromWater);
+	biome = mix(biome, vec3(178, 183, 2), isDesert);
+
 	biome = mix(biome, calculateWaterColor(), isWater);
 	biome = normalize(biome);
 	biome = mix(biome, vec3(1.0), isIce);
@@ -98,7 +107,7 @@ vec4 fragment()
 
 	//terrainColor *= border;
 	float gamma = 2.2;
-	//terrainColor = pow(terrainColor, vec3(2.2));
+	terrainColor = pow(terrainColor, vec3(2.2));
 
 
 	//outColor = vec4(height,1-height,0,1.0);
@@ -113,9 +122,9 @@ vec4 fragment()
 
 	vec3 diffuse = calculateDiffuse(normal);
 
-	vec3 lighting = ((diffuse + ambient) * terrainColor);
+	vec3 lighting =  ((diffuse + ambient) * terrainColor);
 
-	return vec4(terrainColor, 1.0);
+	return vec4(lighting, 1.0);
 
 
 

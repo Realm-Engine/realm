@@ -23,6 +23,7 @@ class TerrainGeneration
 
 	private ComputeShader _stage1Program;
 	private ComputeShader _stage2Program;
+	private ComputeShader _climateGenProgram;
 	private SamplerObject!(TextureType.TEXTURE2D) _heightMap;
 	private SamplerObject!(TextureType.TEXTURE2D) _normalMap;
 	private SamplerObject!(TextureType.TEXTURE2D) _climateMap;
@@ -30,7 +31,7 @@ class TerrainGeneration
 
 	private IFImage normalMapImage;
 	private IFImage _climateMapImage;
-	int seed;
+	float seed;
 	GenSettings settings;
 
 	private Texture2D texture;
@@ -50,8 +51,10 @@ class TerrainGeneration
 	void start(GenSettings settings)
 	{
 		this.settings = settings;
-		_stage1Program = loadComputeShader("$Assets/Shaders/stage1.glsl","Height map compute shader");
-		_stage2Program=   loadComputeShader("$Assets/Shaders/stage2.glsl","Normal map compute shader");
+		_stage1Program = loadComputeShader("$Assets/Shaders/stage1.glsl","Terrain gen stage 1");
+		_stage2Program=   loadComputeShader("$Assets/Shaders/stage2.glsl","Terrain gen stage 2");
+		_climateGenProgram = loadComputeShader("$Assets/Shaders/climateGeneration.glsl","Shore distance");
+
 		_heightMap.create();
 		_heightMap.textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
 		_heightMap.store(2048,2048);
@@ -61,17 +64,18 @@ class TerrainGeneration
 		_climateMap.create();
 		_climateMap.textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
 		_climateMap.store(2048,2048);
+		seed = RealmApp.getTicks();
 	}
 
 	void stage1()
 	{
-		this.seed = seed;
+		
 	
 		Logger.LogInfo("Generating height map...");
 		_stage1Program.bindImageWrite(&_heightMap,0,0);
 		_stage1Program.bindImageWrite(&_climateMap,0,1);
 		_stage1Program.use();
-		_stage1Program.setUniformFloat(0,RealmApp.getTicks);
+		_stage1Program.setUniformFloat(0,seed);
 		_stage1Program.setUniformFloat(1,settings.oceanLevel);
 		_stage1Program.setUniformFloat(2,settings.heightStrength);
 		_stage1Program.setUniformFloat(3,settings.iceThreshold);
@@ -84,17 +88,63 @@ class TerrainGeneration
 		
 	}
 
+	void simulateClimate()
+	{
+		import std.random;
+		SamplerObject!(TextureType.TEXTURE2D) _fluxMap;
+		_fluxMap.create();
+		_fluxMap.textureDesc = TextureDesc(ImageFormat.RED8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
+		_fluxMap.store(_climateMap.width,_climateMap.height);
+		auto rnd = Random(unpredictableSeed);
+		real numSeeds = sqrt(cast(real)_fluxMap.width);
+		
+
+		
+
+	
+
+		_climateGenProgram.use();
+		_climateGenProgram.bindImageWrite(&_climateMap,0,0);
+		_climateGenProgram.bindImageWrite(&_fluxMap,0,1);
+		_climateGenProgram.setUniformFloat(1,seed);
+		_climateGenProgram.setUniformFloat(2,9.81);
+		_climateGenProgram.setUniformFloat(3,settings.heightStrength);
+		int tick = 0;
+		for(tick = 0; tick < 100;tick++)
+		{
+			//Logger.LogInfo("Distance pass: stepsize: %d",stepSize );
+			_climateGenProgram.setUniformInt(0,tick);
+			_climateGenProgram.dispatch(_normalMap.width,_normalMap.height,1);
+			_climateGenProgram.unbind();
+			_climateGenProgram.waitImageWriteComplete();
+		}
+		
+
+
+	}
+
 	void stage2()
 	{
+		
+
 		_stage2Program.bindImageWrite(&_normalMap,0,0);
 		_stage2Program.bindImageWrite(&_heightMap,0,1);
 		_stage2Program.bindImageWrite(&_climateMap,0,2);
 		_stage2Program.use();
 		_stage2Program.setUniformFloat(0,settings.heightStrength);
-
-		_stage2Program.waitImageWriteComplete();
 		_stage2Program.dispatch(_normalMap.width,_normalMap.height,1);
+		_stage2Program.waitImageWriteComplete();
 		_stage2Program.unbind();
+
+
+		
+
+		simulateClimate();
+
+		
+
+
+
 		ubyte[] normalData = _normalMap.readPixels(0);
 		normalMapImage.buf8.length = normalData.length;
 		normalMapImage.buf8 = normalData;

@@ -669,6 +669,12 @@ class GShaderProgramModel(T...)
 
 	}
 
+    void setUniformInts(int loc, int[] values)
+    in(loc >= 0, "Must use valid uniform location")
+	{
+        glUniform1iv(loc,cast(int)values.length,cast(const (int)*)values.ptr);
+	}
+
 	static int getNumSupportedProgramBinaryFormats()
     {
         int result;

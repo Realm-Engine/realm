@@ -1,13 +1,13 @@
-
 #version 430
 layout(local_size_x = 1, local_size_y = 1) in;
-layout(rgba8, binding = 0) writeonly uniform image2D img_output;
-layout(rgba8, binding = 1) writeonly uniform image2D climateMap;
-layout(location = 0) uniform float u_seed;
-layout(location = 1) uniform float u_oceanLevel;
-layout(location = 2) uniform float u_heightStrength;
-layout(location =3) uniform float u_iceThreshold;
-layout(location =4) uniform float u_heatStrength;
+layout(rgba8, binding = 0) uniform image2D climateData;
+layout(rgba8,binding = 1) uniform image2D fluxmap;
+layout(rgba8, binding = 2) uniform image2D heightMap;
+layout(location = 0) uniform int u_tick;
+layout(location = 1) uniform float u_seed;
+layout(location = 2) uniform float u_gravity;
+layout(location = 3) uniform float u_heightStrength;
+
 
 float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
@@ -21,7 +21,7 @@ float gold_noise(vec2 xy)
 }
 
 vec4 permute(vec4 t) {
-    return (t * u_seed) * ((t * u_seed) * 34.0 + 133.0);
+    return (t * (u_seed + u_tick)) * ((t * (u_seed + u_tick)) * 34.0 + 133.0);
 }
 
 // Gradient set is a normalized expanded rhombic dodecahedron
@@ -108,85 +108,9 @@ vec4 openSimplex2SDerivatives_ImproveXY(vec3 X) {
     return vec4(result.xyz * orthonormalMap, result.w);
 }
 
-
-vec3 voronoi(vec2 t)
+float getRainfallAmount()
 {
-    vec2 baseCell = floor(t);
-
-    float minDistToCell = 10;
-    vec2 closestCell;
-    vec2 toClosestCell;
-    for(int x = -1; x <= 1; x++)
-    {
-        for(int y = -1; y <= 1; y++)
-        {
-            vec2 cell = baseCell + vec2(x,y);
-            vec2 cellPos = cell + gold_noise(cell );
-            vec2 toCell = cellPos - t;
-            float dist = length(toCell);
-            if(dist < minDistToCell)
-            {
-                minDistToCell = dist;
-                closestCell = cell;
-                toClosestCell = toCell;
-            }
-            
-        
-        }
-    
-    }
-    float minEdgeDistance = 10;
-    for(int x = -1; x <= 1; x++)
-    {
-        for(int y = -1; y <= 1; y++)
-        {
-            vec2 cell = baseCell + vec2(x,y);
-            vec2 cellPos = cell + gold_noise(cell );
-            vec2 toCell = cellPos - t;
-            vec2 diffToClosestCell = abs(closestCell - cell);
-            bool isClosestCell = diffToClosestCell .x + diffToClosestCell.y < 0.1;
-            if(!isClosestCell)
-            {
-                vec2 toCenter = (toClosestCell + toCell) *0.5;
-                vec2 cellDifference = normalize(toCell - toClosestCell);
-                float edgeDistance = dot(toCenter, cellDifference);
-                minEdgeDistance = min(minEdgeDistance,edgeDistance);
-            
-            }
-        }
-    }
-
-    float random = gold_noise(closestCell );
-    
-
-    return vec3(minDistToCell,random,minEdgeDistance);
-
-}
-
-float calculateHeat(float y,float height)
-{
-    float heat = smoothstep(0,1,y );
-    heat = smoothstep(0,heat,(1 - y)  ) * heat;
-    heat -= smoothstep(0.0,1.0,height * 0.25 );
-    return heat * 2;
-
-}
-
-
-
-void calculateTerrainClimate(float heightVal,vec2 uv, float cellFrequency)
-{
-
-    float heat = calculateHeat(uv.y,heightVal);
-    float moisture = 1-step(u_oceanLevel ,heightVal * u_heightStrength);
-    imageStore(climateMap,ivec2(gl_GlobalInvocationID.xy),vec4(heat,moisture,0,1));
-}
-
-
-void main()
-{
-
-    vec3 uv = vec3(gl_GlobalInvocationID.xyz) / vec3(imageSize(img_output),1);
+    vec3 uv = vec3(gl_GlobalInvocationID.xyz) / vec3(imageSize(climateData),1);
     vec4 simplexVal = vec4(0);
     float amplitude = 1;
     float maxAmp = 0;
@@ -200,28 +124,42 @@ void main()
         amplitude *= 0.5;
 
     }
-
-    simplexVal /= maxAmp;
-    amplitude = 1;
-    maxAmp = 0;
-    frequencey = 2;
-
-    vec3 voronoiVal = vec3(0);
-    
-    for(int i = 0; i <4; i++)
-    {
-         voronoiVal += voronoi(uv.xy * frequencey) * amplitude;
-         frequencey *= 2;
-         maxAmp += amplitude;
-         amplitude *= 0.5;
-    }
-    voronoiVal /= maxAmp;
-    float height = voronoiVal.z + simplexVal.w;
-	vec4 pixel = vec4(vec3(voronoiVal.z + simplexVal.w),1);
-	ivec2 coords = ivec2(gl_GlobalInvocationID.xy);
-	imageStore(img_output,coords,pixel);
-    calculateTerrainClimate(height,uv.xy,16);
+    float rainfall = simplexVal.w;
+    return rainfall;
 
 
 }
 
+void calculateFlux()
+{
+    ivec2 uv = ivec2(gl_GlobalInvocationID.xy);
+    float currentFL = imageLoad(fluxmap,uv).r;
+    float currentFT = imageLoad(fluxmap,uv).g;
+    float currentFR = imageLoad(fluxmap,uv).b;
+    float currentFB = imageLoad(fluxmap,uv).a;
+    
+    float height = imageLoad(heightMap,uv).a;
+    vec4 heightDelta = vec4(0);
+    heightDelta.r = (imageLoad(heightMap,uv + ivec2(-1,0)).a - height) * u_heightStrength;
+    heightDelta.g = (imageLoad(heightMap,uv + ivec2(0,1)).a - height) * u_heightStrength;
+    heightDelta.b = (imageLoad(heightMap,uv + ivec2(1,0)).a - height) * u_heightStrength;
+    heightDelta.a = (imageLoad(heightMap,uv + ivec2(0,-1)).a - height) * u_heightStrength;
+
+    float fl = max(0,currentFL + (u_gravity * heightDelta.r ));
+    float fr = max(0,currentFT + (u_gravity * heightDelta.g ));
+    float ft = max(0,currentFR + (u_gravity * heightDelta.b ));
+    float fb = max(0,currentFB + (u_gravity * heightDelta.a ));
+    imageStore(fluxmap,uv,vec4(fl,ft,fr,fb));
+
+}
+
+void main()
+{
+    ivec2 uv = ivec2(gl_GlobalInvocationID.xy);
+	float rainfall = getRainfallAmount();
+    float currentWater = imageLoad(climateData,uv).g;
+    currentWater += u_tick;
+    calculateFlux();
+
+
+}
