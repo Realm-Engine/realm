@@ -63,6 +63,7 @@ class World
 		
 		ocean = manager.instantiate!(Ocean)(material.oceanLevel,material.textures.normalHeightMap.texture,material.heightStrength);
 		ocean.getComponent!(Transform).scale = getComponent!(Transform).scale;
+		
 		//ocean.getComponent!(Transform).position = transform.position;
 		
 

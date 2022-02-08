@@ -6,6 +6,13 @@ layout(rgba8, binding = 1) readonly uniform image2D imgHeight;
 layout(rgba8, binding = 2) uniform image2D climateData;
 layout(location = 0) uniform float heightStrength;
 
+layout(std430, binding = 3) writeonly buffer _tileData
+{
+	
+	float tileData[1];
+
+};
+
 void grayToNormal(ivec2 uv,float delta)
 {
 	ivec2 dx = uv + ivec2(delta,0);
@@ -66,8 +73,9 @@ void distToOcean()
 
 void main()
 {
-	grayToNormal(ivec2(gl_GlobalInvocationID.xy),14);
-
+	grayToNormal(ivec2(gl_GlobalInvocationID.xy),10);
+	tileData[0] = 1.0f;
+	
 	//blurOcean();
 	
 	

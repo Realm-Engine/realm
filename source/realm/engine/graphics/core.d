@@ -22,6 +22,7 @@ alias State = GState;
 alias FrameBuffer = GFrameBuffer;
 alias FrameBufferAttachment = GFrameBufferAttachment;
 alias PixelBuffer = GPixelBuffer;
+alias ShaderStorage = GShaderStorage;
 alias ShaderPipeline = GShaderPipeline;
 alias FrameBufferTarget = GFrameBufferTarget;
 alias ShaderProgramModel = GShaderProgramModel;
@@ -44,6 +45,8 @@ alias setViewport = gSetViewport;
 alias readBuffer = gReadBuffer;
 alias bindAttribute = gBindAttribute;
 alias enableDebugging = gEnableDebugging;
+alias BufferUsage = GBufferUsage;
+alias drawBuffers = gDrawBuffers;
 
 alias StandardShaderModel = ShaderProgramModel!(ShaderType.VERTEX,ShaderType.FRAGMENT);
 alias ComputeShader = ShaderProgramModel!(ShaderType.COMPUTE);

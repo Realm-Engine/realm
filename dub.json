@@ -6,7 +6,6 @@
 	"targetType": "library",
 	"dependencies": {
 		"derelict-gl3": "~>1.0.24",
-		"dimage": "~>0.2.2",
 		"gl3n": "~>1.4.1",
 		"glfw-d": "~>1.1.0",
 		"imagefmt": "~>2.1.2",
@@ -16,7 +15,8 @@
 	"description": "A minimal D application.",
 	"extraDependencyFiles": [
 		"./Assets/Shaders/*.shader",
-		"./Assets/Models/*.obj"
+		"./Assets/Models/*.obj",
+		"./Assets/Shaders/*.glsl"
 	],
 	"license": "proprietary",
 	"name": "realm",

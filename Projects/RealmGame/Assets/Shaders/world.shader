@@ -1,3 +1,7 @@
+
+
+
+
 #shader shared
 
 struct Material
@@ -24,7 +28,7 @@ vec4 vertex(REVertexData IN)
 	float height = (heightSample.x) * getObjectData(heightStrength);
 	height = mix(height, getObjectData(oceanLevel), isWater);
 	IN.material.height = height;
-	vec3 position = v_Position + vec3(0, height, 0);
+	vec3 position = v_Position + vec3(0, 0, 0);
 	RESurfaceDataOut.TBN = calculateTBN();
 	RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
@@ -80,7 +84,7 @@ vec3 calculateBiome()
 	int isDry = 1 - isMoist;
 	int isCold = 1 -isHot;
 	
-	int isDesert = int(step(1.0, heat));
+	int isDesert = int(step(0.95, heat));
 
 
 	vec3 biome = vec3(0);

@@ -1,7 +1,6 @@
 module realm.engine.asset;
 public
 {
-	import dimage;
 	import imagefmt;
 }
 
@@ -106,12 +105,28 @@ IFImage readImageBytes(string path)
 	return img;
 }
 
+
+
 void writeImageBytes(IFImage* image,string path)
 {
 	string sysPath = VirtualFS.getSystemPath(path);
 	IFImage img = read_image(sysPath,4);
 	long fmtIndix = lastIndexOf(sysPath,'.');
 	string fmt = sysPath[fmtIndix+1..sysPath.length];
+	switch(fmt)
+	{
+		case "png" :
+			ubyte result = write_image(sysPath,image.w,image.h,image.buf8,4);
+			Logger.LogError(result == 0, "Could not write image: %s", path);
+			break;
+		default:
+			Logger.LogError("File type not supported: %s", fmt);
+			break;
+
+			
+
+	}
+
 
 
 }
@@ -286,8 +301,9 @@ StandardShaderModel loadShaderProgram(string path,string name)
 		return shader;
 	}
 	auto file = File(sysPath);
+	
 	auto range = file.byLine();
-
+	
 	CurrentProcess current = CurrentProcess.None;
 	string baseVertex = readText(VirtualFS.getSystemPath("$EngineAssets/Shaders/baseVertex.glsl"));
 	string baseFragment = readText(VirtualFS.getSystemPath("$EngineAssets/Shaders/baseFragment.glsl"));

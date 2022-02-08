@@ -39,6 +39,7 @@ mixin template OpenGLObject()
 
 enum GBufferUsage : GLenum
 {
+    MappedRead = GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT,
     MappedWrite = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT,
     WriteOnlyTemp = GL_MAP_WRITE_BIT,
     Buffered = GL_DYNAMIC_STORAGE_BIT
@@ -78,7 +79,7 @@ enum bool isValidBufferTarget(GLenum T) = (T == GL_ARRAY_BUFFER
 											      || T ==GL_TRANSFORM_FEEDBACK_BUFFER
 											      || T == GL_UNIFORM_BUFFER);
 
-enum bool isMappedBuffer(T) = (T == GBufferUsage.MappedWrite || T == GBufferUsage.WriteOnlyTemp);
+enum bool isMappedBuffer(T) = (T == GBufferUsage.MappedWrite || T == GBufferUsage.WriteOnlyTemp || T == GBufferUsage.MappedRead);
 
 mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 {
@@ -90,7 +91,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
     
 
 
-    static if (usage == GBufferUsage.MappedWrite )
+    static if (usage == GBufferUsage.MappedWrite  || usage == GBufferUsage.MappedRead)
     {
 
         private T* glPtr;
@@ -106,6 +107,33 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
             return (ringSize / T.sizeof);
 
         }
+
+        void refreshPointer()
+		{
+            bind();
+            glUnmapBuffer(bufferType);
+            mapBuffer();
+            unbind();
+
+		}
+        
+        private void mapBuffer()
+        out
+		{
+            
+			GLboolean mapped = getParameter!(GLboolean)(GL_BUFFER_MAPPED);
+			assert(mapped == GL_TRUE,"Could not map buffer");
+			
+			long bufferSize = getParameter!(long)(GL_BUFFER_SIZE);
+
+			assert(bufferSize == ringSize,"Buffer storage allocated less than requested");
+		}
+        do
+		{
+			glPtr = cast(T*) glMapBufferRange(bufferType, 0, ringSize, usage);
+
+            Logger.Assert(glPtr !is null,"Could not map buffer: %s", bufferType.stringof);
+		}
 
     }
 
@@ -133,11 +161,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
     in(size > 0, "Buffer size must be positive")
 	out
 	{
-        static if(usage == GBufferUsage.MappedWrite )
-		{
-			GLboolean mapped = getParameter!(GLboolean)(GL_BUFFER_MAPPED);
-			assert(mapped == GL_TRUE,"Could not map buffer");
-		}
+       
         long bufferSize = getParameter!(long)(GL_BUFFER_SIZE);
         
         assert(bufferSize == ringSize,"Buffer storage allocated less than requested");
@@ -149,14 +173,14 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
         glBufferStorage(bufferType, size * T.sizeof, null, usage);
         ringPtr = 0;
         ringSize = size * T.sizeof;
-        static if (usage == GBufferUsage.MappedWrite )
+        static if (usage == GBufferUsage.MappedWrite || usage == GBufferUsage.MappedRead)
         {
-            glPtr = cast(T*) glMapBufferRange(bufferType, 0, ringSize, usage);
-            
-            Logger.Assert(glPtr !is null,"Could not map buffer: %s", bufferType.stringof);
+            mapBuffer();
         }
 
     }
+
+
 
     private T getParameter(T)(GLenum param)
 	{
@@ -694,7 +718,7 @@ class GShaderProgramModel(T...)
 
     void waitImageWriteComplete()
 	{
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT |GL_TEXTURE_UPDATE_BARRIER_BIT);
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	}
 
 
@@ -847,7 +871,7 @@ struct ShaderBlock
 
 }
 
-struct ShaderStorage(T, GBufferUsage usage)
+struct GShaderStorage(T, GBufferUsage usage)
 {
     mixin OpenGLBuffer!(GBufferType.ShaderStorage, T, usage);
     void bindBase(uint bindPoint)

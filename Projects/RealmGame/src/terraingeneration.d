@@ -27,6 +27,7 @@ class TerrainGeneration
 	private SamplerObject!(TextureType.TEXTURE2D) _heightMap;
 	private SamplerObject!(TextureType.TEXTURE2D) _normalMap;
 	private SamplerObject!(TextureType.TEXTURE2D) _climateMap;
+	private ShaderStorage!(float,BufferUsage.MappedRead) tileData;
 	//private RealmUI.UIElement outputPanel;
 
 	private IFImage normalMapImage;
@@ -102,22 +103,22 @@ class TerrainGeneration
 		
 
 	
-
-		_climateGenProgram.use();
-		_climateGenProgram.bindImageWrite(&_climateMap,0,0);
-		_climateGenProgram.bindImageWrite(&_fluxMap,0,1);
-		_climateGenProgram.setUniformFloat(1,seed);
-		_climateGenProgram.setUniformFloat(2,9.81);
-		_climateGenProgram.setUniformFloat(3,settings.heightStrength);
-		int tick = 0;
-		for(tick = 0; tick < 100;tick++)
-		{
-			//Logger.LogInfo("Distance pass: stepsize: %d",stepSize );
-			_climateGenProgram.setUniformInt(0,tick);
-			_climateGenProgram.dispatch(_normalMap.width,_normalMap.height,1);
-			_climateGenProgram.unbind();
-			_climateGenProgram.waitImageWriteComplete();
-		}
+		//
+		//_climateGenProgram.use();
+		//_climateGenProgram.bindImageWrite(&_climateMap,0,0);
+		//_climateGenProgram.bindImageWrite(&_fluxMap,0,1);
+		//_climateGenProgram.setUniformFloat(1,seed);
+		//_climateGenProgram.setUniformFloat(2,9.81);
+		//_climateGenProgram.setUniformFloat(3,settings.heightStrength);
+		//int tick = 0;
+		//for(tick = 0; tick < 100;tick++)
+		//{
+		//    //Logger.LogInfo("Distance pass: stepsize: %d",stepSize );
+		//    _climateGenProgram.setUniformInt(0,tick);
+		//    _climateGenProgram.dispatch(_normalMap.width,_normalMap.height,1);
+		//    _climateGenProgram.unbind();
+		//    _climateGenProgram.waitImageWriteComplete();
+		//}
 		
 
 
@@ -125,17 +126,25 @@ class TerrainGeneration
 
 	void stage2()
 	{
-		
+		tileData.create();
+		tileData.bind();
+		tileData.store(1);
+
 
 		_stage2Program.bindImageWrite(&_normalMap,0,0);
 		_stage2Program.bindImageWrite(&_heightMap,0,1);
 		_stage2Program.bindImageWrite(&_climateMap,0,2);
 		_stage2Program.use();
+		tileData.bindBase(3);
 		_stage2Program.setUniformFloat(0,settings.heightStrength);
 		_stage2Program.dispatch(_normalMap.width,_normalMap.height,1);
 		_stage2Program.waitImageWriteComplete();
 		_stage2Program.unbind();
 
+		tileData.unbind();
+		tileData.refreshPointer();
+		float* tiles = tileData.ptr;
+		Logger.LogInfo("%f",tiles[0]);
 
 		
 
@@ -184,6 +193,7 @@ class TerrainGeneration
 		_heightMap.free();
 		_normalMap.free();
 		_climateMap.free();
+		//writeImageBytes(&normalMapImage,"$Assets/test.png");
 		
 	}
 

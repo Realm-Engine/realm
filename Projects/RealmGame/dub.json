@@ -13,7 +13,8 @@
 	},
 	"extraDependencyFiles": [
 		"./Assets/Shaders/*.shader",
-		"./Assets/Shaders/*.glsl"
+		"./Assets/Shaders/*.glsl",
+		"../../Assets/Shaders/*.shader"
 	],
 	"configurations": [
 		{

@@ -29,7 +29,7 @@ class MainMenu : GameState
 		startButton = RealmUI.createElement(vec3(0,-60,0),vec3(125,50,1),vec3(0));
 		text.textLayout = RealmUI.TextLayout(4,6,40);
 		startButton.textLayout = RealmUI.TextLayout(4,6,24);
-
+		
 	}
 
 	override void finish() {

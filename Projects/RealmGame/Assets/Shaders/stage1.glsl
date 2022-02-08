@@ -190,7 +190,7 @@ void main()
     vec4 simplexVal = vec4(0);
     float amplitude = 1;
     float maxAmp = 0;
-    float frequencey = 2;
+    float frequencey = 4;
     for (int i = 0; i <6; i++)
     {
         simplexVal += openSimplex2SDerivatives_Conventional(uv * frequencey) * amplitude;
@@ -204,7 +204,7 @@ void main()
     simplexVal /= maxAmp;
     amplitude = 1;
     maxAmp = 0;
-    frequencey = 2;
+    frequencey = 4;
 
     vec3 voronoiVal = vec3(0);
     

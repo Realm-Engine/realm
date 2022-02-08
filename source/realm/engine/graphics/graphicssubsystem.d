@@ -9,8 +9,7 @@ import realm.engine.graphics.batch;
 import derelict.opengl3.gl3;
 
 
-alias BufferUsage = GBufferUsage;
-alias drawBuffers = gDrawBuffers;
+
 class GraphicsSubsystem
 {
 	
