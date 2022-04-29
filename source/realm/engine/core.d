@@ -308,6 +308,65 @@ struct DirectionalLight
 	}
 
 }
+
+class TileMap
+{
+	private Vector!(int, 3) dimensions;
+	
+	struct Cells
+	{
+		Mesh[][][] meshes;
+
+	}
+
+	private Cells cells;
+
+
+	@property width()
+	{
+		return dimensions.x;
+	}
+	@property height()
+	{
+		return dimensions.y;
+	}
+	@property length()
+	{
+		return dimensions.z;
+	}
+
+	this(int width, int height, int length)
+	in
+	{
+		assert(width >=1, "TileMap Width must be atleast 1");
+		assert(height >= 1, "TileMap height must be atleast 1");
+		assert(length >= 1, "TileMap length must be atleast 1");
+	}
+	do
+	{
+		dimensions = Vector!(int,3)(width,height,length);
+		
+		cells.meshes = new Mesh[][][](width,height,length);
+
+		for(int x = 0; x < cells.meshes.length; x++)
+		{
+			for(int y = 0; y < cells.meshes[x].length;y++)
+			{
+				for(int z = 0; z< cells.meshes[x][y].length;z++)
+				{
+					Mesh newMesh;
+
+				}
+			}
+		}
+
+	}
+
+
+
+
+}
+
 alias ColorRGBA = Color!(4,ubyte);
 alias ColorFRGBA = Color!(4,float);
 alias ColorR = Color!(1,ubyte);

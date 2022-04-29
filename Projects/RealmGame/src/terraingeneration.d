@@ -17,6 +17,7 @@ class TerrainGeneration
 		float heightStrength;
 		float iceThreshold;
 		float heatStrength;
+		Vector!(int,2) worldSize;
 	}
 
 	mixin RealmEntity!("TerrainGeneration");
@@ -58,13 +59,13 @@ class TerrainGeneration
 
 		_heightMap.create();
 		_heightMap.textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
-		_heightMap.store(2048,2048);
+		_heightMap.store(settings.worldSize.x,settings.worldSize.y);
 		_normalMap.create();
 		_normalMap.textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
-		_normalMap.store(2048,2048);
+		_normalMap.store(settings.worldSize.x,settings.worldSize.y);
 		_climateMap.create();
 		_climateMap.textureDesc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_EDGE,0);
-		_climateMap.store(2048,2048);
+		_climateMap.store(settings.worldSize.x,settings.worldSize.y);
 		seed = RealmApp.getTicks();
 	}
 

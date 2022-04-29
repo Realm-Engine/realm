@@ -67,6 +67,12 @@ static class RealmUI
 		static TextLayout[UUID] layouts;
 	}
 
+	protected struct DropdownElements
+	{
+		mixin UIElementType!(TextMaterial);
+
+	}
+
 	struct UITheme
 	{
 		vec4 panelColor;
@@ -287,6 +293,27 @@ static class RealmUI
 			currentX += charTexture.w + layout.charSpacing;
 		}
 	}
+	
+
+	static T dropdown(T)(UIElement element, string[T] options, T selectedOption)
+	{
+		drawTextString(element,options[selectedOption]);
+		Transform transform = UIElements.transforms[element];
+		UIMaterial material = UIElements.materials[element];
+		RealmVertex[] panelVertices = panelVertices!(UIMaterial)(transform,material);
+		if(mouseOverElement(element,panelVertices) && _currentEvent.action == InputActionType.MouseAction)
+		{
+			foreach(s;options)
+			{
+				Logger.LogInfo("Option: %s",s);
+			}
+
+		}
+		return selectedOption;
+
+
+	}
+	
 
 	static void drawTextString(T...)(UIElement element,string text,T t )
 	{
@@ -343,6 +370,7 @@ static class RealmUI
 		return (mouseX >= panelAABB.min.x && mouseX <= panelAABB.max.x) && (mouseY >= panelAABB.min.y && mouseY <= panelAABB.max.y);
 	}
 
+	
 	
 
 	static ButtonState button(UIElement element,string text)

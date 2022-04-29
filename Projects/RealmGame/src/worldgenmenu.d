@@ -66,7 +66,7 @@ class WorldGenMenu : GameState
 			Logger.LogInfo("Generating world: %s", name);
 			float oceanLevel = parse!float(oceanLevelStr);
 			float worldHeight = parse!float(worldHeightStr);
-			TerrainGeneration generator = manager.instantiate!(TerrainGeneration)(TerrainGeneration.GenSettings(oceanLevel,worldHeight,0.8,0.5));
+			TerrainGeneration generator = manager.instantiate!(TerrainGeneration)(TerrainGeneration.GenSettings(oceanLevel,worldHeight,0.8,0.5,Vector!(int,2)(1024,1024)));
 			generator.generateMap();
 			manager.getEntities!(StateMachine)()[0].changeState(new MainState(manager));
 		}
