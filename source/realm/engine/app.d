@@ -31,7 +31,26 @@ class RealmApp
         return glfwGetTime();
 	}
 
-    this(int width, int height, const char* title)
+
+    void processArgs(string[] args)
+	{
+        import std.getopt;
+        bool clearCache;
+        foreach(arg;args)
+		{
+            Logger.LogInfo("Command Line Argument: %s",arg);
+		}
+        auto helpInformation = getopt(args,"clearCache",&clearCache);
+        
+        if(clearCache)
+		{
+           VirtualFS.clearCache();
+		}
+        
+        
+	}
+
+    this(int width, int height, const char* title, string[] args)
     {
         Logger.Assert(width >= 0 && height >=0,"Width and height of app are negative");
         shutdown = false;
@@ -50,11 +69,19 @@ class RealmApp
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         InputManager.initialze(window);
         glfwSwapInterval(1);
+        processArgs(args);
 
     }
     
+
+
     abstract void update();
     abstract void start();
+    
+    
+
+   
+
     void run()
     {
         start();

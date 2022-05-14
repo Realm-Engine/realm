@@ -79,6 +79,17 @@ struct MaterialTexture
 		color = c;
         type = InternalType.COLOR;
 	}
+
+    void opAssign(Vector!(int,4) c)
+	{
+        color.r = cast(ubyte)c.r;
+        color.g = cast(ubyte)c.g;
+        color.b = cast(ubyte)c.b;
+        color.a = cast(ubyte)c.a;
+        type = InternalType.COLOR;
+	}
+
+    
     @property bool isTexture() 
 	{
 		return type == InternalType.TEXTURE;
@@ -87,6 +98,8 @@ struct MaterialTexture
 	{
         return type == InternalType.COLOR;
 	}
+
+    
 
     Vector!(ubyte,4) opCast(T : Vector!(ubyte,4))() 
     in(isColor)
@@ -102,7 +115,7 @@ struct MaterialTexture
 
     int width()
 	{
-        if(isTexture)
+        if(type == InternalType.TEXTURE)
 		{
             return texture.w;
 		}
@@ -113,7 +126,7 @@ struct MaterialTexture
 	}
    int height()
 	{
-        if(isTexture)
+        if(type == InternalType.TEXTURE)
 		{
             return texture.h;
 		}

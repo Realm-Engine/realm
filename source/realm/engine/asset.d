@@ -68,6 +68,22 @@ static class VirtualFS
 	}
 
 
+	static void clearCache()
+	{
+
+		if(exists("Cache"))
+		{
+			Logger.LogInfo("Clearing cache");
+			auto dir = dirEntries("Cache","*.bin",SpanMode.depth);
+			foreach(entry; dir)
+			{
+				Logger.LogInfo("Deleting: %s", entry);
+				remove(entry);
+			}
+		}
+	}
+
+
 
 
 }
@@ -81,7 +97,6 @@ static this()
 	}
 	VirtualFS.registerPath!("Assets")("EngineAssets");
 }
-
 
 
 IFImage readImageBytes(string path)

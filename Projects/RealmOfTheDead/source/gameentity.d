@@ -1,4 +1,4 @@
-module realm.gameentity;
+module realmofthedead.gameentity;
 import realm.engine.core;
 import realm.engine.graphics.core;
 import realm.engine.graphics.material;
@@ -13,7 +13,7 @@ alias SimpleMaterial = Alias!(Material!(["color" : UserDataVarTypes.VECTOR,
 
 class GameEntity
 {
-	
+
 	mixin RealmEntity!("GameEntity",Transform,Mesh);
 	private SimpleMaterial material;
 	private static StandardShaderModel shader;
@@ -25,22 +25,37 @@ class GameEntity
 
 	void start(string modelPath)
 	{
+		
+		start(loadMesh(modelPath));
+
+	}
+
+	void start(Mesh mesh)
+	{
+		
 		transform = getComponent!(Transform);
 		material = new SimpleMaterial;
 		if(shader is null)
 		{
 			shader = loadShaderProgram("$EngineAssets/Shaders/simpleShaded.shader","Simple shaded");
 		}
-		setComponent!(Mesh)(loadMesh(modelPath));
-		mesh = &(getComponent!(Mesh)());
-		SimpleMaterial.allocate(mesh);
+		setComponent!(Mesh)(mesh);
+		this.mesh = &(getComponent!(Mesh)());
+		SimpleMaterial.allocate(this.mesh);
+		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.specularPower = 1.0;
 		material.shinyness = 32;
 		material.setShaderProgram(shader);
-		material.color = vec4(1.0,1.0,1.0,1.0);
+		material.textures.diffuse = Vector!(int,4)(255,255,255,255);
+		material.textures.normal = Vector!(int,4)(0,1,0,0);
+		material.color = vec4(1,1,1,1);
+		material.packTextureAtlas();
 	}
+
+
 	static this()
 	{
+		
 		
 	}
 	@property color(vec4 color)
@@ -50,8 +65,9 @@ class GameEntity
 
 	void update()
 	{
+		updateComponents();
 		draw(Renderer.get);
-		
+
 
 	}
 
@@ -65,15 +81,15 @@ class GameEntity
 	{
 		if(active)
 		{
-			renderer.submitMesh!(SimpleMaterial,true)(*mesh,transform,material);
+			renderer.submitMesh!(SimpleMaterial,false)(*mesh,transform,material);
 		}
 
 
 	}
 	void debugDraw()
 	{
+
 		
-		//Debug.drawBox(getComponent!(BoundingBox).center(),getComponent!(BoundingBox).extents(),vec3(0));
 	}
 
 

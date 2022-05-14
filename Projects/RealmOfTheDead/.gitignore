@@ -1,0 +1,17 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/realmofthedead
+realmofthedead.so
+realmofthedead.dylib
+realmofthedead.dll
+realmofthedead.a
+realmofthedead.lib
+realmofthedead-test-*
+*.exe
+*.o
+*.obj
+*.lst
+*.suo
+/.vs

@@ -245,8 +245,9 @@ class Renderer
 			mat4 view = mat4.look_at(-mainDirLight.transform.front,vec3(0,0,0),vec3(0,1,0));
 			mat4 lightSpaceMatrix = lightSpaceCamera.projection * view;
 			lightSpaceMatrix.transpose();
-			_globalData.vp[0..$] = lightSpaceMatrix.value_ptr[0..16].dup;
-			_globalData.lightSpaceMatrix[0..$] =  lightSpaceMatrix.value_ptr[0..16].dup;
+			float[16] lightSpaceDup = lightSpaceMatrix.value_ptr[0..16].dup;
+			_globalData.vp[0..$] = lightSpaceDup;
+			_globalData.lightSpaceMatrix[0..$] =  lightSpaceDup;
 			GraphicsSubsystem.updateGlobalData(&_globalData);
 
 
