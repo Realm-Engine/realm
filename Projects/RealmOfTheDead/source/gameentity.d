@@ -4,6 +4,7 @@ import realm.engine.graphics.core;
 import realm.engine.graphics.material;
 import realm.engine.graphics.renderer;
 import realm.engine.debugdraw;
+import realm.engine.physics.collision;
 import std.stdio;
 alias SimpleMaterial = Alias!(Material!(["color" : UserDataVarTypes.VECTOR,
 										 "diffuse" : UserDataVarTypes.TEXTURE2D,
@@ -14,7 +15,7 @@ alias SimpleMaterial = Alias!(Material!(["color" : UserDataVarTypes.VECTOR,
 class GameEntity
 {
 
-	mixin RealmEntity!("GameEntity",Transform,Mesh);
+	mixin RealmEntity!("GameEntity",Transform,Mesh,SimpleCollider);
 	private SimpleMaterial material;
 	private static StandardShaderModel shader;
 	private static IFImage diffuse;
@@ -50,6 +51,8 @@ class GameEntity
 		material.textures.normal = Vector!(int,4)(0,1,0,0);
 		material.color = vec4(1,1,1,1);
 		material.packTextureAtlas();
+		
+		
 	}
 
 

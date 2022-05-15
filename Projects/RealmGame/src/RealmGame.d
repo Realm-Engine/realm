@@ -32,10 +32,10 @@ class RealmGame : RealmApp
 	private char currentChar;
 	private StateMachine _stateMachine;
 
-	this(int width, int height, const char* title)
+	this(int width, int height, const char* title, string[] args)
 	{
 		
-		super(width,height,title);
+		super(width,height,title,args);
 
 		//enableDebugging();
 		manager = new EntityManager;

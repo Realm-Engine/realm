@@ -23,6 +23,9 @@ class Transform
 	vec3 rotation;
 	vec3 scale;
 	private mat4 transformMat;
+
+	mixin RealmComponent;
+
 	this(vec3 position, vec3 rotation, vec3 scale)
 	{
 		this.position = position;

@@ -53,10 +53,10 @@ version(RealmExecutable)
 	pragma(msg,"Building project to executable");
 	import realm.game;
 
-	int main()
+	int main(string[] args)
 	{
 
-		RealmGame game = new RealmGame(1280,720,"Realm!");
+		RealmGame game = new RealmGame(1280,720,"Realm!",args);
 
 		game.run();
 		scope(exit)

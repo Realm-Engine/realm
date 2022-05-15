@@ -67,18 +67,28 @@ mixin template EntityRegistry(T...)
 enum bool isEntity(T) = (__traits(hasMember, T, "components") == true && __traits(hasMember,
             T, "setComponent") == true && __traits(hasMember, T, "getComponent") == true && __traits(hasMember,T,"update"));
 
-mixin template RealmComponent(string cName)
+mixin template RealmComponent()
 {
-    private string _name;
-    @property name()
-	{
-        return _name;
-	}
-    @property name(string n)
-	{
-        _name =n;
-	}
+
+    import std.variant;
+
     
+    private Variant parentEntity;
+    private string parentTypeMangle;
+
+    void setParent(T)(T parent)
+	{
+        parentEntity = parent;
+        parentTypeMangle = T.mangleof;
+	}
+
+    Variant getParent()
+	{
+        return parentEntity;
+	}
+
+   
+
 
 }
 
@@ -164,12 +174,19 @@ mixin template RealmEntity(string eName, T...)
 					//const (void)[] init = typeid(Type).initializer();
 					auto memory = malloc(size)[0..size];
 					GC.addRange(memory.ptr,size);
+                    
                     __traits(getMember,this,componentName!(Type)) = emplace!(Type)(memory);
+                    __traits(getMember,this,componentName!(Type)).setParent!(__traits(parent,Components))(this);
+                    
 				}
 			}
-
-
-
+		}
+        static foreach(Type; T)
+		{
+            static if(__traits(compiles, __traits(getMember,this,componentName!(Type)).componentStart() ))
+			{
+                __traits(getMember,this,componentName!(Type)).componentStart();
+			}
 		}
 	}
 
