@@ -3,6 +3,12 @@ import realm.engine.core;
 import std.stdio;
 import realm.engine.app;
 import std.typecons;
+
+private
+{
+    import realmofthedead.gun;
+}
+
 class Player
 {
     private Camera* camera;
@@ -26,6 +32,7 @@ class Player
         //camera.update();
 		// setComponent!(Transform)(new Transform);
         transform = getComponent!(Transform);
+        transform.setParent(*camera);
         InputManager.registerInputEventCallback(&inputEvent);
 
 
@@ -76,7 +83,7 @@ class Player
 		{
             movementVector += camera.front.cross(vec3(0,1,0)).normalized() ;
 		}
-        camera.position += movementVector;
+        camera.position += movementVector * 0.25;
         float xOffset = x - lastX;
         float yOffset = lastY - y;
         xOffset *= 0.1;
@@ -117,11 +124,12 @@ class Player
 
     void update()
     {
-
+        
         processInput();
 
-        updateComponents();
+        
         camera.update();
+        updateComponents();
         //camera.view = getComponent!(ArcballCamera).camera;
     }
 

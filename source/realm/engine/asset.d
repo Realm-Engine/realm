@@ -26,6 +26,7 @@ static class VirtualFS
 	import std.digest.md;
 
 	private static string[string] registeredPaths;
+
 	static string registerPath(string sysPath)(string prefix)
 	in
 	{
@@ -87,6 +88,9 @@ static class VirtualFS
 
 
 }
+
+
+
 
 static this()
 {

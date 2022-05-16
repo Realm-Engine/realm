@@ -5,6 +5,8 @@ public
 {
 	import realmofthedead.gameentity;
 	import realmofthedead.player;
+	import realm.engine.core;
+	import realmofthedead.gun;
 }
 
 private
@@ -13,6 +15,6 @@ private
 }
 class EntityManager
 {
-	mixin EntityRegistry!(GameEntity,Player);	
+	mixin EntityRegistry!(Player,Gun);	
 
 }

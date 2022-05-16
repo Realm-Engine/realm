@@ -38,8 +38,17 @@ class SimpleCollider
 		
 	}
 
-	void componentStart()
+	void componentStart(E)(E parent)
 	{
+
+		
+		static if(hasComponent!(E,Transform))
+		{
+			Logger.LogInfo("Parent has transform");
+			parentTransform = parent.getComponent!(Transform);
+		}
+		
+
 
 		//auto parent = getParent().get!(__traits(toType,parentTypeMangle));
 		//TypeInfo parentType = parent.type;
@@ -68,11 +77,11 @@ class SimpleCollider
 	{
 		if(shapeType == ColliderShape.Mesh)
 		{
-
+			
 		}
 	}
 
-	void componentUpdate()
+	void componentUpdate(E)(E parent)
 	{
 		calculateBounds();
 

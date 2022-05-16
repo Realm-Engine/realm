@@ -70,22 +70,10 @@ enum bool isEntity(T) = (__traits(hasMember, T, "components") == true && __trait
 mixin template RealmComponent()
 {
 
-    import std.variant;
-
     
-    private Variant parentEntity;
-    private string parentTypeMangle;
 
-    void setParent(T)(T parent)
-	{
-        parentEntity = parent;
-        parentTypeMangle = T.mangleof;
-	}
 
-    Variant getParent()
-	{
-        return parentEntity;
-	}
+     
 
    
 
@@ -94,8 +82,12 @@ mixin template RealmComponent()
 
 enum string componentName(T) = T.mangleof;
 
+enum bool hasComponent(E,C) = (__traits(hasMember,E.Components,C.mangleof));
+
 mixin template RealmEntity(string eName, T...)
 {
+
+    alias parentType = __traits(parent,Components);
 
     private
     {
@@ -120,22 +112,24 @@ mixin template RealmEntity(string eName, T...)
 
         }
 
-        void updateComponents()
-        {
 
-            static foreach (componentMember; (__traits(allMembers, Components)))
-            {
-
-                static if (__traits(compiles, __traits(getMember, this,
-                        componentMember).componentUpdate()))
-                {
-
-                    __traits(getMember, this, componentMember).componentUpdate();
-                }
-
-            }
-        }
     }
+
+	void updateComponents()
+	{
+
+		static foreach (componentMember; (__traits(allMembers, Components)))
+		{
+
+			static if (__traits(compiles, __traits(getMember, components,
+												   componentMember).componentUpdate!(parentType)(this)))
+			{
+
+				__traits(getMember, this, componentMember).componentUpdate!(parentType)(this);
+			}
+
+		}
+	}
 
     Components components;
     alias components this;
@@ -176,16 +170,17 @@ mixin template RealmEntity(string eName, T...)
 					GC.addRange(memory.ptr,size);
                     
                     __traits(getMember,this,componentName!(Type)) = emplace!(Type)(memory);
-                    __traits(getMember,this,componentName!(Type)).setParent!(__traits(parent,Components))(this);
+                    
                     
 				}
 			}
+           
 		}
         static foreach(Type; T)
 		{
-            static if(__traits(compiles, __traits(getMember,this,componentName!(Type)).componentStart() ))
+            static if(__traits(compiles, __traits(getMember,this,componentName!(Type)).componentStart!(parentType)(this) ))
 			{
-                __traits(getMember,this,componentName!(Type)).componentStart();
+                __traits(getMember,this,componentName!(Type)).componentStart!(parentType)(this);
 			}
 		}
 	}

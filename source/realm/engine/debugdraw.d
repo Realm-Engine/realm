@@ -6,6 +6,7 @@ import realm.engine.core;
 import realm.engine.app;
 import realm.engine.asset;
 import realm.engine.graphics.material;
+
 import gl3n.linalg;
 import std.range;
 static class Debug
@@ -15,11 +16,11 @@ static class Debug
 	alias DebugMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR]);
 	alias DebugMaterial = Alias!(Material!(DebugMaterialLayout));
 	private static VertexAttribute[] vertex3DAttributes;
-
+	private static bool active;
 	static void initialze()
 	{
 	
-
+		active = false;
 		debugProgram = loadShaderProgram("$EngineAssets/Shaders/debug.shader","Debug");
 		
 		DebugMaterial.initialze();
@@ -30,8 +31,25 @@ static class Debug
 		debugBatch.initialize(DebugMaterial.allocatedVertices(),DebugMaterial.allocatedElements());
 		
 		debugBatch.reserve(16);
+		InputManager.registerInputEventCallback(&inputEvent);
 		
 
+	}
+
+	static void toggleActive()
+	{
+		active = active ^ true;
+	}
+
+	static void inputEvent(InputEvent e)
+	{
+		if(e.action == InputActionType.KeyAction)
+		{
+			if(e.keyEvent.state == KeyState.Release && e.keyEvent.key == RealmKey.F1)
+			{
+				active = active ^ true;
+			}
+		}
 	}
 
 	static void drawLine(vec3 start, vec3 end)
@@ -112,9 +130,13 @@ static class Debug
 
 	static void flush()
 	{
-		
-		debugBatch.drawBatch!(false,PrimitiveShape.LINES)();
+		if(active)
+		{
+			debugBatch.drawBatch!(false,PrimitiveShape.LINES)();
+
+		}
 		debugBatch.resetBatch();
 		DebugMaterial.resetInstanceCount();
+
 	}
 }

@@ -11,19 +11,21 @@ class RealmGame : RealmApp
 {
 
 	private EntityManager _manager;
-	private GameEntity _floor;
 	Camera cam;
 	private DirectionalLight mainLight;
 	private Player player;
+	private Gun gun;
+	private IFImage gunDiffuse;
 	this(int width, int height, const char* title,string[] args)
 	{
 		super(width,height,title,args);
 		_manager = new EntityManager;
 		VirtualFS.registerPath!("Projects/RealmOfTheDead/Assets")("Assets");
-		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height) / 1,1,750,60);
+		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height) / 1,0.1,750,60);
 		Renderer.get.activeCamera = &cam;
 		SimpleMaterial.initialze();
 		SimpleMaterial.reserve(2);
+
 
 	}
 
@@ -31,19 +33,25 @@ class RealmGame : RealmApp
 
 	override void start()
 	{
+		gunDiffuse = readImageBytes("$Assets/Images/gun.png");
 		mainLight.transform = new Transform;
 		mainLight.color = vec3(1,1,1);
-		mainLight.transform.rotation = vec3(0,0,0);
-		mainLight.transform.componentUpdate();
+		mainLight.transform.rotation = vec3(0,90,0);
+		//mainLight.transform.componentUpdate();
 		Renderer.get.mainLight(&mainLight);
 		Logger.LogInfo("Starting Realm of the Dead!");
-		_floor = _manager.instantiate!(GameEntity)(generateFace(vec3(0,0,1),4));
 		player = _manager.instantiate!(Player)(&cam);
+		gun = _manager.instantiate!(Gun)(player.getComponent!(Transform));
+		
+		
 
 	}
 
 	override void update()
 	{
+	
+		
+
 		_manager.updateEntities();
 		Renderer.get.update();
 

@@ -22,8 +22,12 @@ class Transform
 	vec3 position;
 	vec3 rotation;
 	vec3 scale;
-	private mat4 transformMat;
 
+	private Transform parent;
+	private Transform[] children;
+
+	private mat4 transformMat;
+	
 	mixin RealmComponent;
 
 	this(vec3 position, vec3 rotation, vec3 scale)
@@ -73,14 +77,31 @@ class Transform
 	
 	void updateTransformation()
 	{
+		
+		vec3 postionRelation = vec3(0);
+		vec3 rotationRelation = vec3(0);
+		vec3 scaleRelation = vec3(0);
+
+		vec3 worldPosition = getWorldPosition();
+		vec3 worldRotation = getWorldRotation();
+		vec3 worldScale = getWorldScale();
+
+		if(parent !is null)
+		{
+			postionRelation = parent.position;
+			rotationRelation = parent.rotation;
+			scaleRelation = parent.scale;
+		}
+
 
 		mat4 M = mat4.identity;
 		
-		M = M.scale(scale.x,scale.y,scale.z);
-		M.rotate(rotation.x,vec3(1,0,0));
-		M.rotate(rotation.y,vec3(0,1,0));
-		M.rotate(rotation.z,vec3(0,0,1));
-		M = M.translate(position.x,position.y,position.z).matrix;
+		M = M.scale(worldScale.x ,worldScale.y ,worldScale.z);
+		M = M.translate(worldPosition.x ,worldPosition.y ,worldPosition.z );
+		M.rotate(worldRotation.x ,vec3(1,0,0));
+		M.rotate(worldRotation.y ,vec3(0,1,0));
+		M.rotate(worldRotation.z ,vec3(0,0,1));
+		
 
 
 		transformMat = M;
@@ -91,21 +112,71 @@ class Transform
 		transformMat *= mat4.look_at(x,y,z);
 	}
 
-	void componentUpdate()
+	void componentUpdate(E)(E parent)
 	{
 		updateTransformation();
 
+	}
+
+	void setParent(Transform parent)
+	{
+		this.parent = parent;
+		parent.addChild(this);
+
+
+	}
+	private void addChild(Transform child)
+	{
+		children ~= child;
+	}
+
+	vec3 getWorldPosition()
+	{
+		if(parent is null)
+		{
+			return position;
+		}
+		return position + parent.getWorldPosition();
+	}
+
+	vec3 getWorldRotation()
+	{
+		if(parent is null)
+		{
+			return rotation;
+		}
+		return rotation + parent.getWorldRotation();
+	}
+	vec3 getWorldScale()
+	{
+		if(parent is null)
+		{
+			return scale;
+		}
+		return scale + parent.getWorldScale();
 	}
 }
 
 
 struct Mesh
 {
+
+	mixin RealmComponent;
+
 	vec3[] positions;
 	vec2[] textureCoordinates;
 	vec3[] normals;
 	vec3[] tangents;
 	uint[] faces;
+	private AABB localBounds;
+	private AABB worldBounds;
+	
+
+	void componentStart(E)(E parent)
+	{
+		worldBounds = localBounds = AABB.from_points(positions);
+	}
+
 
 	void calculateNormals()
 	{
@@ -159,6 +230,40 @@ struct Mesh
 			tangents[triangleFace[2]] = tangent;
 
 		}
+	}
+
+	
+
+	private void calculateWorldBoundingBox(Transform transform)
+	{
+		mat4 modelMatrix = transform.transformation;
+		auto xa = vec4(modelMatrix[0]) * localBounds.min.x;
+		auto xb = vec4(modelMatrix[0]) * localBounds.max.x;
+
+		auto ya = vec4(modelMatrix[1]) * localBounds.min.y;
+		auto yb = vec4(modelMatrix[1]) * localBounds.max.y;
+		auto za = vec4(modelMatrix[2]) * localBounds.min.z;
+		auto zb = vec4(modelMatrix[2]) * localBounds.max.z;
+
+		vec3 test = min(xa, xb);
+
+	}
+
+	void componentUpdate(E)(E parent)
+	{
+		static if(hasComponent!(E, Transform))
+		{
+			calculateWorldBoundingBox(parent.getComponent!(Transform));
+		}
+	}
+
+	AABB getLocalBounds()
+	{
+		return localBounds;
+	}
+	AABB getWorldBounds()
+	{
+		return worldBounds;
 	}
 
 
@@ -299,6 +404,7 @@ class Camera
 
 struct DirectionalLight
 {
+
 	Transform transform;
 	vec3 color; 
 	FrameBuffer shadowFrameBuffer; 
