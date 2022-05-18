@@ -20,7 +20,7 @@ class Transform
 {
 	import std.meta;
 	vec3 position;
-	vec3 rotation;
+	quat quatRotation;
 	vec3 scale;
 
 	private Transform parent;
@@ -33,13 +33,13 @@ class Transform
 	this(vec3 position, vec3 rotation, vec3 scale)
 	{
 		this.position = position;
-		this.rotation = rotation;
+		this.quatRotation = quat.euler_rotation(rotation.z,rotation.x,rotation.y);
 		this.scale = scale;
 	}
 	this()
 	{
 		this.position = vec3(0,0,0);
-		this.rotation = vec3(0,0,0);
+		quatRotation = quat(0,0,0,1);
 		this.scale = vec3(1,1,1);
 		transformMat = mat4(1.0f);
 	}
@@ -48,7 +48,7 @@ class Transform
 	this(Transform other)
 	{
 		position = other.position;
-		rotation = other.rotation;
+		quatRotation = other.quatRotation;
 		scale = other.scale;
 	}
 
@@ -61,12 +61,30 @@ class Transform
 		transformMat = t;
 	}
 
+	@property rotation(vec3 euler)
+	{
+
+		quatRotation = quat.euler_rotation(radians( euler.z),radians(euler.x),radians(euler.y));
+	}
+	@property vec3 rotation()
+	{
+		float yaw = quatRotation.yaw;
+		float pitch = quatRotation.pitch;
+		float roll = quatRotation.roll;
+		return vec3(pitch,yaw,roll);
+	}
+	
+
 	@property front()
 	{
+
+		float yaw = quatRotation.yaw;
+		float pitch = quatRotation.pitch;
+		float roll = quatRotation.roll;
 		vec3 dir = vec3(0);
-		dir.x = cos(radians(rotation.y)) * cos(radians(rotation.x));
-		dir.y = sin(radians(rotation.x));
-		dir.z = sin(radians(rotation.y)) * cos(radians(rotation.x));
+		dir.x = cos(radians(yaw)) * cos(radians(pitch));
+		dir.y = sin(radians(pitch));
+		dir.z = sin(radians(yaw)) * cos(radians(pitch));
 		dir.normalize();
 		return dir;
 		
@@ -99,12 +117,13 @@ class Transform
 		mat4 M = mat4.identity;
 		
 		M = M.scale(worldScale.x ,worldScale.y ,worldScale.z);
-		M = M.translate(worldPosition.x ,worldPosition.y ,worldPosition.z );
-		M.rotate(worldRotation.x ,vec3(1,0,0));
-		M.rotate(worldRotation.y ,vec3(0,1,0));
-		M.rotate(worldRotation.z ,vec3(0,0,1));
 		
-
+		mat4 rotationMat = quatRotation.normalized().to_matrix!(4,4)();
+		//M.rotate(worldRotation.x ,vec3(1,0,0));
+		//M.rotate(worldRotation.y ,vec3(0,1,0));
+		//M.rotate(worldRotation.z ,vec3(0,0,1));
+		M *= rotationMat;
+		M = M.translate(worldPosition.x ,worldPosition.y ,worldPosition.z );
 
 		transformMat = M;
 	}

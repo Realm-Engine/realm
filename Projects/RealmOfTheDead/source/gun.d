@@ -37,9 +37,9 @@ class Gun
 		material.packTextureAtlas();
 		material.setShaderProgram(getEntityShader());
 
-		transform.scale = vec3(0.1,0.1,0.1);
-		transform.rotation = vec3(-45,0,0);
-		transform.position =vec3(0,0,5);
+		transform.scale = vec3(0.5,0.5,0.5);
+		transform.rotation = vec3(0,0,90);
+		transform.position =vec3(0,0,0);
 
 
 		scope(exit)
