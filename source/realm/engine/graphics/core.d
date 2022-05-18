@@ -43,7 +43,7 @@ alias clear = gClear;
 alias cull = gCull;
 alias setViewport = gSetViewport;
 alias readBuffer = gReadBuffer;
-alias bindAttribute = gBindAttribute;
+
 alias enableDebugging = gEnableDebugging;
 alias BufferUsage = GBufferUsage;
 alias drawBuffers = gDrawBuffers;
@@ -51,6 +51,7 @@ alias drawBuffers = gDrawBuffers;
 alias StandardShaderModel = ShaderProgramModel!(ShaderType.VERTEX,ShaderType.FRAGMENT);
 alias ComputeShader = ShaderProgramModel!(ShaderType.COMPUTE);
 
+/// Used to encode information about data types for vertice layout
 enum VertexType : int
 {
 	FLOAT = 0x4011,
@@ -60,6 +61,7 @@ enum VertexType : int
 	INTEGER = 0x4012
 }
 
+/// Types allowed for use per object data in shader
 enum UserDataVarTypes : int
 {
 	VECTOR = VertexType.FLOAT4,
@@ -69,14 +71,6 @@ enum UserDataVarTypes : int
 	
 }
 
-enum AttributeSlot
-{
-	POSITION,
-	TEXCOORD,
-	NORMAL,
-	TANGENT
-
-}
 
 enum MeshTopology : int
 {
@@ -84,13 +78,15 @@ enum MeshTopology : int
 	LINES = 2
 }
 
-
+/// How framebuffer data is stored
 enum GFrameBufferStorage
 {
 	FB_TEXTURE,
 	FB_RENDERBUFFER
 };
 
+
+/// Base vertex layout struct
 struct RealmVertex
 {	
 
@@ -106,20 +102,10 @@ struct RealmVertex
 }
 
 
-
-struct VertexAttribute
-{
-	VertexType type;
-	uint offset;
-	uint index;
-
-
-	
-}
-
 struct TextureDesc
 {
 	ImageFormat fmt;
+
 	TextureFilterfunc filter;
 	TextureWrapFunc wrap;
 	int mipLevels;
@@ -181,6 +167,7 @@ struct ImageFormatData
 
 }
 
+
 enum ImageFormat : ImageFormatData
 {
 	RGBA8 = ImageFormatData(BaseImageFormat.RGBA,SizedImageFormat.RGBA8,4,8),
@@ -197,7 +184,7 @@ enum ImageFormat : ImageFormatData
 
 }
 
-
+/// Raw data structure holding global data for use by all shaders
 struct RealmGlobalData
 {
   float[16] vp;

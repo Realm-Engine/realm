@@ -74,6 +74,8 @@ class Transform
 	
 
 
+
+
 	
 	void updateTransformation()
 	{
@@ -324,6 +326,7 @@ class Camera
 
 
 
+
 	alias transform this;
 
 	this(CameraProjection projectionType, vec2 size,float nearPlane,float farPlane,float fieldOfView)
@@ -387,6 +390,7 @@ class Camera
 		mat4 translation = mat4.identity;
 		translation.matrix[3] = vec4(-transform.position.x,-transform.position.y,-transform.position.z,1.0).vector;
 		cameraTransformation = lookMat;
+		
 	}
 	void cameraLookAt(float x,float y, float z)
 	{

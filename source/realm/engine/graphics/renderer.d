@@ -34,7 +34,6 @@ class Renderer
 	private RealmVertex[][ulong] staticMeshes;
 	private Batch!(RealmVertex)[ulong] batches;
 	private Batch!(RealmVertex) lightSpaceBatch;
-	private static VertexAttribute[] vertex3DAttributes;
 	private RealmGlobalData _globalData;
 	private Camera* camera;
 	private static FrameBuffer mainFrameBuffer;
@@ -106,16 +105,6 @@ class Renderer
 		_globalData.vp = mat4.identity.value_ptr[0..16].dup;
                 
 		GraphicsSubsystem.updateGlobalData(&_globalData);
-		VertexAttribute position = {VertexType.FLOAT3,0,0};
-		VertexAttribute texCoord = {VertexType.FLOAT2,12,1};
-		VertexAttribute normal = {VertexType.FLOAT3,20,2};
-		VertexAttribute tangent = {VertexType.FLOAT3,32,3};
-		VertexAttribute materialId = {VertexType.INTEGER,44,4};
-		vertex3DAttributes ~= position;
-		vertex3DAttributes ~= texCoord;
-		vertex3DAttributes ~= normal;
-		vertex3DAttributes ~= tangent;
-		vertex3DAttributes ~= materialId;
 		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
 		mainFrameBuffer.create!([FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT])(windowSize[0],windowSize[1]);
 		

@@ -1411,32 +1411,7 @@ enum GCullFace : GLenum
 
 
 
-void gBindAttribute(VertexAttribute attr, uint stride = 0)
-{
 
-    GLenum vertexTypeToGLenum(VertexType type)
-    {
-        switch (type)
-        {
-        case VertexType.FLOAT:
-            return GL_FLOAT;
-        case VertexType.FLOAT2:
-            return GL_FLOAT;
-        case VertexType.FLOAT3:
-            return GL_FLOAT;
-        case VertexType.FLOAT4:
-            return GL_FLOAT;
-        default:
-            return GL_FLOAT;
-
-        }
-    }
-
-    glEnableVertexAttribArray(attr.index);
-    GLenum type = vertexTypeToGLenum(attr.type);
-    glVertexAttribPointer(attr.index, shaderVarElements(attr.type), type,
-            GL_FALSE, stride, cast(void*) attr.offset);
-}
 
 void bindAttribute(alias T)(int index,int offset,int stride )
 {

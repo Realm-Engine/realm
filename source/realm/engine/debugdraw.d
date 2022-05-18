@@ -15,7 +15,6 @@ static class Debug
 	private static StandardShaderModel debugProgram;
 	alias DebugMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR]);
 	alias DebugMaterial = Alias!(Material!(DebugMaterialLayout));
-	private static VertexAttribute[] vertex3DAttributes;
 	private static bool active;
 	static void initialze()
 	{

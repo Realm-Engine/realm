@@ -5,6 +5,10 @@ class Stack(T)
 	private T[] arr;
 	private int index;
 	private double growthFactor;
+	/**
+	* len: initial size of stack
+	* growthFactor: By what factor the size of the stack will grow when it reaches capactiy
+	*/
 	this(size_t len,double growthFactor = 1.5)
 	{
 		this.growthFactor = growthFactor;

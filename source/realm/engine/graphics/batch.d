@@ -7,6 +7,10 @@ import realm.engine.graphics.renderer;
 import realm.engine.logging;
 import std.range;
 import std.format;
+/**
+* Mechanism for batch drawing vertices, batching is based on Material layout
+* T: Structure of vertices
+*/
 class Batch(T)
 {
 	import std.algorithm.iteration : fold,map;
@@ -63,6 +67,7 @@ class Batch(T)
 		bindShaderStorage = cb;
 	}
 
+	/// Reserve number of primitive elements (i.e: triangles)
 	void reserve(size_t amount)
 	{
 		this.maxElementsInFrame = cast(uint)amount;
@@ -97,6 +102,7 @@ class Batch(T)
 
 	}
 
+	/// Bind attributes as per defined by the vertex struct supplied
 	void bindAttributes()
 	{
 		
@@ -131,6 +137,7 @@ class Batch(T)
 		cmdBuffer.unbind();
 	}
 		
+	/// Allocate number of vertices and primitive elements
 	void allocateBuffers(uint numElements,uint numFaces)
 	{
 		vertexBuffer.store(numElements * bufferAmount);
@@ -139,6 +146,8 @@ class Batch(T)
 
 		
 	}
+
+	/// Submit mesh to add to batch
 	void submitVertices(Mat)(T[] vertices, uint[] faces, Mat material)
 	{
 		
@@ -162,7 +171,7 @@ class Batch(T)
 		textureAtlases~=material.getTextureAtlas();
 	}
 
-
+	/// Initial setup prior to drawing the elements
 	private uint setupDraw(bool renderShadows)()
 	{
 		int cmdTypeSize = cast(int)DrawElementsIndirectCommand.sizeof;
@@ -244,7 +253,7 @@ class Batch(T)
 	}
 
 
-
+	/// Reset baatch to initial, pre draw state, needs to be done at end of frame
 	void resetBatch()
 	{
 		cmdBufferBase = (cmdBufferBase + 1) % bufferAmount;

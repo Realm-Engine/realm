@@ -186,6 +186,7 @@ class InputManager
 
 	void setScrollCallback(ScrollCallback cb)
 	{
+		
 		scrollEvent = cb;
 	}
 
