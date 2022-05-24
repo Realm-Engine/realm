@@ -16,11 +16,12 @@ public
 	import realm.engine.input;
 }
 
+
 class Transform
 {
 	import std.meta;
 	vec3 position;
-	quat quatRotation;
+	quat rotation;
 	vec3 scale;
 
 	private Transform parent;
@@ -33,13 +34,13 @@ class Transform
 	this(vec3 position, vec3 rotation, vec3 scale)
 	{
 		this.position = position;
-		this.quatRotation = quat.euler_rotation(rotation.z,rotation.x,rotation.y);
+		this.rotation = quat.euler_rotation(rotation.z,rotation.x,rotation.y);
 		this.scale = scale;
 	}
 	this()
 	{
 		this.position = vec3(0,0,0);
-		quatRotation = quat(0,0,0,1);
+		rotation = quat(0,0,0,1);
 		this.scale = vec3(1,1,1);
 		transformMat = mat4(1.0f);
 	}
@@ -48,82 +49,68 @@ class Transform
 	this(Transform other)
 	{
 		position = other.position;
-		quatRotation = other.quatRotation;
+		rotation = other.rotation;
 		scale = other.scale;
 	}
 
 	@property mat4 transformation()
 	{
-		return transformMat;
+		return worldTransform;
 	}
 	@property void transformation(mat4 t)
 	{
 		transformMat = t;
 	}
 
-	@property rotation(vec3 euler)
+	void setRotationEuler(vec3 euler)
 	{
-
-		quatRotation = quat.euler_rotation(radians( euler.z),radians(euler.x),radians(euler.y));
+		rotation = quat.euler_rotation(radians( euler.z),radians(euler.x),radians(euler.y));
 	}
-	@property vec3 rotation()
+
+	void rotateEuler(vec3 euler)
 	{
-		float yaw = quatRotation.yaw;
-		float pitch = quatRotation.pitch;
-		float roll = quatRotation.roll;
+		rotation = rotation.rotate_euler(radians(euler.y),radians(euler.x),radians(euler.z));
+	}
+
+	vec3 getRotationEuler()
+	{
+		float yaw = rotation.yaw;
+		float pitch = rotation.pitch;
+		float roll = rotation.roll;
 		return vec3(pitch,yaw,roll);
 	}
-	
 
-	@property front()
+	vec3 front()
 	{
-
-		float yaw = quatRotation.yaw;
-		float pitch = quatRotation.pitch;
-		float roll = quatRotation.roll;
-		vec3 dir = vec3(0);
-		dir.x = cos(radians(yaw)) * cos(radians(pitch));
-		dir.y = sin(radians(pitch));
-		dir.z = sin(radians(yaw)) * cos(radians(pitch));
-		dir.normalize();
-		return dir;
-		
+		return rotation * vec3(0,0,1);
+		//float yaw =  rotation.yaw;
+		//float pitch = rotation.pitch;
+		//float roll = rotation.roll;
+		//vec3 dir = vec3(0);
+		//dir.x = cos(yaw) * cos(pitch);
+		//dir.y = sin(pitch);
+		//dir.z = sin(yaw) * cos(pitch);
+		//dir.normalize();
+		//return dir;
 	}
-	
-
-
-
-
 	
 	void updateTransformation()
 	{
 		
-		vec3 postionRelation = vec3(0);
-		vec3 rotationRelation = vec3(0);
-		vec3 scaleRelation = vec3(0);
-
 		vec3 worldPosition = getWorldPosition();
-		vec3 worldRotation = getWorldRotation();
+		quat worldRotation = getWorldRotation();
 		vec3 worldScale = getWorldScale();
 
-		if(parent !is null)
-		{
-			postionRelation = parent.position;
-			rotationRelation = parent.rotation;
-			scaleRelation = parent.scale;
-		}
+		
 
 
 		mat4 M = mat4.identity;
 		
-		M = M.scale(worldScale.x ,worldScale.y ,worldScale.z);
+		M = M.scale(scale.x ,scale.y ,scale.z);
 		
-		mat4 rotationMat = quatRotation.normalized().to_matrix!(4,4)();
-		//M.rotate(worldRotation.x ,vec3(1,0,0));
-		//M.rotate(worldRotation.y ,vec3(0,1,0));
-		//M.rotate(worldRotation.z ,vec3(0,0,1));
+		mat4 rotationMat = rotation.normalized().to_matrix!(4,4)();
 		M *= rotationMat;
-		M = M.translate(worldPosition.x ,worldPosition.y ,worldPosition.z );
+		M = M.translate(position.x ,position.y ,position.z );
 
 		transformMat = M;
 	}
@@ -151,6 +138,15 @@ class Transform
 		children ~= child;
 	}
 
+	private mat4 worldTransform()
+	{
+		if(parent !is null)
+		{
+			return transformMat * parent.worldTransform();
+		}
+		return transformMat;
+	}
+
 	vec3 getWorldPosition()
 	{
 		if(parent is null)
@@ -160,7 +156,7 @@ class Transform
 		return position + parent.getWorldPosition();
 	}
 
-	vec3 getWorldRotation()
+	quat getWorldRotation()
 	{
 		if(parent is null)
 		{
@@ -314,8 +310,7 @@ class Camera
 	private CameraProjection projectionType;
 	mat4 vp;
 	mat4 cameraTransformation;
-	float yaw;
-	float pitch;
+	
 	ProjectionWindowBounds projBounds = ProjectionWindowBounds.NEGATIVE_HALF_TO_HALF;
 	//Front
 	//Maybe goes in transform?
@@ -332,15 +327,7 @@ class Camera
 	{
 		cameraTransformation = view;
 	}
-	@property front()
-	{
-		vec3 dir = vec3(0);
-		dir.x = cos(radians(yaw)) * cos(radians(pitch));
-		dir.y = sin(radians(pitch));
-		dir.z = sin(radians(yaw)) * cos(radians(pitch));
-		dir.normalize();
-		return dir;
-	}
+
 
 
 
@@ -355,8 +342,6 @@ class Camera
 		this.farPlane = farPlane;
 		this.nearPlane = nearPlane;
 		this.fieldOfView = fieldOfView;
-		yaw = 0;
-		pitch = 0;
 		transform = new Transform;
 		update();
 	}
@@ -392,8 +377,8 @@ class Camera
 
 	void turn(vec2 v)
 	{
-		yaw += v.x;
-		pitch += v.y;
+		transform.rotation.rotate_euler(radians(v.y),radians(v.x),0);
+		
 	}
 	
 	void updateViewProjection(mat4 view)
@@ -404,7 +389,7 @@ class Camera
 
 	void update()
 	{
-		mat4 lookMat = mat4(mat4.look_at(transform.position,transform.position + front, vec3(0,1,0)));
+		mat4 lookMat = mat4(mat4.look_at(transform.position,transform.position + transform.front, vec3(0,1,0)));
 		lookMat.matrix[3] = vec4(0,0,0,1).vector;
 		mat4 translation = mat4.identity;
 		translation.matrix[3] = vec4(-transform.position.x,-transform.position.y,-transform.position.z,1.0).vector;

@@ -27,8 +27,8 @@ class Player
 
         this.camera = cam;
         camera.position = vec3(-2, 4, -8);
-
-        camera.turn(vec2(90,-80));
+        camera.transform.setRotationEuler(vec3(0,90,0));
+        //camera.turn(vec2(90,-80));
         //camera.update();
 		// setComponent!(Transform)(new Transform);
         transform = getComponent!(Transform);
@@ -88,10 +88,12 @@ class Player
         float yOffset = lastY - y;
         xOffset *= 0.1;
         yOffset*= 0.1;
+        
+       
         if (InputManager.getMouseButton(RealmMouseButton.ButtonLeft) == KeyState.Press )
         {
-
-            camera.turn(vec2(xOffset,yOffset));
+             camera.turn(vec2(xOffset,yOffset));
+            
 			//getComponent!(ArcballCamera)().rotate(prevMouse,mouse);
         }
         if (InputManager.getKey(RealmKey.Right) == KeyState.Press)
@@ -124,12 +126,13 @@ class Player
 
     void update()
     {
-        
+        vec3 front = camera.transform.front;
+     
         processInput();
 
-        
-        camera.update();
         updateComponents();
+        camera.update();
+        
         //camera.view = getComponent!(ArcballCamera).camera;
     }
 

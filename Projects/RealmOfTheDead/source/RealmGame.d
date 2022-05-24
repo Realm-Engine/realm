@@ -16,6 +16,7 @@ class RealmGame : RealmApp
 	private Player player;
 	private Gun gun;
 	private IFImage gunDiffuse;
+	private GameGeometry geo;
 	this(int width, int height, const char* title,string[] args)
 	{
 		super(width,height,title,args);
@@ -36,13 +37,22 @@ class RealmGame : RealmApp
 		gunDiffuse = readImageBytes("$Assets/Images/gun.png");
 		mainLight.transform = new Transform;
 		mainLight.color = vec3(1,1,1);
-		mainLight.transform.rotation = vec3(0,90,0);
+		mainLight.transform.setRotationEuler(vec3(0,0,0));
+
 		//mainLight.transform.componentUpdate();
 		Renderer.get.mainLight(&mainLight);
 		Logger.LogInfo("Starting Realm of the Dead!");
 		player = _manager.instantiate!(Player)(&cam);
-		gun = _manager.instantiate!(Gun)(player.getComponent!(Transform));
+		gun = _manager.instantiate!(Gun)(player.getComponent!(Transform),cam);
+		geo = _manager.instantiate!(GameGeometry)(loadMesh("$Assets/Models/crates.obj"));
+
+		SimpleMaterial geoMaterial = geo.getMaterial();
+		geo.setBaseMap(readImageBytes("$Assets/Images/crates.png"));
+		geoMaterial.shinyness = 1.0f;
+		geoMaterial.specularPower = 1.0f;
+		geoMaterial.color = vec4(1);
 		
+		geo.getComponent!(Transform).position = vec3(0,0,5);
 		
 
 	}

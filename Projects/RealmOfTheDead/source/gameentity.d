@@ -31,4 +31,9 @@ mixin template GameEntity(string name ,T...)
 		return entityShader;
 	}
 
+	SimpleMaterial getMaterial()
+	{
+		return material;
+	}
+
 }
