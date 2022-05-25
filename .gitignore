@@ -38,3 +38,4 @@ Makefile
 /Cache
 *.log
 Projects/RealmGame/.vs/
+/external/freetype
