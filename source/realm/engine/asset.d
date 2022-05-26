@@ -10,7 +10,7 @@ private
 	import std.stdio;
 	import std.file;
 	import std.array;
-	import realm.engine.graphics.core : Shader, StandardShaderModel , ShaderType;
+	import realm.engine.graphics.core : Shader, StandardShaderModel , ShaderType,ShaderParameter;
 	import std.algorithm.comparison : equal;
 	import realm.engine.logging;
 	import realm.engine.core : Mesh;
@@ -300,6 +300,23 @@ Mesh loadMesh(string path)
 }
 
 
+private string getShaderDefines(ShaderType type,StandardShaderModel shader)
+{
+	string defines;
+	int maxTextureUnits;
+	if(type == ShaderType.VERTEX)
+	{
+		maxTextureUnits = shader.getParameter!(int)(ShaderParameter.MAX_VERTEX_TEXTURE_UNITS);
+	}
+	else if(type == ShaderType.FRAGMENT)
+	{
+		maxTextureUnits = shader.getParameter!(int)(ShaderParameter.MAX_FRAGMENT_TEXTURE_UNITS);
+	}
+	defines ~= ("#define TEXTURE_ATLAS_UNITS %d".format(maxTextureUnits));
+	return defines;
+
+}
+
 
 StandardShaderModel loadShaderProgram(string path,string name)
 {
@@ -312,7 +329,8 @@ StandardShaderModel loadShaderProgram(string path,string name)
 		None
 	}
 
-	StandardShaderModel shader;
+	StandardShaderModel shader = new StandardShaderModel(name);
+	
 	//string shader = readText(path);
 	if(!exists(sysPath))
 	{
@@ -327,7 +345,7 @@ StandardShaderModel loadShaderProgram(string path,string name)
 	string baseVertex = readText(VirtualFS.getSystemPath("$EngineAssets/Shaders/baseVertex.glsl"));
 	string baseFragment = readText(VirtualFS.getSystemPath("$EngineAssets/Shaders/baseFragment.glsl"));
 	string core = readText(VirtualFS.getSystemPath("$EngineAssets/Shaders/core.glsl"));
-
+	
 	string sharedData ="";
 	string fragmentData = "";
 	string vertexData = "";
@@ -376,13 +394,14 @@ StandardShaderModel loadShaderProgram(string path,string name)
 		}
 
 	}
-
-	string vertexText = "#version 460 core\n"~sharedData ~"\n" ~baseVertex ~ "\n" ~core ~ vertexData;
-	string fragmentText = "#version 460 core\n" ~ sharedData ~"\n" ~baseFragment ~ "\n" ~ core  ~ "\n"  ~ fragmentData;
+	string vertexShaderDefines = getShaderDefines(ShaderType.VERTEX,shader);
+	string fragmentShaderDefines = getShaderDefines(ShaderType.FRAGMENT,shader);
+	string vertexText = "#version 460 core\n"~sharedData ~"\n" ~ vertexShaderDefines ~ "\n" ~baseVertex ~ "\n" ~core ~ vertexData;
+	string fragmentText = "#version 460 core\n" ~ sharedData ~"\n" ~ fragmentShaderDefines ~ "\n" ~baseFragment ~ "\n" ~ core  ~ "\n"  ~ fragmentData;
 
 	Shader vertexShader = new Shader(ShaderType.VERTEX,vertexText, name ~ " Vertex");
 	Shader fragmentShader = new Shader(ShaderType.FRAGMENT,fragmentText,name ~ " Fragment");
-	shader = new StandardShaderModel(name);
+	
 	shader.vertexShader = vertexShader;
 	shader.fragmentShader = fragmentShader;
 	shader.compile();

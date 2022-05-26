@@ -62,7 +62,7 @@ float linearDepth(float depth)
 }
 
 
-layout(location = 3) uniform sampler2D atlasTextures[32];
+layout(location = 3) uniform sampler2D atlasTextures[TEXTURE_ATLAS_UNITS];
 
 
 #define SAMPLE_TEXTURE(t,texCoord) texture(objectTexture, samplerUV(getObjectData( t ), texCoord ))

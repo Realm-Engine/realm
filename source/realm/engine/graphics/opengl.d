@@ -724,7 +724,7 @@ class GShaderProgramModel(T...)
 
 
 
-    mixin ParameterQuery!(GShaderParamater);
+    mixin ParameterQuery!(GShaderParameter);
 
 }
 
@@ -1390,10 +1390,12 @@ enum GBlendFuncType : GLenum
     ONE_MINUS_CONSTANT_ALPHA = GL_ONE_MINUS_CONSTANT_ALPHA
 }
 
-enum GShaderParamater : GLenum
+enum GShaderParameter : GLenum
 {
     COMPUTE_WORK_GROUP_COUNT = GL_MAX_COMPUTE_WORK_GROUP_COUNT,
-    COMPUTE_WORK_GROUP_SIZE = GL_MAX_COMPUTE_WORK_GROUP_SIZE
+    COMPUTE_WORK_GROUP_SIZE = GL_MAX_COMPUTE_WORK_GROUP_SIZE,
+    MAX_VERTEX_TEXTURE_UNITS = GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS,
+    MAX_FRAGMENT_TEXTURE_UNITS = GL_MAX_TEXTURE_IMAGE_UNITS
 }
 
 enum GPrimitiveShape
