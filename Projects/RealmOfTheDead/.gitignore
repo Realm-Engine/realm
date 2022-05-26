@@ -11,7 +11,7 @@ realmofthedead.lib
 realmofthedead-test-*
 *.exe
 *.o
-*.obj
+
 *.lst
 *.suo
 /.vs
