@@ -69,7 +69,7 @@ static class Debug
 
 
 		debugMaterial.setShaderProgram(debugProgram);
-		debugMaterial.color = vec4(1,0,0,1);
+		debugMaterial.color = vec4(0,1,0,1);
 		debugBatch.submitVertices!(DebugMaterial)([startVertex,endVertex],[0,1],debugMaterial);
 	}
 

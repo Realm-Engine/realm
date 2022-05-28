@@ -16,6 +16,6 @@ private
 }
 class EntityManager
 {
-	mixin EntityRegistry!(Player,Gun,GameGeometry);	
+	mixin EntityRegistry!(Player,Gun,GameGeometry,DirectionalLight);	
 
 }

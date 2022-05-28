@@ -1,0 +1,11 @@
+{
+  "args": {}, 
+  "headers": {
+    "Accept": "*/*", 
+    "Host": "httpbin.org", 
+    "User-Agent": "Phobos-std.net.curl/2.098 (libcurl/7.68.0)", 
+    "X-Amzn-Trace-Id": "Root=1-629149b8-2ac9b31f07b46ef504075e49"
+  }, 
+  "origin": "104.160.224.206", 
+  "url": "https://httpbin.org/get"
+}

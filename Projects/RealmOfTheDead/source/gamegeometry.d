@@ -26,7 +26,17 @@ class GameGeometry
 		SimpleMaterial.allocate(mesh);
 		material.textures.normal = Vector!(int,4)(0);
 		material.setShaderProgram(getEntityShader());
+		material.shinyness = 64.0;
+		material.specularPower = 0.1;
+		material.color = vec4(1.0);
 
+	}
+	
+	void setBaseMap(Vector!(int,4) color)
+	{
+		material.textures.diffuse = color;
+		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
+		material.packTextureAtlas();
 	}
 
 	void setBaseMap(IFImage image)

@@ -3,7 +3,6 @@ private
 {
     import bindbc.freetype;
     import realm.engine.logging;
-    import realm.engine.asset : VirtualFS;
     import std.string;
     import imagefmt;
 }
@@ -49,13 +48,13 @@ struct Font
     private IFImage[Tuple!(uint,uint,char)] glyphCache;
     private uint currentWidth;
     private uint currentHeight;
-    static Font load(string fontPath)
+    static Font load(string sysPath)
     {
         Font font;
-        string sysPath = VirtualFS.getSystemPath(fontPath);
-        Logger.LogInfo("Loading font %s", fontPath);
+        
+        Logger.LogInfo("Loading font %s", sysPath);
         Logger.LogError(!FT_New_Face(ft, toStringz(sysPath), 0, &font.face),
-                "Failed to load font %s", fontPath);
+                "Failed to load font %s", sysPath);
         return font;
     }
 

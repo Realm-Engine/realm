@@ -145,7 +145,7 @@ static class RealmUI
 		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
 		uiCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(windowSize[0],windowSize[1]),-1,100,0);
 		uiCamera.projBounds = ProjectionWindowBounds.ZERO_TO_ONE;
-		font = Font.load("$EngineAssets/Fonts/arial.ttf");
+		font = Font.load(VirtualFS.getSystemPath("$EngineAssets/Fonts/arial.ttf"));
 		parentContainer = createElement(vec3(0),vec3(1),vec3(0));
 
 		containerStack = new Stack!(UIElement)(32);

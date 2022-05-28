@@ -1,7 +1,11 @@
 module realm.engine.core;
-import realm.engine.graphics.core;
-import std.stdio;
-import realm.engine.app;
+private
+{
+	import realm.engine.graphics.core;
+	import std.stdio;
+	import realm.engine.app;
+}
+
 public
 {
 	import gl3n.aabb;
@@ -410,10 +414,10 @@ class Camera
 
 }
 
-struct DirectionalLight
+class DirectionalLight
 {
-
-	Transform transform;
+	mixin RealmEntity!("Directional Light",Transform);
+	//Transform transform;
 	vec3 color; 
 	FrameBuffer shadowFrameBuffer; 
 	void createFrameBuffer(int width, int height)
@@ -422,6 +426,25 @@ struct DirectionalLight
 		shadowFrameBuffer.create!([FrameBufferAttachmentType.DEPTH_ATTACHMENT])(width,height);
 		shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture.wrap = TextureWrapFunc.CLAMP_TO_BORDER;
 		shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture.border = [1.0,1.0,1.0,1.0];
+	}
+	void start()
+	{
+
+	}
+
+	void draw()
+	{
+		import realm.engine.debugdraw;
+		Debug.drawLine(vec3(0,8,0),getComponent!(Transform).front + vec3(0,8,0));
+		
+
+	}
+
+	void update()
+	{
+		
+		updateComponents();
+		draw();
 	}
 
 }

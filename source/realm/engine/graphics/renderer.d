@@ -39,7 +39,7 @@ class Renderer
 	private static FrameBuffer mainFrameBuffer;
 	private StandardShaderModel lightSpaceShaderProgram;
 	private LightSpaceMaterial lightSpaceMaterial;
-	private DirectionalLight* mainDirLight;
+	private DirectionalLight mainDirLight;
 	private Camera lightSpaceCamera;
 	private static mat4 shadowBias = mat4(vec4(0.5,0,0,0),vec4(0,0.5,0,0),vec4(0,0,0.5,0),vec4(0.5,0.5,0.5,1.0));
 	
@@ -231,7 +231,7 @@ class Renderer
 			cull(CullFace.FRONT);
 			//lightSpaceCamera.update();
 
-			mat4 view = mat4.look_at(-mainDirLight.transform.front,vec3(0,0,0),vec3(0,1,0));
+			mat4 view = mat4.look_at(-mainDirLight.getComponent!(Transform).front,vec3(0,0,0),vec3(0,1,0));
 			mat4 lightSpaceMatrix = lightSpaceCamera.projection * view;
 			lightSpaceMatrix.transpose();
 			float[16] lightSpaceDup = lightSpaceMatrix.value_ptr[0..16].dup;
@@ -254,7 +254,7 @@ class Renderer
 		
 	}
 
-	@property void mainLight(DirectionalLight* light)
+	@property void mainLight(DirectionalLight light)
 	{
 		mainDirLight = light;
 		mainDirLight.createFrameBuffer(2048,2048);
@@ -263,9 +263,10 @@ class Renderer
 	void updateMainLight()
 	{
 		//mainDirLight = light;
-		mainDirLight.transform.updateTransformation();
+		Transform lightTransform = mainDirLight.getComponent!(Transform);
+		//lightTransform.updateTransformation();
 		//mat4 modelMatrix = mainDirLight.transform.transformation;
-		vec4 direction = vec4(mainDirLight.transform.front.normalized(),1.0);
+		vec4 direction = vec4(lightTransform.front.normalized(),1.0);
 		_globalData.mainLightDirection[0..$] = direction.value_ptr[0..4].dup;
 		_globalData.mainLightColor[0..$] = vec4(mainDirLight.color,0.0).value_ptr[0..4].dup;
 		

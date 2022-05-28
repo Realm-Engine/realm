@@ -17,6 +17,7 @@ class RealmGame : RealmApp
 	private Gun gun;
 	private IFImage gunDiffuse;
 	private GameGeometry geo;
+	private GameGeometry floor;
 	this(int width, int height, const char* title,string[] args)
 	{
 		super(width,height,title,args);
@@ -25,7 +26,7 @@ class RealmGame : RealmApp
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height) / 1,0.1,750,60);
 		Renderer.get.activeCamera = &cam;
 		SimpleMaterial.initialze();
-		SimpleMaterial.reserve(2);
+		SimpleMaterial.reserve(3);
 
 
 	}
@@ -35,24 +36,28 @@ class RealmGame : RealmApp
 	override void start()
 	{
 		gunDiffuse = readImageBytes("$Assets/Images/gun.png");
-		mainLight.transform = new Transform;
+		mainLight = _manager.instantiate!(DirectionalLight)();
 		mainLight.color = vec3(1,1,1);
-		mainLight.transform.setRotationEuler(vec3(0,0,0));
+		mainLight.getComponent!(Transform).setRotationEuler(vec3(0,0,45));
 
 		//mainLight.transform.componentUpdate();
-		Renderer.get.mainLight(&mainLight);
+		Renderer.get.mainLight(mainLight);
 		Logger.LogInfo("Starting Realm of the Dead!");
 		player = _manager.instantiate!(Player)(&cam);
 		gun = _manager.instantiate!(Gun)(player.getComponent!(Transform),cam);
 		geo = _manager.instantiate!(GameGeometry)(loadMesh("$Assets/Models/crates.obj"));
-
+		floor = _manager.instantiate!(GameGeometry)(generateFace(vec3(0,1,0),8));
 		SimpleMaterial geoMaterial = geo.getMaterial();
 		geo.setBaseMap(readImageBytes("$Assets/Images/crates.png"));
-		geoMaterial.shinyness = 1.0f;
+		geoMaterial.shinyness = 32.0f;
 		geoMaterial.specularPower = 1.0f;
 		geoMaterial.color = vec4(1);
 		
 		geo.getComponent!(Transform).position = vec3(0,0,5);
+		
+		floor.setBaseMap(Vector!(int,4)(255));
+		floor.getComponent!(Transform)().scale = vec3(10,1,10);
+		floor.getComponent!(Transform)().position = vec3(0,-2,0);
 		
 
 	}
