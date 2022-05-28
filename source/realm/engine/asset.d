@@ -312,7 +312,7 @@ private string getShaderDefines(ShaderType type,StandardShaderModel shader)
 	{
 		maxTextureUnits = shader.getParameter!(int)(ShaderParameter.MAX_FRAGMENT_TEXTURE_UNITS);
 	}
-	defines ~= ("#define TEXTURE_ATLAS_UNITS %d".format(maxTextureUnits));
+	defines ~= ("#define TEXTURE_ATLAS_UNITS %d".format(maxTextureUnits - 4));
 	return defines;
 
 }

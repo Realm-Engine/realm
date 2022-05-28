@@ -1,6 +1,6 @@
 /+ dub.sdl:
     name "initScript"
-
+	libs "curl"
 +/
 import std.stdio;
 import std.getopt;
@@ -82,6 +82,6 @@ int main(string[] args)
     
 
     getFreetype(args);
-    download("https://httpbin.org/get", "./downloaded-http-file");
+    
     return 0;
 }

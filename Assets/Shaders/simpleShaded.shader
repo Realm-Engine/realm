@@ -42,8 +42,8 @@ vec4 fragment()
 {
 
 	vec3 ambient = vec3(0.1);
-	vec3 normal = SAMPLE_TEXTURE(normal, RESurfaceDataIn.texCoord).rgb;
-	normal = transformNormal(normal);
+	vec3 normal = RESurfaceDataIn.normal;
+	//normal = transformNormal(normal);
 	vec4 color = SAMPLE_TEXTURE(diffuse, RESurfaceDataIn.texCoord);
 	vec3 lighting = calculateLighting(normal,ambient);
 	float bias = max(0.05 * (1.0 - dot(normal, mainLight.direction.xyz)), 0.005);

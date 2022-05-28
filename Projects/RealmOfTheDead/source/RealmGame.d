@@ -58,6 +58,8 @@ class RealmGame : RealmApp
 		floor.setBaseMap(Vector!(int,4)(255));
 		floor.getComponent!(Transform)().scale = vec3(10,1,10);
 		floor.getComponent!(Transform)().position = vec3(0,-2,0);
+
+		
 		
 
 	}

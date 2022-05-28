@@ -249,7 +249,7 @@ class Renderer
 
 			mainDirLight.shadowFrameBuffer.unbind(FrameBufferTarget.FRAMEBUFFER);
 			GraphicsSubsystem.setShadowMap(mainDirLight.shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture);
-			cull(CullFace.BACK);
+			//cull(CullFace.BACK);
 		}
 		
 	}

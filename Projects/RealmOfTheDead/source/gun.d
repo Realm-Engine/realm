@@ -38,7 +38,7 @@ class Gun
 		transform.position = vec3(0,0,0);
 		transform.scale = vec3(1,1,1);
 		//transform.rotation = vec3(0,0,0);
-		transform.setRotationEuler(vec3(0,90,0));
+		transform.setRotationEuler(vec3(0,0,0));
 		
 
 		transform.position =vec3(0,0,1);

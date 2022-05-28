@@ -24,7 +24,7 @@ class GameGeometry
 		*mesh = geo;
 		material = new SimpleMaterial;
 		SimpleMaterial.allocate(mesh);
-		material.textures.normal = Vector!(int,4)(0);
+		material.textures.normal = Vector!(int,4)(0,1,0,0);
 		material.setShaderProgram(getEntityShader());
 		material.shinyness = 64.0;
 		material.specularPower = 0.1;
