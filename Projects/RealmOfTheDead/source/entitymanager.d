@@ -1,6 +1,7 @@
 module realmofthedead.entitymanager;
 
 
+
 public
 {
 	import realmofthedead.gameentity;
@@ -8,6 +9,7 @@ public
 	import realm.engine.core;
 	import realmofthedead.gun;
 	import realmofthedead.gamegeometry;
+	
 }
 
 private

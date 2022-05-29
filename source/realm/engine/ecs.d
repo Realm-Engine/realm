@@ -88,7 +88,7 @@ mixin template RealmEntity(string eName, T...)
 {
 
     alias parentType = __traits(parent,Components);
-
+    
     private
     {
         import realm.engine.logging;
@@ -118,16 +118,14 @@ mixin template RealmEntity(string eName, T...)
 	void updateComponents()
 	{
 
-		static foreach (componentMember; (__traits(allMembers, Components)))
+		
+		static foreach(Type; T)
 		{
-
-			static if (__traits(compiles, __traits(getMember, components,
-												   componentMember).componentUpdate!(parentType)(this)))
+            static if(__traits(hasMember, Type,"componentUpdate" ))
 			{
-
-				__traits(getMember, this, componentMember).componentUpdate!(parentType)(this);
+                pragma(msg, "Component " ~ Type.stringof ~ " update function registered");
+                __traits(getMember,this,componentName!(Type)).componentUpdate!(parentType)(this);
 			}
-
 		}
 	}
 
@@ -178,8 +176,9 @@ mixin template RealmEntity(string eName, T...)
 		}
         static foreach(Type; T)
 		{
-            static if(__traits(compiles, __traits(getMember,this,componentName!(Type)).componentStart!(parentType)(this) ))
+            static if(__traits(hasMember, Type,"componentStart" ))
 			{
+                pragma(msg, "Component " ~ Type.stringof ~ " start function registered");
                 __traits(getMember,this,componentName!(Type)).componentStart!(parentType)(this);
 			}
 		}

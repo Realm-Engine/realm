@@ -8,18 +8,19 @@ private
 	import realm.engine.graphics.material;
 	import realm.engine.graphics.renderer;
 	import realm.engine.debugdraw;
-	import realm.engine.physics.collision;
+	import realm.engine.physics.core;
 
 }
 class Gun
 {
-	mixin GameEntity!("Gun",Transform,Mesh);
+	mixin GameEntity!("Gun",Transform,Mesh,BoxCollider,PhysicsBody);
 	private IFImage diffuseImage;
 	private Mesh* mesh;
 	private Transform transform;
 
 	void start(Transform player, Camera camera)
 	{
+		
 		diffuseImage = readImageBytes("$Assets/Images/gun.png");
 		mesh = &getComponent!(Mesh)();
 		transform = getComponent!(Transform)();

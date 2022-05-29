@@ -50,10 +50,6 @@ class SimpleCollider
 		
 
 
-		//auto parent = getParent().get!(__traits(toType,parentTypeMangle));
-		//TypeInfo parentType = parent.type;
-		//string s = parentType.toString();
-		//parentTransform = getParentComponent!(Transform)();
 	}
 
 	union
