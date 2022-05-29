@@ -1,6 +1,7 @@
 /+ dub.sdl:
     name "initScript"
 	libs "curl"
+	targetPath "$ROOT_PACKAGE_DIR/bin/"
 +/
 import std.stdio;
 import std.getopt;
@@ -13,6 +14,8 @@ import std.string;
 import std.algorithm.iteration;
 void getFreetype(string [] args)
 {
+	
+
 
 	string root;
 	auto helpInformation = getopt(args,"realm-root", &root);
@@ -23,11 +26,17 @@ void getFreetype(string [] args)
 	}
 	mkdir(root ~ "/external/freetype");
 	
+	scope(failure)
+	{
+		writeln("Failed to install freetype");
+		rmdirRecurse(root ~ "/external/freetype");
+	}
+
 	writeln("Freetype release not found, downloading ");
 	auto http = HTTP();
 
 	http.addRequestHeader("Accept","application/vnd.github.v3+json");
-	string request = "https://api.github.com/repos/realm-engine/freetype-windows-binaries/releases/latest";
+	string request = "https://api.github.com/repos/realm-engine/freetype-wdows-binaries/releases/latest";
 
 	JSONValue response = parseJSON(get(request,http),JSONOptions.doNotEscapeSlashes);
 	
@@ -79,7 +88,6 @@ int main(string[] args)
 {
 
     writefln("Downloading\n");
-    
 
     getFreetype(args);
     

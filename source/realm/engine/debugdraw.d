@@ -51,7 +51,7 @@ static class Debug
 		}
 	}
 
-	static void drawLine(vec3 start, vec3 end)
+	static void drawLine(vec3 start, vec3 end, vec3 color = vec3(0,1,0))
 	{
 		DebugMaterial debugMaterial = new DebugMaterial;
 		RealmVertex startVertex;
@@ -69,7 +69,7 @@ static class Debug
 
 
 		debugMaterial.setShaderProgram(debugProgram);
-		debugMaterial.color = vec4(0,1,0,1);
+		debugMaterial.color = vec4(color,1);
 		debugBatch.submitVertices!(DebugMaterial)([startVertex,endVertex],[0,1],debugMaterial);
 	}
 

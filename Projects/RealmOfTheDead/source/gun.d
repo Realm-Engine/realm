@@ -24,7 +24,7 @@ class Gun
 		mesh = &getComponent!(Mesh)();
 		transform = getComponent!(Transform)();
 		*mesh = loadMesh("$Assets/Models/gun.obj");
-		//transform.setParent(camera);
+		transform.setParent(player);
 		material = new SimpleMaterial;
 		SimpleMaterial.allocate(mesh);
 		material.shinyness = 1.0f;
@@ -35,13 +35,12 @@ class Gun
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		material.setShaderProgram(getEntityShader());
-		transform.position = vec3(0,0,0);
+		transform.position = vec3(0,-0.5,3);
 		transform.scale = vec3(1,1,1);
 		//transform.rotation = vec3(0,0,0);
-		transform.setRotationEuler(vec3(0,0,0));
+		transform.setRotationEuler(vec3(0,-80,0));
 		
 
-		transform.position =vec3(0,0,1);
 		
 		
 
@@ -58,8 +57,9 @@ class Gun
 	{
 		vec3 front = transform.front();
 		vec3 position = transform.position;
+
 		//Logger.LogInfo("%f %f %f", position.x, position.y,position.z);
-		//transform.rotateEuler(vec3(0,1,0));
+		transform.rotateEuler(vec3(0,0,0));
 		updateComponents();
 		Renderer.get.submitMesh!(SimpleMaterial,false)(*mesh,transform,material);
 	}

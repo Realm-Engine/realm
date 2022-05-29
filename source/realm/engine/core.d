@@ -68,12 +68,12 @@ class Transform
 
 	void setRotationEuler(vec3 euler)
 	{
-		rotation = quat.euler_rotation(radians( euler.z),radians(euler.x),radians(euler.y));
+		rotation = quat.euler_rotation(radians( euler.z),radians(euler.y),radians(euler.x));
 	}
 
 	void rotateEuler(vec3 euler)
 	{
-		rotation = rotation.rotate_euler(radians(euler.y),radians(euler.x),radians(euler.z));
+		rotation = rotation.rotate_euler(radians(euler.x),radians(euler.y),radians(euler.z));
 	}
 
 	vec3 getRotationEuler()
@@ -101,20 +101,12 @@ class Transform
 	void updateTransformation()
 	{
 		
-		vec3 worldPosition = getWorldPosition();
-		quat worldRotation = getWorldRotation();
-		vec3 worldScale = getWorldScale();
-
-		
-
-
 		mat4 M = mat4.identity;
-		
 		M = M.scale(scale.x ,scale.y ,scale.z);
-		
 		mat4 rotationMat = rotation.normalized().to_matrix!(4,4)();
 		M *= rotationMat;
 		M = M.translate(position.x ,position.y ,position.z );
+		
 
 		transformMat = M;
 	}
@@ -146,7 +138,7 @@ class Transform
 	{
 		if(parent !is null)
 		{
-			return transformMat * parent.worldTransform();
+			return parent.worldTransform() * transformMat;
 		}
 		return transformMat;
 	}
@@ -381,6 +373,11 @@ class Camera
 
 	void turn(vec2 v)
 	{
+		if(degrees(transform.rotation.pitch) > 89.0f || degrees(transform.rotation.pitch) < -89.0f)
+		{
+			v.x = 0;
+		}
+
 		transform.rotation.rotate_euler(radians(v.y),radians(v.x),0);
 		
 	}
@@ -393,6 +390,7 @@ class Camera
 
 	void update()
 	{
+		transform.updateTransformation();
 		mat4 lookMat = mat4(mat4.look_at(transform.position,transform.position + transform.front, vec3(0,1,0)));
 		lookMat.matrix[3] = vec4(0,0,0,1).vector;
 		mat4 translation = mat4.identity;

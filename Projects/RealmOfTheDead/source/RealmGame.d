@@ -67,7 +67,7 @@ class RealmGame : RealmApp
 	override void update()
 	{
 	
-		
+		//floor.getComponent!(Transform).rotateEuler(vec3(0,0,0));
 
 		_manager.updateEntities();
 		Renderer.get.update();

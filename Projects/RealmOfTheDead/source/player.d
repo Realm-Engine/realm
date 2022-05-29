@@ -27,7 +27,7 @@ class Player
 
         this.camera = cam;
         camera.position = vec3(-2, 4, -8);
-        camera.transform.setRotationEuler(vec3(0,90,0));
+        //camera.transform.setRotationEuler(vec3(0,90,0));
         //camera.turn(vec2(90,-80));
         //camera.update();
 		// setComponent!(Transform)(new Transform);
