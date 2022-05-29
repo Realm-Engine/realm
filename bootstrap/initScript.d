@@ -36,7 +36,7 @@ void getFreetype(string [] args)
 	auto http = HTTP();
 
 	http.addRequestHeader("Accept","application/vnd.github.v3+json");
-	string request = "https://api.github.com/repos/realm-engine/freetype-wdows-binaries/releases/latest";
+	string request = "https://api.github.com/repos/realm-engine/freetype-windows-binaries/releases/latest";
 
 	JSONValue response = parseJSON(get(request,http),JSONOptions.doNotEscapeSlashes);
 	

@@ -5,7 +5,7 @@ import realmofthedead.entitymanager;
 import realm.engine.graphics.core;
 import realm.engine.graphics.renderer;
 import realm.engine.graphics.material;
-
+import realm.engine.ui.realmui;
 
 class RealmGame : RealmApp
 {
@@ -18,6 +18,8 @@ class RealmGame : RealmApp
 	private IFImage gunDiffuse;
 	private GameGeometry geo;
 	private GameGeometry floor;
+	private RealmUI.UIElement text;
+	private RealmUI.UIElement panel;
 	this(int width, int height, const char* title,string[] args)
 	{
 		super(width,height,title,args);
@@ -35,6 +37,11 @@ class RealmGame : RealmApp
 
 	override void start()
 	{
+		auto windowSize = RealmApp.getWindowSize();
+		RealmUI.themePush(RealmUI.UITheme(vec4(1),vec4(0,0,0,1)));
+		text = RealmUI.createElement(vec3(300,100,0),vec3(600,100,1),vec3(0));
+		text.textLayout = RealmUI.TextLayout(4,6,40);
+		panel =RealmUI.createElement(vec3(windowSize[0] / 2,windowSize[1]/2, 0),vec3(windowSize[0],windowSize[1],1),vec3(0));
 		gunDiffuse = readImageBytes("$Assets/Images/gun.png");
 		mainLight = _manager.instantiate!(DirectionalLight)();
 		mainLight.color = vec3(1,1,1);
@@ -68,7 +75,10 @@ class RealmGame : RealmApp
 	{
 	
 		//floor.getComponent!(Transform).rotateEuler(vec3(0,0,0));
-
+		//RealmUI.drawPanel(panel);
+		//RealmUI.containerPush(panel);
+		RealmUI.drawTextString(text,"Hello Antoine");
+		//RealmUI.containerPop();
 		_manager.updateEntities();
 		Renderer.get.update();
 

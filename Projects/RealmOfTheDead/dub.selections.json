@@ -8,6 +8,6 @@
 		"gl3n": "1.4.1",
 		"glfw-d": "1.1.0",
 		"imagefmt": "2.1.2",
-		"realm": "~restructure"
+		"realm": "~main"
 	}
 }
