@@ -12,11 +12,19 @@ class RealmApp
 
     alias RealmKeyPressDelegate = void delegate(int, int);
     
+    
 
     public static __gshared GLFWwindow* window;
     private bool shutdown;
     private const GLMAX_VER = GLVersion.GL45;
     private const GLMIN_VER = GLVersion.GL43;
+    private AppMetrics appMetrics;
+    
+	
+	struct AppMetrics
+	{
+        float deltaTime;
+	}
 
     static Tuple!(int,int) getWindowSize()
 	{
@@ -29,6 +37,11 @@ class RealmApp
     static float getTicks()
 	{
         return glfwGetTime();
+	}
+
+    AppMetrics getAppMetrics()
+	{
+        return appMetrics;
 	}
 
 
@@ -88,13 +101,17 @@ class RealmApp
         while (!shutdown)
         {
             InputManager.tick();
+            float startTick = getTicks();
             update();
             glfwPollEvents();
+            
             if (glfwWindowShouldClose(window))
             {
                 shutdown = true;
             }
             glfwSwapBuffers(window);
+            float endTick = getTicks();
+            appMetrics.deltaTime = (endTick - startTick) * 1000;
 
         }
 

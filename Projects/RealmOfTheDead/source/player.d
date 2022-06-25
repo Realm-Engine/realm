@@ -9,6 +9,8 @@ private
     import realmofthedead.gun;
 }
 
+
+
 class Player
 {
     private Camera* camera;
@@ -19,6 +21,7 @@ class Player
     float lastScrollX;
     float lastScrollY;
     private Transform transform;
+    vec2 rotation;
     void start(Camera* cam)
     {
 
@@ -34,7 +37,7 @@ class Player
         transform = getComponent!(Transform);
         transform.setParent(*camera);
         InputManager.registerInputEventCallback(&inputEvent);
-
+        rotation = vec2(0,0);
 
     }
 
@@ -86,14 +89,19 @@ class Player
         camera.position += movementVector * 0.25;
         float xOffset = x - lastX;
         float yOffset = lastY - y;
-        xOffset *= 0.1;
-        yOffset*= 0.1;
+        xOffset *= 0.001;
+        yOffset*= 0.001;
         
        
         if (InputManager.getMouseButton(RealmMouseButton.ButtonLeft) == KeyState.Press )
         {
-             camera.turn(vec2(xOffset,yOffset));
-            
+             //camera.turn(vec2(xOffset,yOffset));
+            rotation.x += xOffset ;
+            rotation.y += yOffset ;
+            rotation.y = clamp(rotation.y,-88.0f,88.0f);
+            auto xQuat = quat.axis_rotation(rotation.x,vec3(0,1,0));
+            auto yQuat = quat.axis_rotation(rotation.y,vec3(-1,0,0));
+            camera.transform.rotation = xQuat * yQuat;
 			//getComponent!(ArcballCamera)().rotate(prevMouse,mouse);
         }
         if (InputManager.getKey(RealmKey.Right) == KeyState.Press)

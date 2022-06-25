@@ -18,8 +18,9 @@ class RealmGame : RealmApp
 	private IFImage gunDiffuse;
 	private GameGeometry geo;
 	private GameGeometry floor;
-	private RealmUI.UIElement text;
-	private RealmUI.UIElement panel;
+	private RealmUI.UIElement renderTime;
+	private RealmUI.UIElement debugPanel;
+	private RealmUI.UIElement deltaTime;
 	this(int width, int height, const char* title,string[] args)
 	{
 		super(width,height,title,args);
@@ -37,11 +38,17 @@ class RealmGame : RealmApp
 
 	override void start()
 	{
+		
 		auto windowSize = RealmApp.getWindowSize();
 		RealmUI.themePush(RealmUI.UITheme(vec4(1),vec4(0,0,0,1)));
-		text = RealmUI.createElement(vec3(300,100,0),vec3(600,100,1),vec3(0));
-		text.textLayout = RealmUI.TextLayout(4,6,40);
-		panel =RealmUI.createElement(vec3(windowSize[0] / 2,windowSize[1]/2, 0),vec3(windowSize[0],windowSize[1],1),vec3(0));
+		
+		
+
+		renderTime.textLayout = RealmUI.TextLayout(4,6,12);
+		deltaTime.textLayout =  RealmUI.TextLayout(4,6,12);
+		debugPanel =RealmUI.createElement(vec3(windowSize[0]-200,windowSize[1] - 200, 0),vec3(300,200,1),vec3(0));
+		deltaTime = RealmUI.createElement(vec3(0,100,0),vec3(300,25,1),vec3(0));
+		renderTime = RealmUI.createElement(vec3(0,0,0),vec3(300,25,1),vec3(0));
 		gunDiffuse = readImageBytes("$Assets/Images/gun.png");
 		mainLight = _manager.instantiate!(DirectionalLight)();
 		mainLight.color = vec3(1,1,1);
@@ -71,15 +78,24 @@ class RealmGame : RealmApp
 
 	}
 
+	void drawUI()
+	{
+		import std.format;
+		double drawTime = Renderer.get.getMetrics().frameTime;
+		RealmUI.drawPanel(debugPanel);
+		RealmUI.containerPush(debugPanel);
+		
+		RealmUI.drawTextString(deltaTime,"Delta Time: %f",getAppMetrics().deltaTime);
+		RealmUI.drawTextString(renderTime,"Frame draw time: %f", drawTime);
+		RealmUI.containerPop();
+	}
 	override void update()
 	{
 	
 		//floor.getComponent!(Transform).rotateEuler(vec3(0,0,0));
-		//RealmUI.drawPanel(panel);
-		//RealmUI.containerPush(panel);
-		RealmUI.drawTextString(text,"Hello Antoine");
-		//RealmUI.containerPop();
+		
 		_manager.updateEntities();
+		drawUI();
 		Renderer.get.update();
 
 	}

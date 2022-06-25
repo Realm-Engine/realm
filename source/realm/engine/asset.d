@@ -25,6 +25,7 @@ static class VirtualFS
 {
 	import std.digest.md;
 
+
 	private static string[string] registeredPaths;
 
 	static string registerPath(string sysPath)(string prefix)
@@ -147,6 +148,49 @@ void writeImageBytes(IFImage* image,string path)
 	}
 
 
+
+}
+
+private Mesh loadLDraw(string path)
+{
+	import gl3n.linalg;
+	auto file =  File(path);
+	Mesh result;
+	vec3[] vertices;
+	vec3[] normals;
+	vec2[] texCoords;
+
+	foreach(index, line; enumerate(file.byLine,0))
+	{
+		char[][] values = line.strip().split(" ").map!(s => s.strip()).array;
+		if(values.length <= 0)
+		{
+			continue;
+		}
+		switch(values[0])
+		{
+			case "3":
+				auto color = values[1];
+				vec3 v1,v2,v3;
+				v1.vector = values[2..5].map!(s => parse!(float)(s)).takeExactly(3).array;
+				v2.vector = values[5..8].map!(s => parse!(float)(s)).takeExactly(3).array;
+				v3.vector = values[8..11].map!(s => parse!(float)(s)).takeExactly(3).array;
+				vertices ~= [v1,v2,v3];
+				vec3 side1 = v2 - v1;
+				vec3 side2 = v3 - v1;
+				vec3 normal = v3.cross(v2);
+				normals ~= [normal,normal,normal];
+				vec2 uv = vec2(0,0);
+				texCoords ~= [uv,uv,uv];
+				break;
+			default:
+				Logger.LogWarning("Unsupported line type: %s", values[0]);
+				break;
+
+		}
+		
+	}
+	return result;
 
 }
 
@@ -294,6 +338,7 @@ Mesh loadMesh(string path)
 			Logger.LogError("%s unknown file extension",fmt);
 			break;
 	}
+	result.calculateWorldBoundingBox();
 	return result;
 
 

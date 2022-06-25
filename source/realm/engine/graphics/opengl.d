@@ -1184,11 +1184,45 @@ struct GQueryObject(bool isBuffer = false)
 	{
         int result;
         glGetQueryObjectiv(id,GL_QUERY_RESULT_AVAILABLE,&result);
-        return (result == GL_TRUE) ? true : false;
+        return (result == GL_TRUE);
+	}
+
+    private void getQueryObjectVal(T)(T* result)
+	{
+        static if(T.sizeof == 8)
+		{
+			static if(__traits(isUnsigned,T))
+			{
+				glGetQueryObjectui64v(id,GL_QUERY_RESULT,result);
+			}
+			static if(!__traits(isUnsigned,T))
+			{
+				glGetQueryObjecti64v(id,GL_QUERY_RESULT,result);
+			}
+
+		}
+		static if(T.sizeof == 4)
+		{
+			static if(__traits(isUnsigned,T))
+			{
+				glGetQueryObjectuiv(id,GL_QUERY_RESULT,result);
+			}
+			static if(!__traits(isUnsigned,T))
+			{
+				glGetQueryObjectiv(id,GL_QUERY_RESULT,result);
+			}
+
+		}
+	}
+
+    T getResult(T)()
+	{
+        T result;
+        getQueryObjectVal!(T)(&result);
+        return result;
 	}
 
     bool tryGetResult(T)(T* result)
-
 	in(queryEnded,"Query needs to end before requesting result")
     in
 	{
@@ -1200,31 +1234,8 @@ struct GQueryObject(bool isBuffer = false)
         
         if(isResultAvailable())
 		{
-         
-            static if(T.sizeof == 8)
-			{
-                static if(__traits(isUnsigned,T))
-				{
-                    glGetQueryObjectui64v(id,GL_QUERY_RESULT,result);
-				}
-                static if(!__traits(isUnsigned,T))
-				{
-                    glGetQueryObjecti64v(id,GL_QUERY_RESULT,result);
-				}
-                
-			}
-            static if(T.sizeof == 4)
-			{
-                static if(__traits(isUnsigned,T))
-				{
-                    glGetQueryObjectuiv(id,GL_QUERY_RESULT,result);
-				}
-                static if(!__traits(isUnsigned,T))
-				{
-                    glGetQueryObjectiv(id,GL_QUERY_RESULT,result);
-				}
-                
-			}
+            getQueryObjectVal!(T)(result);
+            
 
             return true;
 		}

@@ -22,10 +22,9 @@ alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
 class Renderer
 {
 
-	struct RenderInfo
+	struct RendererMetrics
 	{
-		ulong lastRenderTimeStamp;
-		ulong currentFrameRenderTime;
+		double frameTime;
 	}
 
 	import std.container.array;
@@ -42,12 +41,13 @@ class Renderer
 	private DirectionalLight mainDirLight;
 	private Camera lightSpaceCamera;
 	private static mat4 shadowBias = mat4(vec4(0.5,0,0,0),vec4(0,0.5,0,0),vec4(0,0,0.5,0),vec4(0.5,0.5,0.5,1.0));
-	
+	private RendererMetrics metrics;
 	private static bool _instantiated;
 	private __gshared Renderer _instance;
 	private QueryObject!() queryDevice;
-	private RenderInfo _info;
 	private ShaderPipeline lightSpacePipeline;
+	
+
 
 	static Renderer get()
 	{
@@ -92,6 +92,11 @@ class Renderer
 	@property RealmGlobalData* globalData()
 	{
 		return &_globalData;
+	}
+
+	RendererMetrics getMetrics()
+	{
+		return metrics;
 	}
 	
 
@@ -318,13 +323,17 @@ class Renderer
 		RealmUI.flush();
 		mainFrameBuffer.unbind(FrameBufferTarget.DRAW );
 		mainFrameBuffer.blitToScreen(FrameMask.COLOR );
-
 		foreach(batch; orderedBatches)
 		{
 			batch.resetBatch();
 		}
 		
+		long timeElapsed = 0;
+		
+		
+		
 	}
+	
 	
 
 	void flush()

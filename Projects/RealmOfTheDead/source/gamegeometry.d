@@ -7,13 +7,13 @@ private
 	import realm.engine.graphics.material;
 	import realm.engine.graphics.renderer;
 	import realm.engine.debugdraw;
-	import realm.engine.physics.collision;
+	import realm.engine.physics.core;
 
 }
 
 class GameGeometry
 {
-	mixin GameEntity!("Geometry",Transform,Mesh);
+	mixin GameEntity!("Geometry",Transform,Mesh,PhysicsBody);
 	private Mesh* mesh;
 	private Transform transform;
 	private Texture2D diffuseMap;
@@ -29,6 +29,7 @@ class GameGeometry
 		material.shinyness = 64.0;
 		material.specularPower = 0.1;
 		material.color = vec4(1.0);
+		getComponent!(PhysicsBody).type = PhysicsBodyType.Kinematic;
 
 	}
 	

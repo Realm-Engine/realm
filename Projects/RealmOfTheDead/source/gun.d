@@ -25,7 +25,7 @@ class Gun
 		mesh = &getComponent!(Mesh)();
 		transform = getComponent!(Transform)();
 		*mesh = loadMesh("$Assets/Models/gun.obj");
-		transform.setParent(player);
+		transform.setParent(camera);
 		material = new SimpleMaterial;
 		SimpleMaterial.allocate(mesh);
 		material.shinyness = 1.0f;
@@ -40,7 +40,7 @@ class Gun
 		transform.scale = vec3(1,1,1);
 		//transform.rotation = vec3(0,0,0);
 		transform.setRotationEuler(vec3(0,-80,0));
-		
+		getComponent!(PhysicsBody).type = PhysicsBodyType.Kinematic;
 
 		
 		

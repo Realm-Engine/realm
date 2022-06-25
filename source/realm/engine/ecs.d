@@ -37,6 +37,7 @@ mixin template EntityRegistry(T...)
         E entity = new E(uuid);
         //entity.construct(uuid);
         entity.start(args);
+        entity.startComponents();
         mixin("%s[uuid] = entity;".format(E.mangleof));
         return entity;
     }
@@ -174,6 +175,11 @@ mixin template RealmEntity(string eName, T...)
 			}
            
 		}
+
+	}
+
+    void startComponents()
+	{
         static foreach(Type; T)
 		{
             static if(__traits(hasMember, Type,"componentStart" ))

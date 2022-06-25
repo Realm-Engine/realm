@@ -27,7 +27,7 @@ class Transform
 	vec3 position;
 	quat rotation;
 	vec3 scale;
-
+	private mat4 parentTransformation;
 	private Transform parent;
 	private Transform[] children;
 
@@ -46,7 +46,7 @@ class Transform
 		this.position = vec3(0,0,0);
 		rotation = quat(0,0,0,1);
 		this.scale = vec3(1,1,1);
-		transformMat = mat4(1.0f);
+		transformMat = mat4.identity;
 	}
 
 
@@ -59,7 +59,7 @@ class Transform
 
 	@property mat4 transformation()
 	{
-		return worldTransform;
+		return transformMat;
 	}
 	@property void transformation(mat4 t)
 	{
@@ -107,8 +107,31 @@ class Transform
 		M *= rotationMat;
 		M = M.translate(position.x ,position.y ,position.z );
 		
+		mat4 parentTransform = mat4.identity;
+		Transform currentParent = parent;
+		while(currentParent !is null)
+		{
+			M = currentParent.transformation * M;
+			currentParent = currentParent.getParent();
+		}
 
 		transformMat = M;
+		
+		
+	}
+
+	private mat4 resolveHierarchy()
+	{
+		if(parent !is null)
+		{
+			return  parent.resolveHierarchy() * transformMat;
+		}
+		
+		return transformMat;
+		
+
+
+
 	}
 
 	void lookAt(vec3 x, vec3 y, vec3 z)
@@ -129,6 +152,12 @@ class Transform
 
 
 	}
+
+	Transform getParent()
+	{
+		return parent;
+	}
+
 	private void addChild(Transform child)
 	{
 		children ~= child;
@@ -187,7 +216,7 @@ struct Mesh
 
 	void componentStart(E)(E parent)
 	{
-		worldBounds = localBounds = AABB.from_points(positions);
+		calculateWorldBoundingBox();
 	}
 
 
@@ -247,27 +276,16 @@ struct Mesh
 
 	
 
-	private void calculateWorldBoundingBox(Transform transform)
+	void calculateWorldBoundingBox()
 	{
-		mat4 modelMatrix = transform.transformation;
-		auto xa = vec4(modelMatrix[0]) * localBounds.min.x;
-		auto xb = vec4(modelMatrix[0]) * localBounds.max.x;
-
-		auto ya = vec4(modelMatrix[1]) * localBounds.min.y;
-		auto yb = vec4(modelMatrix[1]) * localBounds.max.y;
-		auto za = vec4(modelMatrix[2]) * localBounds.min.z;
-		auto zb = vec4(modelMatrix[2]) * localBounds.max.z;
-
-		vec3 test = min(xa, xb);
+		worldBounds = localBounds = AABB.from_points(positions);
 
 	}
 
 	void componentUpdate(E)(E parent)
 	{
-		static if(hasComponent!(E, Transform))
-		{
-			calculateWorldBoundingBox(parent.getComponent!(Transform));
-		}
+	
+
 	}
 
 	AABB getLocalBounds()
