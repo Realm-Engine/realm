@@ -4,7 +4,6 @@ import realm.engine.graphics.core;
 import realm.engine.graphics.material;
 import realm.engine.graphics.renderer;
 import realm.engine.debugdraw;
-import realm.engine.physics.collision;
 import std.stdio;
 alias SimpleMaterial = Alias!(Material!(["color" : UserDataVarTypes.VECTOR,
 										 "diffuse" : UserDataVarTypes.TEXTURE2D,

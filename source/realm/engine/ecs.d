@@ -148,7 +148,7 @@ mixin template RealmEntity(string eName, T...)
     private string _entityName = eName;
     private UUID _id;
     private bool _active;
-
+    
 
     this(UUID id)
 	{

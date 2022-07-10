@@ -9,15 +9,15 @@ private
 	import realm.engine.graphics.renderer;
 	import realm.engine.debugdraw;
 	import realm.engine.physics.core;
+	import realmofthedead.gamegeometry;
 
 }
 class Gun
 {
-	mixin GameEntity!("Gun",Transform,Mesh,BoxCollider,PhysicsBody);
+	mixin GameEntity!("Gun",Transform,Mesh);
 	private IFImage diffuseImage;
 	private Mesh* mesh;
 	private Transform transform;
-
 	void start(Transform player, Camera camera)
 	{
 		
@@ -25,7 +25,7 @@ class Gun
 		mesh = &getComponent!(Mesh)();
 		transform = getComponent!(Transform)();
 		*mesh = loadMesh("$Assets/Models/gun.obj");
-		transform.setParent(camera);
+		transform.setParent(player);
 		material = new SimpleMaterial;
 		SimpleMaterial.allocate(mesh);
 		material.shinyness = 1.0f;
@@ -36,11 +36,10 @@ class Gun
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		material.setShaderProgram(getEntityShader());
-		transform.position = vec3(0,-0.5,3);
+		transform.position = vec3(0,1,3);
 		transform.scale = vec3(1,1,1);
 		//transform.rotation = vec3(0,0,0);
 		transform.setRotationEuler(vec3(0,-80,0));
-		getComponent!(PhysicsBody).type = PhysicsBodyType.Kinematic;
 
 		
 		
@@ -52,7 +51,9 @@ class Gun
 		}
 	}
 
-	 
+	
+	
+
 
 	void update()
 	{
@@ -60,7 +61,8 @@ class Gun
 		vec3 position = transform.position;
 
 		//Logger.LogInfo("%f %f %f", position.x, position.y,position.z);
-		transform.rotateEuler(vec3(0,0,0));
+		//processCollisions();
+		//transform.rotateEuler(vec3(0,0,0));
 		updateComponents();
 		Renderer.get.submitMesh!(SimpleMaterial,false)(*mesh,transform,material);
 	}

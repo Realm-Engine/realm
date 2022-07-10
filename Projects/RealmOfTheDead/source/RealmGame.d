@@ -6,7 +6,7 @@ import realm.engine.graphics.core;
 import realm.engine.graphics.renderer;
 import realm.engine.graphics.material;
 import realm.engine.ui.realmui;
-
+import realm.engine.physics.core :physicsWorld,PhysicsBody;
 class RealmGame : RealmApp
 {
 
@@ -29,7 +29,7 @@ class RealmGame : RealmApp
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height) / 1,0.1,750,60);
 		Renderer.get.activeCamera = &cam;
 		SimpleMaterial.initialze();
-		SimpleMaterial.reserve(3);
+		SimpleMaterial.reserve(4);
 
 
 	}
@@ -60,7 +60,9 @@ class RealmGame : RealmApp
 		player = _manager.instantiate!(Player)(&cam);
 		gun = _manager.instantiate!(Gun)(player.getComponent!(Transform),cam);
 		geo = _manager.instantiate!(GameGeometry)(loadMesh("$Assets/Models/crates.obj"));
+		geo.entityName = "Crates";
 		floor = _manager.instantiate!(GameGeometry)(generateFace(vec3(0,1,0),8));
+		floor.entityName = "Floor";
 		SimpleMaterial geoMaterial = geo.getMaterial();
 		geo.setBaseMap(readImageBytes("$Assets/Images/crates.png"));
 		geoMaterial.shinyness = 32.0f;
@@ -72,8 +74,8 @@ class RealmGame : RealmApp
 		floor.setBaseMap(Vector!(int,4)(255));
 		floor.getComponent!(Transform)().scale = vec3(10,1,10);
 		floor.getComponent!(Transform)().position = vec3(0,-2,0);
-
-		
+		floor.getComponent!(PhysicsBody)().active = false;
+		//gun.active = false;
 		
 
 	}
@@ -95,6 +97,7 @@ class RealmGame : RealmApp
 		//floor.getComponent!(Transform).rotateEuler(vec3(0,0,0));
 		
 		_manager.updateEntities();
+		physicsWorld.tick(getAppMetrics().deltaTime);
 		drawUI();
 		Renderer.get.update();
 

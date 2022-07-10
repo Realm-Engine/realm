@@ -7,6 +7,12 @@ import std.typecons;
 private
 {
     import realmofthedead.gun;
+    import realm.engine.physics.core;
+    import realmofthedead.gamegeometry;
+    import realmofthedead.gameentity;
+	import realm.engine.graphics.core;
+	import realm.engine.graphics.material;
+	import realm.engine.graphics.renderer;
 }
 
 
@@ -15,13 +21,16 @@ class Player
 {
     private Camera* camera;
 
-    mixin RealmEntity!("Player",Transform);
+    mixin GameEntity!("Player",Transform,Mesh,MeshCollider,PhysicsBody);
     float lastX;
     float lastY;
     float lastScrollX;
     float lastScrollY;
     private Transform transform;
     vec2 rotation;
+    private PhysicsBody physicsBody;
+    private BoxCollider* collider;
+    private Mesh* mesh;
     void start(Camera* cam)
     {
 
@@ -29,16 +38,38 @@ class Player
         lastY = float.max;
 
         this.camera = cam;
-        camera.position = vec3(-2, 4, -8);
+        camera.position = vec3(0,2,2);
+		//collider = &(getComponent!(BoxCollider)());
+		////collider.center = vec3(0,1,0);
+		//collider.center = vec3(1);
+		//collider.setSize(2,5,2);
+        mesh = &(getComponent!(Mesh)());
+        *mesh = loadMesh("$Assets/Models/Player.obj");
+        material = new SimpleMaterial;
+		SimpleMaterial.allocate(mesh);
+		material.shinyness = 1.0f;
+		material.specularPower = 1.0f;
+		material.textures.normal = Vector!(int, 4)(0);
+		material.color = vec4(1);
+		material.textures.diffuse = Vector!(int, 4)(255);
+		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
+		material.packTextureAtlas();
+		material.setShaderProgram(getEntityShader());
+
         //camera.transform.setRotationEuler(vec3(0,90,0));
         //camera.turn(vec2(90,-80));
         //camera.update();
 		// setComponent!(Transform)(new Transform);
         transform = getComponent!(Transform);
-        transform.setParent(*camera);
+        //transform.setParent(*camera);
+        //camera.setParent(transform);
+		
         InputManager.registerInputEventCallback(&inputEvent);
         rotation = vec2(0,0);
-
+        physicsBody = getComponent!(PhysicsBody)();
+        transform.position = vec3(0,1,-10);
+        camera.transform.position = transform.position - vec3(0,0,-2);
+        //physicsBody.active = false;
     }
 
     vec2 transformMouse(vec2 mouse)
@@ -72,21 +103,21 @@ class Player
         vec3 movementVector = vec3(0);
         if(InputManager.getKey(RealmKey.W) == KeyState.Press)
 		{
-            movementVector +=camera.front;
+            movementVector += transform.front;
 		}
 		else if(InputManager.getKey(RealmKey.S) == KeyState.Press)
 		{
-            movementVector -= camera.front;
+            movementVector -= transform.front;
 		}
 		if(InputManager.getKey(RealmKey.A) == KeyState.Press)
 		{
-            movementVector -= camera.front.cross(vec3(0,1,0)).normalized() ;
+            movementVector -= transform.front.cross(vec3(0,1,0)).normalized() ;
 		}
 		else if(InputManager.getKey(RealmKey.D) == KeyState.Press)
 		{
-            movementVector += camera.front.cross(vec3(0,1,0)).normalized() ;
+            movementVector += transform.front.cross(vec3(0,1,0)).normalized() ;
 		}
-        camera.position += movementVector * 0.25;
+        transform.position += movementVector * 0.25;
         float xOffset = x - lastX;
         float yOffset = lastY - y;
         xOffset *= 0.001;
@@ -95,14 +126,13 @@ class Player
        
         if (InputManager.getMouseButton(RealmMouseButton.ButtonLeft) == KeyState.Press )
         {
-             //camera.turn(vec2(xOffset,yOffset));
             rotation.x += xOffset ;
             rotation.y += yOffset ;
             rotation.y = clamp(rotation.y,-88.0f,88.0f);
             auto xQuat = quat.axis_rotation(rotation.x,vec3(0,1,0));
             auto yQuat = quat.axis_rotation(rotation.y,vec3(-1,0,0));
-            camera.transform.rotation = xQuat * yQuat;
-			//getComponent!(ArcballCamera)().rotate(prevMouse,mouse);
+            transform.rotation = xQuat * yQuat;
+            //camera.transform.rotation = transform.rotation;
         }
         if (InputManager.getKey(RealmKey.Right) == KeyState.Press)
         {
@@ -132,14 +162,34 @@ class Player
 
     }
 
+    void processCollisions()
+	{
+		import std.variant;
+		PhysicsBody[] collisions = physicsBody.getCollisions();
+
+		foreach(physicsBody; collisions)
+		{
+			Variant collidingObject = physicsBody.getParentObject();
+			if(collidingObject.peek!(GameGeometry) !is null)
+			{
+				auto geo = collidingObject.peek!(GameGeometry)();
+				Logger.LogInfo("Player Colliding with geo: %s", geo.entityName);
+			}
+		}
+
+	}
+
     void update()
     {
-        vec3 front = camera.transform.front;
-     
+       
         processInput();
-
-        updateComponents();
         camera.update();
+        updateComponents();
+        //processCollisions();
+        Renderer.get.submitMesh!(SimpleMaterial,false)(*mesh,transform,material);
+
+        
+        
         
         //camera.view = getComponent!(ArcballCamera).camera;
     }

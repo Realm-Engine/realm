@@ -13,7 +13,7 @@ private
 
 class GameGeometry
 {
-	mixin GameEntity!("Geometry",Transform,Mesh,PhysicsBody);
+	mixin GameEntity!("Geometry",Transform,Mesh,MeshCollider,PhysicsBody);
 	private Mesh* mesh;
 	private Transform transform;
 	private Texture2D diffuseMap;
@@ -29,7 +29,6 @@ class GameGeometry
 		material.shinyness = 64.0;
 		material.specularPower = 0.1;
 		material.color = vec4(1.0);
-		getComponent!(PhysicsBody).type = PhysicsBodyType.Kinematic;
 
 	}
 	

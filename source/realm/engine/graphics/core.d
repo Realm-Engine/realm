@@ -102,6 +102,7 @@ struct RealmVertex
 }
 
 
+
 struct TextureDesc
 {
 	ImageFormat fmt;

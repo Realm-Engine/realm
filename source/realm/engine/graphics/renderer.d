@@ -185,7 +185,7 @@ class Renderer
 		
 		
 		AABB boundingBox = AABB.from_points(aabbPoints);
-		Frustum frustum = Frustum((camera.projection * camera.view) );
+		Frustum frustum = Frustum(camera.projection * camera.view );
 		
 		int intersection = frustum.intersects(boundingBox);
 
@@ -210,7 +210,7 @@ class Renderer
 			}
 			auto batch = materialId in batches;
 			batch.submitVertices!(Mat)(vertexData,mesh.faces,mat);
-			Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(0,1,0));
+			//Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(0,1,0));
 		}
 
 		else

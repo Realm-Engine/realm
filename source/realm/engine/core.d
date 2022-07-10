@@ -44,7 +44,7 @@ class Transform
 	this()
 	{
 		this.position = vec3(0,0,0);
-		rotation = quat(0,0,0,1);
+		rotation = quat.euler_rotation(0,0,0);
 		this.scale = vec3(1,1,1);
 		transformMat = mat4.identity;
 	}
@@ -63,6 +63,12 @@ class Transform
 	}
 	@property void transformation(mat4 t)
 	{
+
+		position = vec3(t[0][3],t[1][3],t[2][3]);
+		mat4 scaleMat = t.get_scale();
+		scale = vec3(scaleMat[0][0],scaleMat[1][1],scaleMat[2][2]); 
+		rotation = quat.from_matrix(mat3(t.get_rotation()));
+
 		transformMat = t;
 	}
 
@@ -86,7 +92,7 @@ class Transform
 
 	vec3 front()
 	{
-		return rotation * vec3(0,0,1);
+		return getWorldRotation() * vec3(0,0,1);
 		//float yaw =  rotation.yaw;
 		//float pitch = rotation.pitch;
 		//float roll = rotation.roll;
@@ -101,6 +107,8 @@ class Transform
 	void updateTransformation()
 	{
 		
+		
+
 		mat4 M = mat4.identity;
 		M = M.scale(scale.x ,scale.y ,scale.z);
 		mat4 rotationMat = rotation.normalized().to_matrix!(4,4)();
@@ -114,6 +122,8 @@ class Transform
 			M = currentParent.transformation * M;
 			currentParent = currentParent.getParent();
 		}
+		
+		
 
 		transformMat = M;
 		
@@ -138,6 +148,8 @@ class Transform
 	{
 		transformMat *= mat4.look_at(x,y,z);
 	}
+
+	
 
 	void componentUpdate(E)(E parent)
 	{
@@ -174,20 +186,14 @@ class Transform
 
 	vec3 getWorldPosition()
 	{
-		if(parent is null)
-		{
-			return position;
-		}
-		return position + parent.getWorldPosition();
+		
+		return vec3(transformMat[0][3],transformMat[1][3],transformMat[2][3]);
 	}
 
 	quat getWorldRotation()
 	{
-		if(parent is null)
-		{
-			return rotation;
-		}
-		return rotation + parent.getWorldRotation();
+		
+		return quat.from_matrix(mat3(transformMat.get_rotation()));
 	}
 	vec3 getWorldScale()
 	{
@@ -212,7 +218,7 @@ struct Mesh
 	uint[] faces;
 	private AABB localBounds;
 	private AABB worldBounds;
-	
+	bool isStatic;
 
 	void componentStart(E)(E parent)
 	{
@@ -284,7 +290,7 @@ struct Mesh
 
 	void componentUpdate(E)(E parent)
 	{
-	
+		
 
 	}
 
@@ -292,10 +298,7 @@ struct Mesh
 	{
 		return localBounds;
 	}
-	AABB getWorldBounds()
-	{
-		return worldBounds;
-	}
+
 
 
 	
@@ -409,21 +412,15 @@ class Camera
 	void update()
 	{
 		transform.updateTransformation();
-		mat4 lookMat = mat4(mat4.look_at(transform.position,transform.position + transform.front, vec3(0,1,0)));
+		vec3 position = transform.getWorldPosition();
+		mat4 lookMat = mat4(mat4.look_at(position,position + transform.front, vec3(0,1,0)));
 		lookMat.matrix[3] = vec4(0,0,0,1).vector;
 		mat4 translation = mat4.identity;
-		translation.matrix[3] = vec4(-transform.position.x,-transform.position.y,-transform.position.z,1.0).vector;
+		translation.matrix[3] = vec4(-position.x,-position.y,-position.z,1.0).vector;
 		cameraTransformation = lookMat;
 		
 	}
-	void cameraLookAt(float x,float y, float z)
-	{
-		mat4 lookMat = mat4(mat4.look_at( transform.position,transform.position + vec3(x,y,z),vec3(0,1,0)));
-		lookMat.matrix[3] = vec4(0,0,0,1).vector;
-		mat4 translation = mat4.identity;
-		translation.matrix[3] = vec4(-transform.position.x,-transform.position.y,-transform.position.z,1.0).vector;
-		cameraTransformation = lookMat;
-	}
+
 
 	
 
