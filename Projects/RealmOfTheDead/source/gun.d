@@ -36,7 +36,7 @@ class Gun
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		material.setShaderProgram(getEntityShader());
-		transform.position = vec3(0,1,3);
+		transform.position = vec3(-1.5,1,3);
 		transform.scale = vec3(1,1,1);
 		//transform.rotation = vec3(0,0,0);
 		transform.setRotationEuler(vec3(0,-80,0));

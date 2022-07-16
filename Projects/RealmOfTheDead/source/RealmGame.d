@@ -52,7 +52,7 @@ class RealmGame : RealmApp
 		gunDiffuse = readImageBytes("$Assets/Images/gun.png");
 		mainLight = _manager.instantiate!(DirectionalLight)();
 		mainLight.color = vec3(1,1,1);
-		mainLight.getComponent!(Transform).setRotationEuler(vec3(0,0,45));
+		mainLight.getComponent!(Transform).setRotationEuler(vec3(45,0,0));
 
 		//mainLight.transform.componentUpdate();
 		Renderer.get.mainLight(mainLight);

@@ -61,20 +61,30 @@ class Transform
 	{
 		return transformMat;
 	}
+
+	vec3 scaleFromMatrix(mat4 t)
+	{
+		mat3 matrix = mat3(t).transposed;
+		
+		float sx = matrix[0].length;
+		float sy = matrix[1].length;
+		float sz = matrix[2].length;
+		return vec3(sx,sy,sz);
+	}
 	@property void transformation(mat4 t)
 	{
 
 		position = vec3(t[0][3],t[1][3],t[2][3]);
-		mat4 scaleMat = t.get_scale();
-		scale = vec3(scaleMat[0][0],scaleMat[1][1],scaleMat[2][2]); 
 		rotation = quat.from_matrix(mat3(t.get_rotation()));
 
 		transformMat = t;
 	}
 
+
+
 	void setRotationEuler(vec3 euler)
 	{
-		rotation = quat.euler_rotation(radians( euler.z),radians(euler.y),radians(euler.x));
+		rotation = quat.euler_rotation(radians( euler.x),radians(euler.y),radians(euler.z));
 	}
 
 	void rotateEuler(vec3 euler)
@@ -108,12 +118,14 @@ class Transform
 	{
 		
 		
-
 		mat4 M = mat4.identity;
 		M = M.scale(scale.x ,scale.y ,scale.z);
+		
+
 		mat4 rotationMat = rotation.normalized().to_matrix!(4,4)();
 		M *= rotationMat;
 		M = M.translate(position.x ,position.y ,position.z );
+		
 		
 		mat4 parentTransform = mat4.identity;
 		Transform currentParent = parent;

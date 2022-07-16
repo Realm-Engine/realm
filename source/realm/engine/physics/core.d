@@ -69,6 +69,7 @@ class PhysicsWorld
 		AABB[UUID] boundingBoxes;
 		GetColliderTransform[UUID] getColliderTransformDelegates;
 		SetColliderTransform[UUID] setColliderTransformDelegates;
+		
 		mat4[UUID] lastTransforms;
 		
 		PhysicsBody[UUID] physicsBodies;
@@ -152,18 +153,9 @@ class PhysicsWorld
 			
 			if(body1 in colliders.lastTransforms)
 			{
-				mat4 lastTranslation = colliders.lastTransforms[body1].get_translation;
-				mat4 currentTranslation = transform1;
-				vec3 lastPosition = vec3(lastTranslation[0][3],lastTranslation[1][3],lastTranslation[3][3]);
-				vec3 currentPosition = vec3(currentTranslation[0][3],currentTranslation[1][3],currentTranslation[3][3]);
-				vec3 differnce = currentPosition - lastPosition;
-				mat4 transInv = mat4.translation(differnce).inverse();
-				if(differnce.magnitude > 0)
-				{
-
-					mat4 reverse = transform1.translate(-differnce);
-					colliders.setColliderTransformDelegates[body1](  reverse );
-				}
+				mat4 lastTranslation = colliders.lastTransforms[body1];
+				colliders.setColliderTransformDelegates[body1](  lastTranslation );
+				
 				
 			}
 			
