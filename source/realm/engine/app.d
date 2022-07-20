@@ -98,6 +98,7 @@ class RealmApp
     void run()
     {
         start();
+        appMetrics.deltaTime = 0;
         while (!shutdown)
         {
             InputManager.tick();

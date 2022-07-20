@@ -79,6 +79,8 @@ static class Debug
 		drawBox(origin,extent.x,extent.y,extent.z,rotation,color);
 	}
 
+	
+
 	static void drawBox(vec3 origin,float width, float height,float length,vec3 rotation,vec3 color = vec3(1,0,0))
 	{
 

@@ -278,13 +278,6 @@ class Renderer
 
 	}
 
-	private void updateGlobalData()
-	{
-		
-	}
-
-
-
 	void update()
 	{
 		if(mainDirLight !is null)

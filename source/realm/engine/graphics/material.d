@@ -11,6 +11,7 @@ import gl3n.math;
 import realm.engine.core;
 
 
+
 mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
 {
     import std.format;

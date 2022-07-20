@@ -50,7 +50,7 @@ class GameGeometry
 		}
 	}
 
-	void update()
+	void update(float dt)
 	{
 		updateComponents();
 		Renderer.get.submitMesh!(SimpleMaterial,false)(*mesh,transform,material);

@@ -74,7 +74,7 @@ class RealmGame : RealmApp
 		floor.setBaseMap(Vector!(int,4)(255));
 		floor.getComponent!(Transform)().scale = vec3(10,1,10);
 		floor.getComponent!(Transform)().position = vec3(0,-2,0);
-		floor.getComponent!(PhysicsBody)().active = false;
+		//floor.getComponent!(PhysicsBody)().active = false;
 		//gun.active = false;
 		
 
@@ -86,8 +86,8 @@ class RealmGame : RealmApp
 		double drawTime = Renderer.get.getMetrics().frameTime;
 		RealmUI.drawPanel(debugPanel);
 		RealmUI.containerPush(debugPanel);
-		
-		RealmUI.drawTextString(deltaTime,"Delta Time: %f",getAppMetrics().deltaTime);
+		float dt = getAppMetrics().deltaTime;
+		RealmUI.drawTextString(deltaTime,"Delta Time: %f",dt);
 		RealmUI.drawTextString(renderTime,"Frame draw time: %f", drawTime);
 		RealmUI.containerPop();
 	}
@@ -95,9 +95,9 @@ class RealmGame : RealmApp
 	{
 	
 		//floor.getComponent!(Transform).rotateEuler(vec3(0,0,0));
-		
-		_manager.updateEntities();
-		physicsWorld.tick(getAppMetrics().deltaTime);
+		float dt = getAppMetrics().deltaTime;
+		_manager.updateEntities(dt / 100);
+		physicsWorld.tick(dt / 100);
 		drawUI();
 		Renderer.get.update();
 

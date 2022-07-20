@@ -465,7 +465,7 @@ class DirectionalLight
 
 	}
 
-	void update()
+	void update(float dt)
 	{
 		
 		updateComponents();

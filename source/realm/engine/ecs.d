@@ -42,15 +42,16 @@ mixin template EntityRegistry(T...)
         return entity;
     }
 
-    void updateEntities()
+    void updateEntities(float dt)
 	{
+        import realm.engine.app;
         static foreach(Type; T)
 		{
             foreach(entity; __traits(getMember,this,Type.mangleof))
 			{
                 if(entity.active)
 				{
-                    entity.update();
+                    entity.update(dt);
                     entity.updateComponents();
 				}
 			}

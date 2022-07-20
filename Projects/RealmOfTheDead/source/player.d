@@ -31,6 +31,8 @@ class Player
     private PhysicsBody physicsBody;
     private BoxCollider* collider;
     private Mesh* mesh;
+    float gravity = 9.82;
+    bool onGround;
     void start(Camera* cam)
     {
 
@@ -63,12 +65,12 @@ class Player
         transform = getComponent!(Transform);
         //transform.setParent(*camera);
         camera.setParent(transform);
-		camera.setRotationEuler(vec3(20,0,0));
+		camera.setRotationEuler(vec3(45,0,0));
         InputManager.registerInputEventCallback(&inputEvent);
         rotation = vec2(0,0);
         physicsBody = getComponent!(PhysicsBody)();
-        transform.position = vec3(0,1,-10);
-        camera.transform.position = transform.position - vec3(0,-3,-2);
+        transform.position = vec3(0,5,-7);
+        camera.transform.position = transform.position - vec3(0,-3,-5);
         //physicsBody.active = false;
     }
 
@@ -84,7 +86,7 @@ class Player
 
 	}
 
-    void processInput()
+    void processInput(float dt)
     {
         float x = cast(float) InputManager.getMouseAxis(MouseAxis.X);
 
@@ -117,7 +119,14 @@ class Player
 		{
             movementVector += transform.front.cross(vec3(0,1,0)).normalized() ;
 		}
-        transform.position += movementVector * 0.25;
+        //Logger.LogInfo("DT: %f", dt);
+        if(!onGround)
+		{
+            movementVector.y -= 1 * dt;
+		}
+
+        
+        transform.position += movementVector;
         float xOffset = x - lastX;
         float yOffset = lastY - y;
         xOffset *= 0.001;
@@ -173,19 +182,24 @@ class Player
 			if(collidingObject.peek!(GameGeometry) !is null)
 			{
 				auto geo = collidingObject.peek!(GameGeometry)();
-				Logger.LogInfo("Player Colliding with geo: %s", geo.entityName);
+                if(geo.entityName == "Floor")
+				{
+                    onGround = true;
+                    Logger.LogInfo("On ground");
+				}
+				
 			}
 		}
 
 	}
 
-    void update()
+    void update(float dt)
     {
        
-        processInput();
+        processInput(dt);
         camera.update();
         updateComponents();
-        //processCollisions();
+        processCollisions();
         Renderer.get.submitMesh!(SimpleMaterial,false)(*mesh,transform,material);
 
         

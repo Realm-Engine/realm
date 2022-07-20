@@ -55,7 +55,7 @@ class Gun
 	
 
 
-	void update()
+	void update(float dt)
 	{
 		vec3 front = transform.front();
 		vec3 position = transform.position;
