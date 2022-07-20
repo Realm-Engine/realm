@@ -176,7 +176,7 @@ class Renderer
 				vertex.normal =  vec3(transInv * vec4(mesh.normals[i],1.0));
 				vertex.tangent = vec3(modelMatrix * vec4(mesh.tangents[i],1.0));
 				vertex.materialId = mat.instanceId;
-				aabbPoints ~= vertex.position;
+				//aabbPoints ~= vertex.position;
 				vertexData[i] = vertex;
 
 			}
@@ -184,7 +184,7 @@ class Renderer
 		
 		
 		
-		AABB boundingBox = AABB.from_points(aabbPoints);
+		AABB boundingBox = aabbTransformWorldSpace(mesh.getLocalBounds(),transform.transformation);
 		Frustum frustum = Frustum(camera.projection * camera.view );
 		
 		int intersection = frustum.intersects(boundingBox);

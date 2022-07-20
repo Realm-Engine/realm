@@ -433,10 +433,36 @@ class Camera
 		
 	}
 
+}
 
-	
-
-
+AABB aabbTransformWorldSpace(AABB box, mat4 matrix)
+{
+	vec3 aMin = box.min;
+	vec3 aMax = box.max;
+	vec3 translation = vec3(matrix[0][3],matrix[1][3],matrix[2][3]);
+	vec3 bMin,bMax;
+	bMax = bMin =  translation;
+	mat3 transform = mat3(matrix);
+	for(int i = 0; i < 3; i++)
+	{
+		for(int j = 0; j < 3; j++)
+		{
+			float a = transform[i][j] * aMin.value_ptr[j];
+			float b = transform[i][j] * aMax.value_ptr[j];
+			if(a < b)
+			{
+				bMin.vector[i] += a;
+				bMax.vector[i] += b;
+			}
+			else
+			{
+				bMin.vector[i] += b;
+				bMax.vector[i] += a;
+			}
+		}
+	}
+	AABB result = AABB(bMin,bMax);
+	return result;
 }
 
 class DirectionalLight

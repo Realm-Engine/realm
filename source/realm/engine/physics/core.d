@@ -109,43 +109,12 @@ class PhysicsWorld
 		AABB aabb1 = colliders.boundingBoxes[body1];
 		AABB aabb2 = colliders.boundingBoxes[body2];
 		
-		AABB transformAABB(AABB box, mat4 matrix)
-		{
-			vec3 aMin = box.min;
-			vec3 aMax = box.max;
-			vec3 translation = vec3(matrix[0][3],matrix[1][3],matrix[2][3]);
-			vec3 bMin,bMax;
-			bMax = bMin =  translation;
-			mat3 transform = mat3(matrix);
-			for(int i = 0; i < 3; i++)
-			{
-				for(int j = 0; j < 3; j++)
-				{
-					float a = transform[i][j] * aMin.value_ptr[j];
-					float b = transform[i][j] * aMax.value_ptr[j];
-					if(a < b)
-					{
-						bMin.vector[i] += a;
-						bMax.vector[i] += b;
-					}
-					else
-					{
-						bMin.vector[i] += b;
-						bMax.vector[i] += a;
-					}
-				}
-			}
-			AABB result = AABB(bMin,bMax);
-			return result;
-			
-
-
-		}
+		
 		mat4 transform1 = colliders.getColliderTransformDelegates[body1]();
 		mat4 transform2 = colliders.getColliderTransformDelegates[body2]();
 		
-		aabb1 = transformAABB(aabb1,transform1);
-		aabb2 = transformAABB(aabb2,transform2);
+		aabb1 = aabbTransformWorldSpace(aabb1,transform1);
+		aabb2 = aabbTransformWorldSpace(aabb2,transform2);
 		
 		
 		Debug.drawBox(aabb1.center,aabb1.extent,vec3(0));
