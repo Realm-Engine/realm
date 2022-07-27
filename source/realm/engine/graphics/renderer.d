@@ -2,6 +2,7 @@ module realm.engine.graphics.renderer;
 import realm.engine.graphics.batch;
 import realm.engine.graphics.graphicssubsystem;
 import realm.engine.graphics.core;
+import realm.engine.graphics.renderpass;
 import realm.engine.core;
 import realm.engine.app;
 import realm.engine.asset;
@@ -16,6 +17,7 @@ import std.algorithm;
 import realm.engine.debugdraw;
 import realm.engine.ui.realmui;
 import gl3n.frustum;
+import realm.engine.container.stack;
 alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "cameraNear" : UserDataVarTypes.FLOAT]);
 alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
 
@@ -35,7 +37,6 @@ class Renderer
 	private Batch!(RealmVertex) lightSpaceBatch;
 	private RealmGlobalData _globalData;
 	private Camera* camera;
-	private static FrameBuffer mainFrameBuffer;
 	private StandardShaderModel lightSpaceShaderProgram;
 	private LightSpaceMaterial lightSpaceMaterial;
 	private DirectionalLight mainDirLight;
@@ -46,8 +47,15 @@ class Renderer
 	private __gshared Renderer _instance;
 	private QueryObject!() queryDevice;
 	private ShaderPipeline lightSpacePipeline;
+	alias GeometryPassInputs = Alias!(["lightMap" : ImageFormat.DEPTH]);
+	alias GeometryPassOutputs = Alias!(["cameraColor" : ImageFormat.RGB8, "cameraDepth" : ImageFormat.DEPTH]);
+	alias LightPassOutputs = Alias!(["lightMap" : ImageFormat.DEPTH]);
+	private static FrameBuffer mainFramebuffer;
 	
-
+	Renderpass!(null,LightPassOutputs) lightPass;
+	Renderpass!(GeometryPassInputs,GeometryPassOutputs) geometryPass;
+	
+	
 
 	static Renderer get()
 	{
@@ -110,9 +118,7 @@ class Renderer
 		_globalData.vp = mat4.identity.value_ptr[0..16].dup;
                 
 		GraphicsSubsystem.updateGlobalData(&_globalData);
-		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
-		mainFrameBuffer.create!([FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT])(windowSize[0],windowSize[1]);
-		
+		initRenderpasses();
 		enable(State.Blend);
 		blendFunc(BlendFuncType.SRC_ALPHA,BlendFuncType.ONE_MINUS_SRC_ALPHA);
 		
@@ -126,15 +132,21 @@ class Renderer
 		lightSpacePipeline.create();
 		lightSpacePipeline.useProgramStages(lightSpaceShaderProgram);
 		enable(State.FrameBufferSRGB);
-		
 
-
+	
 	}
-	static FrameBuffer* getMainFrameBuffer()
+
+	void initRenderpasses()
 	{
-		assert (&mainFrameBuffer !is null);
-		return &mainFrameBuffer;
+		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
+		lightPass = new Renderpass!(null,LightPassOutputs)(2048,2048);
+		geometryPass = new Renderpass!(GeometryPassInputs,GeometryPassOutputs)(windowSize[0],windowSize[1]);
+		geometryPass.inputs.lightMap = lightPass.getOutputs().lightMap;
+		mainFramebuffer.create(windowSize[0],windowSize[1],[FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT]);
+		
 	}
+
+
 
 	void submitMesh(Mat, bool isStatic = false)(Mesh mesh,Transform transform,Mat mat)
 	{
@@ -176,7 +188,6 @@ class Renderer
 				vertex.normal =  vec3(transInv * vec4(mesh.normals[i],1.0));
 				vertex.tangent = vec3(modelMatrix * vec4(mesh.tangents[i],1.0));
 				vertex.materialId = mat.instanceId;
-				//aabbPoints ~= vertex.position;
 				vertexData[i] = vertex;
 
 			}
@@ -203,10 +214,13 @@ class Renderer
 			
 			if(materialId !in batches)
 			{
+				
 				batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
-				batches[materialId].setShaderStorageCallback(&(Mat.bindShaderStorage));
-				batches[materialId].initialize(Mat.allocatedVertices(),Mat.allocatedElements());
-				batches[materialId].reserve(Mat.getNumMaterialInstances());
+				Batch!(RealmVertex) batch = batches[materialId];
+				batch.setShaderStorageCallback(&(Mat.bindShaderStorage));
+				
+				batch.initialize(Mat.allocatedVertices(),Mat.allocatedElements());
+				batch.reserve(Mat.getNumMaterialInstances());
 			}
 			auto batch = materialId in batches;
 			batch.submitVertices!(Mat)(vertexData,mesh.faces,mat);
@@ -226,12 +240,7 @@ class Renderer
 	
 		if(mainDirLight !is null)
 		{
-			FrameBuffer* shadowFramebuffer = &mainDirLight.shadowFrameBuffer;
-			setViewport(0,0,shadowFramebuffer.width, shadowFramebuffer.height);
-			mainDirLight.shadowFrameBuffer.bind(FrameBufferTarget.FRAMEBUFFER);
-
-			//mainDirLight.shadowFrameBuffer.refresh();
-			GraphicsSubsystem.clearScreen();
+			lightPass.startPass();
 
 			cull(CullFace.FRONT);
 			//lightSpaceCamera.update();
@@ -249,11 +258,13 @@ class Renderer
 
 			foreach(batch; orderedBatches)
 			{
+				batch.setPrepareDrawCallback(&prepareDrawLightpass);
 				batch.drawBatch!(false)(lightSpacePipeline);
+
 			}
 
-			mainDirLight.shadowFrameBuffer.unbind(FrameBufferTarget.FRAMEBUFFER);
-			GraphicsSubsystem.setShadowMap(mainDirLight.shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture);
+			
+			
 			//cull(CullFace.BACK);
 		}
 		
@@ -262,7 +273,7 @@ class Renderer
 	@property void mainLight(DirectionalLight light)
 	{
 		mainDirLight = light;
-		mainDirLight.createFrameBuffer(2048,2048);
+		
 	}
 
 	void updateMainLight()
@@ -287,11 +298,13 @@ class Renderer
 
 		renderLightSpace();
 		
-
-		setViewport(0,0,mainFrameBuffer.width,mainFrameBuffer.height);
-		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
-		mainFrameBuffer.bind(FrameBufferTarget.DRAW);
 		
+
+
+		setViewport(0,0,mainFramebuffer.width,mainFramebuffer.height);
+		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
+		mainFramebuffer.bind(FrameBufferTarget.DRAW);
+
 		drawBuffers([DrawBufferTarget.COLOR]);
 		GraphicsSubsystem.clearScreen();
 		if(camera !is null)
@@ -307,24 +320,40 @@ class Renderer
 		}
 
 		GraphicsSubsystem.updateGlobalData(&_globalData);
-		
+
 		foreach(batch; orderedBatches)
 		{
+			batch.setPrepareDrawCallback(&prepareDrawGeometry);
 			batch.drawBatch!(true)();
 		}
 		Debug.flush();
 		RealmUI.flush();
-		mainFrameBuffer.unbind(FrameBufferTarget.DRAW );
-		mainFrameBuffer.blitToScreen(FrameMask.COLOR );
+		mainFramebuffer.unbind(FrameBufferTarget.DRAW );
+		mainFramebuffer.blitToScreen(FrameMask.COLOR );
 		foreach(batch; orderedBatches)
 		{
 			batch.resetBatch();
 		}
-		
+
 		long timeElapsed = 0;
 		
 		
 		
+	}
+
+	void prepareDrawGeometry(StandardShaderModel program)
+	{
+		geometryPass.bindAttachments(program);
+
+		
+		
+
+
+	}
+
+	void prepareDrawLightpass(StandardShaderModel program)
+	{
+		lightPass.bindAttachments(program);
 	}
 	
 	

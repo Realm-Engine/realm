@@ -501,6 +501,9 @@ class GShaderProgramModel(T...)
                 glDispatchCompute(groupsX,groupsY,groupsZ);
 			}
 		}
+
+
+
 	}
 
     private string _name;
@@ -511,6 +514,11 @@ class GShaderProgramModel(T...)
 		id = glCreateProgram();
         glProgramParameteri(id,GL_PROGRAM_SEPARABLE,GL_TRUE);
        
+	}
+    this(string name, int id)
+	{
+        _name = name;
+        this.id = id;
 	}
 
     void compile()
@@ -731,6 +739,8 @@ class GShaderProgramModel(T...)
 struct GFrameBufferAttachment
 {
     GSamplerObject!(GTextureType.TEXTURE2D) texture;
+    int colorSlot = 0;
+    GFrameBufferAttachmentType attachmentType;
     this(GFrameBufferAttachmentType type,int width, int height)
     {
         texture.create();
@@ -754,6 +764,19 @@ struct GFrameBufferAttachment
         texture.textureDesc = desc;
         texture.store(width,height);
         texture.uploadImage(0,0,null);
+        attachmentType = type;
+    }
+	this(GFrameBufferAttachmentType type,int width, int height,ImageFormat fmt)
+    {
+        texture.create();
+        TextureDesc desc;
+        desc.wrap = GTextureWrapFunc.CLAMP_TO_BORDER;
+        desc.filter = GTextureFilterFunc.LINEAR;
+        desc.fmt = fmt;
+        texture.textureDesc = desc;
+        texture.store(width,height);
+        texture.uploadImage(0,0,null);
+        attachmentType = type;
     }
 }
 
@@ -771,7 +794,42 @@ struct GFrameBuffer
     {
         return fbHeight;
     }
-    void create(GFrameBufferAttachmentType[] attachmentTypes)(int width, int height)
+
+    void create(int width, int height)
+	{
+        this.fbWidth = width;
+        this.fbHeight = height;
+        glGenFramebuffers(1, &id);
+        
+
+	}
+
+    GFrameBufferAttachment* addAttachment(GFrameBufferAttachmentType type, ImageFormat format)
+	{
+        glBindFramebuffer(GL_FRAMEBUFFER,id);
+        GFrameBufferAttachment attachment = GFrameBufferAttachment(type,width,height,format);
+        fbAttachments[type] = attachment;
+        attachment.texture.bind();
+        glFramebufferTexture2D(GL_FRAMEBUFFER,type,GL_TEXTURE_2D,attachment.texture.ID(),0);
+        if(type == GFrameBufferAttachmentType.DEPTH_ATTACHMENT)
+		{
+            glDrawBuffer(GL_NONE);
+			glReadBuffer(GL_NONE);
+		}
+        attachment.texture.unbind();
+        return &fbAttachments[type];
+
+	}
+
+    bool isComplete()
+	{
+		return glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+        
+	}
+
+    
+
+    void create(int width, int height,GFrameBufferAttachmentType[] attachmentTypes)
 	in(width * height >0,"Framebuffer area must be bigger than 0")
     {
         import std.algorithm.searching :find;

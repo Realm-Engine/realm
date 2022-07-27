@@ -470,14 +470,7 @@ class DirectionalLight
 	mixin RealmEntity!("Directional Light",Transform);
 	//Transform transform;
 	vec3 color; 
-	FrameBuffer shadowFrameBuffer; 
-	void createFrameBuffer(int width, int height)
-	{
-
-		shadowFrameBuffer.create!([FrameBufferAttachmentType.DEPTH_ATTACHMENT])(width,height);
-		shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture.wrap = TextureWrapFunc.CLAMP_TO_BORDER;
-		shadowFrameBuffer.fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture.border = [1.0,1.0,1.0,1.0];
-	}
+	
 	void start()
 	{
 

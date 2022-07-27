@@ -35,7 +35,9 @@ class Batch(T)
 	private BindShaderStorageCallback bindShaderStorage;
 	private int order;
 	private ShaderPipeline shaderPipeline;
-
+	alias PrepareDrawCallback = void delegate(StandardShaderModel model);
+	private PrepareDrawCallback prepareDraw;
+	private ulong materialId;
 	@property renderOrder()
 	{
 		return order;
@@ -65,6 +67,11 @@ class Batch(T)
 	void setShaderStorageCallback(BindShaderStorageCallback cb)
 	{
 		bindShaderStorage = cb;
+	}
+
+	void setPrepareDrawCallback(PrepareDrawCallback cb)
+	{
+		prepareDraw = cb;
 	}
 
 	/// Reserve number of primitive elements (i.e: triangles)
@@ -169,7 +176,9 @@ class Batch(T)
 		numIndicesInFrame+=faces.length;
 		material.writeUniformData();
 		textureAtlases~=material.getTextureAtlas();
+		materialId = Mat.materialId();
 	}
+
 
 	/// Initial setup prior to drawing the elements
 	private uint setupDraw(bool renderShadows)()
@@ -187,20 +196,9 @@ class Batch(T)
 			program.setUniformInt(texture.slot,texture.slot);
 
 		}
-		SamplerObject!(TextureType.TEXTURE2D)* cameraDepth;
-		SamplerObject!(TextureType.TEXTURE2D)* cameraScreen;
-		cameraDepth =&Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.DEPTH_ATTACHMENT].texture;
-		cameraDepth.setActive(0);
-		program.setUniformInt(0,0);
-		cameraScreen = &Renderer.getMainFrameBuffer().fbAttachments[FrameBufferAttachmentType.COLOR_ATTACHMENT].texture;
-		cameraScreen.setActive(1);
-		program.setUniformInt(1,1);
-		if(renderShadows && GraphicsSubsystem.getShadowMap().ID >0)
+		if(prepareDraw)
 		{
-			GraphicsSubsystem.getShadowMap().setActive(2);
-
-
-			program.setUniformInt(2,2);
+			prepareDraw(program);
 		}
 		if(bindShaderStorage !is null)
 		{
@@ -212,14 +210,14 @@ class Batch(T)
 
 	void drawBatch(bool renderShadows = true,PrimitiveShape shape = PrimitiveShape.TRIANGLE, ShaderPipeline pipelineOverride = null)()
 	{
-		
-	
+
+
 		if(numVerticesInFrame > 0)
 		{
-			
-			
+
+
 			uint offset = setupDraw!(renderShadows)();
-			
+
 
 			shaderPipeline.bind();
 			shaderPipeline.validate();
@@ -228,7 +226,7 @@ class Batch(T)
 			shaderPipeline.unbind();
 			unbindBuffers();
 		}
-		
+
 	}
 
 	void drawBatch(bool renderShadows = true,PrimitiveShape shape = PrimitiveShape.TRIANGLE)(ShaderPipeline pipelineOverride)
