@@ -17,6 +17,7 @@ class GameGeometry
 	private Mesh* mesh;
 	private Transform transform;
 	private Texture2D diffuseMap;
+	private RealmVertex[] vertexBuffer;
 	void start(Mesh geo)
 	{
 		mesh = &getComponent!(Mesh)();
@@ -29,6 +30,7 @@ class GameGeometry
 		material.shinyness = 64.0;
 		material.specularPower = 0.1;
 		material.color = vec4(1.0);
+		vertexBuffer.length = geo.positions.length;
 
 	}
 	
@@ -53,7 +55,7 @@ class GameGeometry
 	void update(float dt)
 	{
 		updateComponents();
-		Renderer.get.submitMesh!(SimpleMaterial,false)(*mesh,transform,material);
+		Renderer.get.submitMesh!(SimpleMaterial,false)(mesh,transform,material,vertexBuffer);
 	}
 
 

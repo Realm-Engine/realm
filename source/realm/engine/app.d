@@ -6,7 +6,7 @@ import std.conv;
 import std.meta;
 import realm.engine.core;
 import std.typecons;
-
+import core.memory;
 class RealmApp
 {
 
@@ -98,12 +98,16 @@ class RealmApp
     void run()
     {
         start();
+        GC.collect;
         appMetrics.deltaTime = 0;
         while (!shutdown)
         {
             InputManager.tick();
             float startTick = getTicks();
+            //GC.disable();
             update();
+            
+            //GC.enable();
             glfwPollEvents();
             
             if (glfwWindowShouldClose(window))

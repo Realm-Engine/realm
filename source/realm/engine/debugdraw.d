@@ -84,9 +84,9 @@ static class Debug
 	static void drawBox(vec3 origin,float width, float height,float length,vec3 rotation,vec3 color = vec3(1,0,0))
 	{
 
-		//Bottom face
-		RealmVertex[] vertices;
-		vertices.length = 8;
+		
+		RealmVertex[8] vertices;
+		
 
 		vertices[0].position = vec3(-0.5,-0.5,-0.5);
 		vertices[1].position = vec3(-0.5,-0.5,0.5);
@@ -98,33 +98,35 @@ static class Debug
 		vertices[6].position = vec3(0.5,0.5,0.5);
 		vertices[7].position = vec3(0.5,0.5,-0.5);
 
-
-		uint[] bottom = [0,1,1,2,2,3,3,0];
-		uint[] front = [1,5,5,6,6,2,2,1];
-		uint[] left = [0,4,4,5,5,1,1,0];
-		uint[] right = [3,7,7,6,6,2,2,3];
-		uint[] back = [0,4,4,7,7,3,3,0];
-		uint[] top =[4,5,5,6,6,7,7,4];
+		uint[8*6] faces = [
+			0,1,1,2,2,3,3,0,
+			1,5,5,6,6,2,2,1,
+			0,4,4,5,5,1,1,0,
+			3,7,7,6,6,2,2,3,
+			0,4,4,7,7,3,3,0,
+			4,5,5,6,6,7,7,4,
+		];
+		
 		mat4 rotationMatrix = quat.euler_rotation(rotation.x,rotation.y,rotation.z).to_matrix!(4,4);
 		mat4 M = mat4.identity;
 		M = M.scale(width,height,length);
 		M *=rotationMatrix;
 		M = M.translate(origin);
 		DebugMaterial debugMaterial = new DebugMaterial;
-		foreach(i,v;vertices.enumerate(0))
+		for(int i = 0; i < vertices.length; i++)
 		{
+			RealmVertex v = vertices[i];
 			vertices[i].normal = vec3(0,-1,0);
 			vertices[i].texCoord = vec2(0,0);
 			vertices[i].tangent = vec3(0,0,-1);
 			vertices[i].position = vec3(M *vec4(v.position,1.0) );
 			vertices[i].materialId = debugMaterial.instanceId;
-			
 		}
 		
 		debugMaterial.color = vec4(color,1.0);
 		debugMaterial.setShaderProgram(debugProgram);
 		
-		debugBatch.submitVertices!(DebugMaterial)(vertices,bottom ~ front ~ left ~ right ~ back ~ top,debugMaterial);
+		debugBatch.submitVertices!(DebugMaterial)(vertices,faces,debugMaterial);
 
 
 	}

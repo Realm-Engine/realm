@@ -147,34 +147,13 @@ class Renderer
 	}
 
 
-
-	void submitMesh(Mat, bool isStatic = false)(Mesh mesh,Transform transform,Mat mat)
+	void submitMesh(Mat, bool isStatic = false)(Mesh* mesh,Transform transform,Mat mat,RealmVertex[] vertexData)
 	{
-		
-
-		static assert(isMaterial!(Mat));
 		ulong materialId = Mat.materialId();
-
-
-		RealmVertex[] vertexData;
-		vec3[] aabbPoints;
 		ulong staticId = materialId + mat.instanceId;
-		static if(isStatic)
-		{
-
-			if(staticId in staticMeshes)
-			{
-				vertexData = staticMeshes[staticId];
-				foreach(vertex; vertexData)
-				{
-					aabbPoints ~= vertex.position;
-				}
-			}
-		}
-
 		if(!isStatic || (isStatic && staticId !in staticMeshes))
 		{
-			vertexData.length = mesh.positions.length;
+			//vertexData.length = mesh.positions.length;
 			mat4 modelMatrix = transform.transformation;
 			mat4 transInv = modelMatrix.inverse().transposed();
 
@@ -192,33 +171,33 @@ class Renderer
 
 			}
 		}
-		
-		
-		
+
+
+
 		AABB boundingBox = aabbTransformWorldSpace(mesh.getLocalBounds(),transform.transformation);
 		Frustum frustum = Frustum(camera.projection * camera.view );
-		
+
 		int intersection = frustum.intersects(boundingBox);
 
 		static if(isStatic)
 		{
-			
+
 			if(staticId !in staticMeshes)
 			{
 				staticMeshes[staticId] = vertexData;
 			}
 		}
-		
+
 		if(intersection == INSIDE || intersection == INTERSECT)
 		{
-			
+
 			if(materialId !in batches)
 			{
-				
+
 				batches[materialId] = new Batch!(RealmVertex)(MeshTopology.TRIANGLE,Mat.getShaderProgram(),Mat.getOrder());
 				Batch!(RealmVertex) batch = batches[materialId];
 				batch.setShaderStorageCallback(&(Mat.bindShaderStorage));
-				
+
 				batch.initialize(Mat.allocatedVertices(),Mat.allocatedElements());
 				batch.reserve(Mat.getNumMaterialInstances());
 			}
@@ -231,6 +210,46 @@ class Renderer
 		{
 			Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(1,0,0));
 		}
+	}
+
+	void submitMesh(Mat, bool isStatic = false)(Mesh* mesh,Transform transform,Mat mat)
+	{
+		import core.stdc.stdlib;
+
+		static assert(isMaterial!(Mat));
+		ulong materialId = Mat.materialId();
+
+
+		RealmVertex[] vertexData;
+		
+		ulong staticId = materialId + mat.instanceId;
+		static if(isStatic)
+		{
+
+			if(staticId in staticMeshes)
+			{
+				vertexData = staticMeshes[staticId];
+				
+			}
+		}
+		
+		if(!isStatic || (isStatic && staticId !in staticMeshes))
+		{
+
+			RealmVertex* dataPtr = cast(RealmVertex*)malloc(RealmVertex.sizeof * mesh.positions.length);
+			submitMesh!(Mat,isStatic)(mesh,transform,mat,vertexData[0..mesh.positions.length]);
+			scope(exit)
+			{
+				free(dataPtr);
+			}
+			
+		}
+		submitMesh!(Mat,isStatic)(mesh,transform,mat,vertexData);
+		
+
+
+
+		
 
 
 	}

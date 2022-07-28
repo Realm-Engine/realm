@@ -18,6 +18,7 @@ class Gun
 	private IFImage diffuseImage;
 	private Mesh* mesh;
 	private Transform transform;
+	private RealmVertex[] vertexBuffer;
 	void start(Transform player, Camera camera)
 	{
 		
@@ -40,7 +41,7 @@ class Gun
 		transform.scale = vec3(1,1,1);
 		//transform.rotation = vec3(0,0,0);
 		transform.setRotationEuler(vec3(0,-80,0));
-
+		vertexBuffer.length = mesh.positions.length;
 		
 		
 
@@ -64,7 +65,7 @@ class Gun
 		//processCollisions();
 		//transform.rotateEuler(vec3(0,0,0));
 		updateComponents();
-		Renderer.get.submitMesh!(SimpleMaterial,false)(*mesh,transform,material);
+		Renderer.get.submitMesh!(SimpleMaterial,false)(mesh,transform,material,vertexBuffer);
 	}
 
 }

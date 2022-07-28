@@ -118,6 +118,8 @@ static class RealmUI
 	private static InputEvent _currentEvent;
 	private static UIElement focusedElement;
 
+	private static RealmVertex[] panel;
+
 
 	static void initialize()
 	{
@@ -153,6 +155,8 @@ static class RealmUI
 		containerPush(parentContainer);
 		themePush(UITheme(vec4(1),vec4(1)));
 		InputManager.registerInputEventCallback(&inputEvent);
+
+		panel.length = panelMesh.positions.length;
 
 	}
 
@@ -422,8 +426,8 @@ static class RealmUI
 	do
 	{
 
-		RealmVertex[] vertices;
-		vertices.length = panelMesh.positions.length;
+		RealmVertex[] vertices = panel.dup;
+		//vertices.length = panelMesh.positions.length;
 		Transform parent = UIElements.transforms[containerStack.peek()];
 		Transform copy = new Transform(transform);
 		copy.position += parent.position;

@@ -33,6 +33,7 @@ class Player
     private Mesh* mesh;
     float gravity = 9.82;
     bool onGround;
+    private RealmVertex[] vertexBuffer;
     void start(Camera* cam)
     {
 
@@ -71,6 +72,7 @@ class Player
         physicsBody = getComponent!(PhysicsBody)();
         transform.position = vec3(0,5,-7);
         camera.transform.position = transform.position - vec3(0,-3,-5);
+        vertexBuffer.length = mesh.positions.length;
         //physicsBody.active = false;
     }
 
@@ -200,7 +202,7 @@ class Player
         camera.update();
         updateComponents();
         processCollisions();
-        Renderer.get.submitMesh!(SimpleMaterial,false)(*mesh,transform,material);
+        Renderer.get.submitMesh!(SimpleMaterial,false)(mesh,transform,material,vertexBuffer);
 
         
         
