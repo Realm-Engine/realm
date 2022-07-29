@@ -20,6 +20,7 @@ class RealmApp
     private const GLMIN_VER = GLVersion.GL43;
     private AppMetrics appMetrics;
     
+    
 	
 	struct AppMetrics
 	{
@@ -83,6 +84,8 @@ class RealmApp
         InputManager.initialze(window);
         glfwSwapInterval(1);
         processArgs(args);
+        
+
 
     }
     
@@ -104,10 +107,10 @@ class RealmApp
         {
             InputManager.tick();
             float startTick = getTicks();
-            //GC.disable();
+            GC.disable();
             update();
             
-            //GC.enable();
+            GC.enable();
             glfwPollEvents();
             
             if (glfwWindowShouldClose(window))
@@ -131,5 +134,7 @@ class RealmApp
         glfwTerminate();
 
     }
+
+
 
 }

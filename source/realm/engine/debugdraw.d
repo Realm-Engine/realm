@@ -6,11 +6,12 @@ import realm.engine.core;
 import realm.engine.app;
 import realm.engine.asset;
 import realm.engine.graphics.material;
-
+import std.typecons;
 import gl3n.linalg;
 import std.range;
 static class Debug
 {
+	private static DebugMaterial[] materialPool;
 	private static Batch!(RealmVertex) debugBatch;
 	private static StandardShaderModel debugProgram;
 	alias DebugMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR]);
@@ -53,7 +54,8 @@ static class Debug
 
 	static void drawLine(vec3 start, vec3 end, vec3 color = vec3(0,1,0))
 	{
-		DebugMaterial debugMaterial = new DebugMaterial;
+
+		DebugMaterial debugMaterial = new DebugMaterial();
 		RealmVertex startVertex;
 		RealmVertex endVertex;
 		startVertex.position = start;
@@ -112,7 +114,7 @@ static class Debug
 		M = M.scale(width,height,length);
 		M *=rotationMatrix;
 		M = M.translate(origin);
-		DebugMaterial debugMaterial = new DebugMaterial;
+		DebugMaterial debugMaterial = new DebugMaterial();
 		for(int i = 0; i < vertices.length; i++)
 		{
 			RealmVertex v = vertices[i];

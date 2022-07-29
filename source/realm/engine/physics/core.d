@@ -117,12 +117,12 @@ class PhysicsWorld
 		aabb2 = aabbTransformWorldSpace(aabb2,transform2);
 		
 		
-		Debug.drawBox(aabb1.center,aabb1.extent,vec3(0));
+		
 		vec3 distance = aabb2.center - aabb1.center;
 		distance.normalize();
 		vec3 closestPoint = distance * aabb2.center;
 		//closestPoint += aabb2.half_extent();
-		Debug.drawLine(aabb1.center, closestPoint);
+		
 		if(aabb1.intersects(aabb2))
 		{
 			

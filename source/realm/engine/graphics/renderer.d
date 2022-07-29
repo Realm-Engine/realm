@@ -133,6 +133,8 @@ class Renderer
 		lightSpacePipeline.useProgramStages(lightSpaceShaderProgram);
 		enable(State.FrameBufferSRGB);
 
+
+
 	
 	}
 
@@ -147,7 +149,7 @@ class Renderer
 	}
 
 
-	void submitMesh(Mat, bool isStatic = false)(Mesh* mesh,Transform transform,Mat mat,RealmVertex[] vertexData)
+	void submitMesh(Mat, bool isStatic = false)(Mesh* mesh,Transform transform,Mat mat,ref RealmVertex[] vertexData)
 	{
 		ulong materialId = Mat.materialId();
 		ulong staticId = materialId + mat.instanceId;
@@ -203,7 +205,7 @@ class Renderer
 			}
 			auto batch = materialId in batches;
 			batch.submitVertices!(Mat)(vertexData,mesh.faces,mat);
-			//Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(0,1,0));
+			Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(0,1,0));
 		}
 
 		else

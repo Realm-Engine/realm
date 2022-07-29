@@ -429,7 +429,7 @@ static class RealmUI
 		RealmVertex[] vertices = panel.dup;
 		//vertices.length = panelMesh.positions.length;
 		Transform parent = UIElements.transforms[containerStack.peek()];
-		Transform copy = new Transform(transform);
+		scope Transform copy = new Transform(transform);
 		copy.position += parent.position;
 		//copy.scale += parent.scale;
 		copy.rotation += parent.rotation;

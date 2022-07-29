@@ -26,5 +26,5 @@
 	"targetPath": "./bin",
 	"preBuildCommands": [ "dub run --single $REALM_PACKAGE_DIR\\bootstrap\\initScript.d -- --realm-root=\"$REALM_PACKAGE_DIR\"" ],
 	"postBuildCommands": [ "copy \"$REALM_PACKAGE_DIR\\external\\freetype\\release dll\\win64\\freetype.dll\" $ROOT_PACKAGE_DIR\\bin" ],
-	"dflags": [ "--DRT-gcopt=profile:1" ]
+	
 }
