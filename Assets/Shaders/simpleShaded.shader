@@ -14,14 +14,16 @@ struct Material
 #shader vertex simpleVertex
 vec4 vertex(REVertexData IN)
 {
+	mat4 vp = u_projection * u_view;
     RESurfaceDataOut.TBN = calculateTBN();
 	RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
-	RESurfaceDataOut.posCS = u_vp * vec4(IN.position, 1.0);
+	RESurfaceDataOut.posCS = vp * vec4(IN.position, 1.0);
 	RESurfaceDataOut.posWS = IN.position;
 	RESurfaceDataOut.texCoord = IN.texCoord;
 	RESurfaceDataOut.normal = IN.normal;
 	RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * vec4(IN.position, 1.0);
+	RESurfaceDataOut.eyeSpacePosition = u_view * vec4(IN.position,1.0);
 	return RESurfaceDataOut.posCS;
 }
 #shader fragment simpleFragment
@@ -49,6 +51,11 @@ vec4 fragment()
 	float bias = max(0.05 * (1.0 - dot(normal, mainLight.direction.xyz)), 0.005);
 	float shadow = calculateShadow(RESurfaceDataIn.lightSpacePosition, bias);
 	
+	
+	float fog = abs(RESurfaceDataIn.eyeSpacePosition.z / RESurfaceDataIn.eyeSpacePosition.w);
+	fog = 1.0 - clamp(exp(-0.1 * fog),0.0,1.0);
+
 	vec3 frag = (ambient + (1-shadow)) *  (color.rgb * lighting);
+	frag = mix(vec4(frag, 1.0), vec4(0.1, 0.1, 0.1, 1.0), fog).rgb;
 	return vec4(frag, color.a);
 }

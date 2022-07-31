@@ -185,24 +185,23 @@ enum ImageFormat : ImageFormatData
 
 }
 
-struct DirectionalLightData
-{
-	float[4] direction;
-	float[4] color;
-}
 
 /// Raw data structure holding global data for use by all shaders
 struct RealmGlobalData
 {
-  float[16] vp;
-  float[4] mainLightDirection;
-  float[4] mainLightColor;
-  float[16] lightSpaceMatrix;
-  float[4] camPosition;
-  float[4] camDirection;
-  float nearPlane;
-  float farPlane;
-  float[2] size;
+	
+	float[16] viewMatrix;
+	float[16] projectionMatrix;
+
+	//float[16] vp;
+	float[4] mainLightDirection;
+	float[4] mainLightColor;
+	float[16] lightSpaceMatrix;
+	float[4] camPosition;
+	float[4] camDirection;
+	float nearPlane;
+	float farPlane;
+	float[2] size;
   
 }
 

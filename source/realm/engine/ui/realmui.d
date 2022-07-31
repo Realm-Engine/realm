@@ -603,7 +603,8 @@ static class RealmUI
 		uiCamera.update();
 		mat4 vp = uiCamera.projection;
 		vp.transpose();
-		Renderer.get.globalData.vp[0..$] = vp.value_ptr[0..16].dup;
+		Renderer.get.globalData.projectionMatrix[0..$] = vp.value_ptr[0..16].dup;
+		Renderer.get.globalData.viewMatrix[0..$] = mat4.identity.transposed.value_ptr[0..16];
 		GraphicsSubsystem.updateGlobalData(Renderer.get.globalData);
 		uiBatch.drawBatch!(false,PrimitiveShape.TRIANGLE);
 		textBatch.drawBatch!(false,PrimitiveShape.TRIANGLE);

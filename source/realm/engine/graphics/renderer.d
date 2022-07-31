@@ -51,7 +51,7 @@ class Renderer
 	private QueryObject!() queryDevice;
 	private ShaderPipeline lightSpacePipeline;
 	private ShaderPipeline depthPrepassPipeline;
-	alias GeometryPassInputs = Alias!(["shadowMap" : ImageFormat.DEPTH]);
+	alias GeometryPassInputs = Alias!(["shadowMap" : ImageFormat.DEPTH,"cameraDepthTexture" : ImageFormat.DEPTH]);
 	alias GeometryPassOutputs = Alias!(["cameraScreenTexture" : ImageFormat.RGB8]);
 	alias LightPassOutputs = Alias!(["shadowMap" : ImageFormat.DEPTH]);
 	alias DepthPrepassOutputs = Alias!(["cameraDepthTexture" : ImageFormat.DEPTH] );
@@ -121,7 +121,7 @@ class Renderer
 		GraphicsSubsystem.initialze();
 		GraphicsSubsystem.setClearColor(126,32,32,true);
 		GraphicsSubsystem.enableDepthTest();
-		_globalData.vp = mat4.identity.value_ptr[0..16].dup;
+		_globalData.viewMatrix = _globalData.projectionMatrix = mat4.identity.value_ptr[0..16].dup;
                 
 		GraphicsSubsystem.updateGlobalData(&_globalData);
 		initRenderpasses();
@@ -155,6 +155,7 @@ class Renderer
 		lightPass = new Renderpass!(null,LightPassOutputs)(2048,2048);
 		geometryPass = new Renderpass!(GeometryPassInputs,GeometryPassOutputs)(windowSize[0],windowSize[1]);
 		geometryPass.inputs.shadowMap = lightPass.getOutputs().shadowMap;
+		geometryPass.inputs.cameraDepthTexture = depthPrepass.getOutputs().cameraDepthTexture;
 		mainFramebuffer.create(windowSize[0],windowSize[1],[FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT]);
 		
 	}
@@ -188,7 +189,8 @@ class Renderer
 
 
 		AABB boundingBox = aabbTransformWorldSpace(mesh.getLocalBounds(),transform.transformation);
-		Frustum frustum = Frustum(camera.projection * camera.view );
+		mat4 vp  = camera.projection * camera.view;
+		Frustum frustum = Frustum(vp );
 
 		int intersection = frustum.intersects(boundingBox);
 
@@ -215,7 +217,7 @@ class Renderer
 				batch.reserve(Mat.getNumMaterialInstances());
 			}
 			auto batch = materialId in batches;
-			batch.submitVertices!(Mat)(vertexData,mesh.faces,mat);
+			batch.submitVertices!(Mat)(vertexData,mesh.faces,mat,transform.transformation);
 			Debug.drawBox(boundingBox.center(), boundingBox.extent(),vec3(0),vec3(0,1,0));
 		}
 
@@ -281,7 +283,9 @@ class Renderer
 			mat4 lightSpaceMatrix = lightSpaceCamera.projection * view;
 			lightSpaceMatrix.transpose();
 			float[16] lightSpaceDup = lightSpaceMatrix.value_ptr[0..16].dup;
-			_globalData.vp[0..$] = lightSpaceDup;
+			_globalData.viewMatrix[0..$] = lightSpaceCamera.view.transposed.value_ptr[0..16].dup;
+			_globalData.projectionMatrix[0..$] = lightSpaceCamera.projection.transposed.value_ptr[0..16].dup;
+			//_globalData.vp[0..$] = lightSpaceDup;
 			_globalData.lightSpaceMatrix[0..$] =  lightSpaceDup;
 			GraphicsSubsystem.updateGlobalData(&_globalData);
 
@@ -344,9 +348,11 @@ class Renderer
 		renderLightSpace();
 		if(camera !is null)
 		{
-			mat4 vp = camera.projection * camera.view;
-			vp.transpose();
-			_globalData.vp[0..$] = vp.value_ptr[0..16].dup;
+			//mat4 vp = camera.projection * camera.view;
+			//vp.transpose();
+			_globalData.viewMatrix[0..$] = camera.view.transposed.value_ptr[0..16].dup;
+			_globalData.projectionMatrix[0..$] = camera.projection.transposed.value_ptr[0..16].dup;
+			//_globalData.vp[0..$] = vp.value_ptr[0..16].dup;
 			_globalData.camPosition[0..$] = camera.transform.position.value_ptr[0..4].dup;
 			_globalData.camDirection[0..$] = camera.transform.front.value_ptr[0..4].dup;
 			_globalData.nearPlane = camera.nearPlane;

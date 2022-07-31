@@ -7,6 +7,11 @@ import realm.engine.graphics.renderer;
 import realm.engine.logging;
 import std.range;
 import std.format;
+private
+{
+	import gl3n.linalg : mat4;
+}
+
 /**
 * Mechanism for batch drawing vertices, batching is based on Material layout
 * T: Structure of vertices
@@ -21,6 +26,7 @@ class Batch(T)
 	private VertexBuffer!(T,BufferUsage.MappedWrite) vertexBuffer;
 	private ElementBuffer!(BufferUsage.MappedWrite) elementBuffer;
 	private DrawIndirectCommandBuffer!(BufferUsage.MappedWrite) cmdBuffer;
+	private ShaderStorage!(float[16],BufferUsage.MappedWrite) objectToWorldMats;
 	//private ShaderStorage!(BufferUsage.MappedWrite) perObjectData;
 	private uint numElementsInFrame;
 	private uint numVerticesInFrame;
@@ -61,6 +67,9 @@ class Batch(T)
 		shaderPipeline.create();
 		shaderPipeline.useProgramStages(program);
 		shaderPipeline.useProgramStages(program);
+
+		objectToWorldMats.create();
+		objectToWorldMats.bindBase(1);
 		
 	}
 
@@ -81,6 +90,7 @@ class Batch(T)
 		cmdBuffer.bind();
 		cmdBuffer.store(amount * bufferAmount);
 		cmdBuffer.unbind();
+		objectToWorldMats.store(amount);
 
 	}
 
@@ -154,6 +164,33 @@ class Batch(T)
 		
 	}
 
+	void submitVertices(Mat)(T[] vertices, uint[] faces, Mat material, mat4 objectToWorld)
+	{
+
+		static assert(isMaterial!(Mat));
+		uint elementOffset = ( cmdBufferBase * (capacity * topology)) + numIndicesInFrame;
+		uint offset = ( cmdBufferBase * capacity) + numVerticesInFrame;
+		vertexBuffer.ptr[offset.. offset + vertices.length] = vertices;
+		elementBuffer.ptr[elementOffset .. elementOffset + faces.length] = faces;
+		DrawElementsIndirectCommand cmd;
+		cmd.count = cast(uint)faces.length;
+		cmd.instanceCount =cast(uint) faces.length / topology;
+		cmd.firstIndex = numIndicesInFrame;
+		cmd.baseVertex = numVerticesInFrame;
+		cmd.baseInstance = 0;
+		cmdBuffer.ptr[( cmdBufferBase) * (maxElementsInFrame )  + numElementsInFrame] = cmd;
+
+		numElementsInFrame++;
+		numVerticesInFrame+=vertices.length;
+		numIndicesInFrame+=faces.length;
+		material.writeUniformData();
+		textureAtlases~=material.getTextureAtlas();
+		materialId = Mat.materialId();
+		float[16] objectToWorldData = objectToWorld.value_ptr[0..16].dup;
+		float[16]* objectToWorldPtr = &objectToWorldMats.ptr[material.instanceId];
+		*objectToWorldPtr = objectToWorldData;
+	}
+
 	/// Submit mesh to add to batch
 	void submitVertices(Mat)(T[] vertices, uint[] faces, Mat material)
 	{
@@ -177,6 +214,8 @@ class Batch(T)
 		material.writeUniformData();
 		textureAtlases~=material.getTextureAtlas();
 		materialId = Mat.materialId();
+
+		//submitVertices!(Mat)(vertices,faces,material);
 	}
 
 
@@ -200,6 +239,7 @@ class Batch(T)
 		{
 			prepareDraw(program);
 		}
+		objectToWorldMats.bindBase(2);
 		if(bindShaderStorage !is null)
 		{
 			bindShaderStorage();

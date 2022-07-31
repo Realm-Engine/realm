@@ -16,7 +16,9 @@ struct Camera
 
 layout(std140, binding = 0) uniform _reGloblaData
 {
-	mat4 u_vp;
+	mat4 u_view;
+	mat4 u_projection;
+	//mat4 u_vp;
     DirectionalLight mainLight;
     mat4 lightSpaceMatrix;
 	Camera camera;

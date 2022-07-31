@@ -16,6 +16,11 @@ layout (std430,binding = 1) buffer _perObjectData
 	Material data[];
 };
 
+layout(std430, binding = 2) buffer _objectToWorld
+{
+	mat4 objectToWorld[];
+};
+
 
 out RESurfaceData
 {
@@ -27,6 +32,9 @@ out RESurfaceData
 	vec3 normal;
 	mat3 TBN;
 	vec4 lightSpacePosition;
+	vec4 eyeSpacePosition;
+
+		
 } RESurfaceDataOut;
 
 
@@ -70,5 +78,6 @@ void main()
 	vertexData.objectId = v_MaterialID;
 	
 	gl_Position = vertex(vertexData);
+	
 	
 }

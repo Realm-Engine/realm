@@ -4,7 +4,10 @@ layout (std430,binding = 1) buffer _perObjectData
 {
 	Material data[];
 };
-
+layout(std430, binding = 2) buffer _objectToWorld
+{
+	mat4 objectToWorld[];
+};
 
 in RESurfaceData
 {
@@ -16,6 +19,7 @@ in RESurfaceData
 	vec3 normal;
 	mat3 TBN;
 	vec4 lightSpacePosition;
+	vec4 eyeSpacePosition;
 
 } RESurfaceDataIn;
 #define objectTexture atlasTextures[RESurfaceDataIn.objectId]
@@ -36,6 +40,8 @@ float shadowMapSample(vec4 lightSpace)
 	float closest= texture(shadowMap,projCoords.xy).r;
 	return closest;
 }
+
+
 
 
 vec3 transformNormal(vec3 normal)

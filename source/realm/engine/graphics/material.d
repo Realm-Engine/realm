@@ -37,6 +37,8 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
                     mixin("%s %s;".format("vec4", uniform));
                 }
             }
+
+            
         }
 
         struct Textures
