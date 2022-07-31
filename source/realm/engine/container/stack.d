@@ -1,28 +1,78 @@
 module realm.engine.container.stack;
-
-class Stack(T)
+import std.traits;
+private
 {
-	private T[] arr;
-	private int index;
-	private double growthFactor;
-	/**
-	* len: initial size of stack
-	* growthFactor: By what factor the size of the stack will grow when it reaches capactiy
-	*/
-	this(size_t len,double growthFactor = 1.5)
+	import realm.engine.memory;
+}
+class Stack(T, size_t Size = 0,alias A = RealmHeapAllocator) 
+{
+	
+	static assert(__traits(isTemplate,A));
+	enum isClassAllocator = __traits(isFinalClass,A!(T));
+	static if(isClassAllocator == true)
 	{
-		this.growthFactor = growthFactor;
-		arr.length = len;
-		index = -1;
+		
+		private A!(T) allocator;
+		alias Allocator = allocator;
+		
+	}
+	else
+	{
+		alias Allocator = A!(T);
+		
 	}
 
-	void push(T val) nothrow @nogc
-	in(index < cast(long)arr.length)
+	
+	enum isFixedSize = Size > 0;
+	static if(isFixedSize)
 	{
-		index++;
-		arr[index] = val;
-		
+		private T[Size] arr;
+	}
+	else
+	{
+		private T[] arr;
+		private float growthFactor;
 
+	}
+
+	
+	private size_t index;
+	
+
+
+	
+	static if(!isFixedSize)
+	{
+		this(size_t len,float growthFactor = 1.5f)
+		{
+			static if(isClassAllocator == true)
+			{
+
+				Allocator = new A!(T);
+			}
+			this.growthFactor = growthFactor;
+			arr = Allocator.allocate(len);
+			index = 0;
+		}
+	}
+
+	
+
+	void push(T val) nothrow @nogc
+	in(index < arr.length)
+	{
+		
+		arr[++index] = val;
+		static if(!isFixedSize)
+		{
+			if(index == arr.length)
+			{
+
+				arr = Allocator.reallocate(arr.ptr,cast(size_t)(cast(float)arr.length * growthFactor));
+			}
+		}
+
+		
 		
 	}
 
@@ -50,12 +100,12 @@ class Stack(T)
 
 	@property bool empty() nothrow @nogc
 	{
-		return index < 0;
+		return index == 0;
 	}
 
 	@property length() nothrow @nogc
 	{
-		return index + 1;
+		return index;
 	}
 	
 	@property capacity() nothrow @nogc
@@ -63,6 +113,13 @@ class Stack(T)
 		return arr.length;
 	}
 
+	~this()
+	{
+		static if(!isFixedSize)
+		{
+			Allocator.deallocate(arr.ptr);
+		}
+	}
 
 
 }

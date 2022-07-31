@@ -91,27 +91,42 @@ class Renderpass(ImageFormat[string] passInputs,ImageFormat[string] passOutputs)
 		
 	}
 
+
+
 	void bindAttachments(StandardShaderModel program)
 	{
 		int numFramebuffers = 0;
-		static foreach(member; __traits(allMembers,Outputs))
+
+		void bindTexture(alias member)(SamplerObject!(TextureType.TEXTURE2D)* texture)
 		{
+			int loc = program.uniformLocation(member);
+			if(loc >= 0)
 			{
-				SamplerObject!(TextureType.TEXTURE2D)* texture = &(__traits(getMember,outputs,member).texture);
-				texture.setActive(numFramebuffers);
-				program.setUniformInt(numFramebuffers,numFramebuffers);
+				
+
+				texture.setActive(loc);
+				program.setUniformInt(loc,loc);
 				numFramebuffers++;
 			}
+
 		}
+
 		static foreach(member; __traits(allMembers,Inputs))
 		{
 			{
 				SamplerObject!(TextureType.TEXTURE2D)* texture = &(__traits(getMember,inputs,member).texture);
-				texture.setActive(numFramebuffers);
-				program.setUniformInt(numFramebuffers,numFramebuffers);
-				numFramebuffers++;
+				bindTexture!(member)(texture);
+				
 			}
 		}
+		static foreach(member; __traits(allMembers,Outputs))
+		{
+			{
+				SamplerObject!(TextureType.TEXTURE2D)* texture = &(__traits(getMember,outputs,member).texture);
+				bindTexture!(member)(texture);
+			}
+		}
+		
 	}
 
 	void startPass()

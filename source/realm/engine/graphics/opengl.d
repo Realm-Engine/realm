@@ -474,23 +474,34 @@ class GShaderProgramModel(T...)
         static assert(isValidShaderType!(Type) == true);
         static if(Type == GShaderType.VERTEX)
 		{
-            private GShader _vertexShader;
+            
             @property vertexShader(GShader shader)
 			{
                 _shaders[Type] = shader;
 			}
+            @property vertexShader()
+			{
+                return _shaders[Type];
+			}
+
+            
 		}
 		static if(Type == GShaderType.FRAGMENT)
 		{
-            private GShader _fragmentShader;
+            
             @property fragmentShader(GShader shader)
 			{
                  _shaders[Type] = shader;
 			}
+            @property fragmentShader()
+			{
+                return _shaders[Type];
+			}
+            
 		}
 		static if(Type == GShaderType.COMPUTE)
 		{
-            private GShader _computeShader;
+           
             @property computeShader(GShader shader)
 			{
                  _shaders[Type] = shader;
@@ -499,6 +510,10 @@ class GShaderProgramModel(T...)
             void dispatch(uint groupsX, uint groupsY, uint groupsZ)
 			{
                 glDispatchCompute(groupsX,groupsY,groupsZ);
+			}
+            @property computeShader() 
+			{
+				return _shaders[Type];
 			}
 		}
 
@@ -675,14 +690,16 @@ class GShaderProgramModel(T...)
 	}
 
 	int uniformLocation(string uniform)
+    //out(r; r != -1, "uniform " ~  uniform  ~" does not exsist")
     {
         int* loc = (uniform in samplerUniformCache);
         if (loc !is null)
         {
             return *loc;
         }
-
-        samplerUniformCache[uniform] = glGetUniformLocation(this, toStringz(uniform));
+        auto cString = toStringz(uniform);
+        int result = glGetUniformLocation(this, cString);
+        samplerUniformCache[uniform] = result;
         return uniformLocation(uniform);
 
     }

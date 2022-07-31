@@ -53,6 +53,8 @@ class Logger
 
 	}
 
+	
+
 	static void LogWarningUnsafe(string fmt, ...) nothrow
 	{
 		import core.vararg;

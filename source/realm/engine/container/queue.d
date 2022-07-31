@@ -2,14 +2,18 @@ module realm.engine.container.queue;
 
 private
 {
+	import realm.engine.memory;
 	import realm.engine.container.stack;
 
 }
 
-class Queue(T)
+class Queue(T,size_t Size = 0,alias A = RealmHeapAllocator)
 {
-	private Stack!(T) _stack1;
-	private Stack!(T) _stack2;
+
+	
+
+	private Stack!(T,Size,A) _stack1;
+	private Stack!(T,Size,A) _stack2;
 	
 
 	this(uint len)

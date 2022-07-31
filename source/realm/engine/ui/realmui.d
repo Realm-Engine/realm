@@ -112,7 +112,7 @@ static class RealmUI
 	private static Camera uiCamera;
 	private static Mesh panelMesh;
 	private static Font font;
-	private static Stack!(UIElement) containerStack;
+	private static Stack!(UIElement,0,) containerStack;
 	private static Stack!(UITheme) themeStack;
 	private static UIElement parentContainer;
 	private static InputEvent _currentEvent;
@@ -572,10 +572,10 @@ static class RealmUI
 		UIElement element = containerStack.pop();
 		Transform transform = UIElements.transforms[element];
 
-
-		transform.position -= UIElements.transforms[containerStack.peek()].position;
-		transform.scale -= UIElements.transforms[containerStack.peek()].scale;
-		transform.rotation -= UIElements.transforms[containerStack.peek()].rotation;
+		element = containerStack.peek();
+		transform.position -= UIElements.transforms[element].position;
+		transform.scale -= UIElements.transforms[element].scale;
+		transform.rotation -= UIElements.transforms[element].rotation;
 		transform.updateTransformation();
 
 		

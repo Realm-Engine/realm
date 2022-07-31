@@ -9,9 +9,10 @@ import realm.engine.graphics.material;
 import std.typecons;
 import gl3n.linalg;
 import std.range;
+
 static class Debug
 {
-	private static DebugMaterial[] materialPool;
+	
 	private static Batch!(RealmVertex) debugBatch;
 	private static StandardShaderModel debugProgram;
 	alias DebugMaterialLayout = Alias!(["color" : UserDataVarTypes.VECTOR]);
@@ -32,6 +33,7 @@ static class Debug
 		
 		debugBatch.reserve(16);
 		InputManager.registerInputEventCallback(&inputEvent);
+		//materialPool = new DebugMaterial[16];
 		
 
 	}

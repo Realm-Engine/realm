@@ -18,6 +18,7 @@ import realm.engine.debugdraw;
 import realm.engine.ui.realmui;
 import gl3n.frustum;
 import realm.engine.container.stack;
+import realm.engine.memory;
 alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "cameraNear" : UserDataVarTypes.FLOAT]);
 alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
 
@@ -38,7 +39,9 @@ class Renderer
 	private RealmGlobalData _globalData;
 	private Camera* camera;
 	private StandardShaderModel lightSpaceShaderProgram;
+	private StandardShaderModel depthPrepassProgram;
 	private LightSpaceMaterial lightSpaceMaterial;
+	 
 	private DirectionalLight mainDirLight;
 	private Camera lightSpaceCamera;
 	private static mat4 shadowBias = mat4(vec4(0.5,0,0,0),vec4(0,0.5,0,0),vec4(0,0,0.5,0),vec4(0.5,0.5,0.5,1.0));
@@ -47,11 +50,14 @@ class Renderer
 	private __gshared Renderer _instance;
 	private QueryObject!() queryDevice;
 	private ShaderPipeline lightSpacePipeline;
-	alias GeometryPassInputs = Alias!(["lightMap" : ImageFormat.DEPTH]);
-	alias GeometryPassOutputs = Alias!(["cameraColor" : ImageFormat.RGB8, "cameraDepth" : ImageFormat.DEPTH]);
-	alias LightPassOutputs = Alias!(["lightMap" : ImageFormat.DEPTH]);
+	private ShaderPipeline depthPrepassPipeline;
+	alias GeometryPassInputs = Alias!(["shadowMap" : ImageFormat.DEPTH]);
+	alias GeometryPassOutputs = Alias!(["cameraScreenTexture" : ImageFormat.RGB8]);
+	alias LightPassOutputs = Alias!(["shadowMap" : ImageFormat.DEPTH]);
+	alias DepthPrepassOutputs = Alias!(["cameraDepthTexture" : ImageFormat.DEPTH] );
 	private static FrameBuffer mainFramebuffer;
 	
+	Renderpass!(null, DepthPrepassOutputs) depthPrepass;
 	Renderpass!(null,LightPassOutputs) lightPass;
 	Renderpass!(GeometryPassInputs,GeometryPassOutputs) geometryPass;
 	
@@ -128,9 +134,13 @@ class Renderer
 		RealmUI.initialize();
 		queryDevice.create();
 		lightSpaceShaderProgram = loadShaderProgram("$EngineAssets/Shaders/lightSpace.shader","lightSpace");
+		depthPrepassProgram = loadShaderProgram("$EngineAssets/Shaders/depthPrepass.shader","Depth prepass");
 		lightSpacePipeline = new ShaderPipeline;
 		lightSpacePipeline.create();
 		lightSpacePipeline.useProgramStages(lightSpaceShaderProgram);
+		depthPrepassPipeline = new ShaderPipeline;
+		depthPrepassPipeline.create();
+		depthPrepassPipeline.useProgramStages(depthPrepassProgram);
 		enable(State.FrameBufferSRGB);
 
 
@@ -141,9 +151,10 @@ class Renderer
 	void initRenderpasses()
 	{
 		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
+		depthPrepass = new Renderpass!(null,DepthPrepassOutputs)(windowSize[0],windowSize[1]);
 		lightPass = new Renderpass!(null,LightPassOutputs)(2048,2048);
 		geometryPass = new Renderpass!(GeometryPassInputs,GeometryPassOutputs)(windowSize[0],windowSize[1]);
-		geometryPass.inputs.lightMap = lightPass.getOutputs().lightMap;
+		geometryPass.inputs.shadowMap = lightPass.getOutputs().shadowMap;
 		mainFramebuffer.create(windowSize[0],windowSize[1],[FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT]);
 		
 	}
@@ -238,11 +249,11 @@ class Renderer
 		if(!isStatic || (isStatic && staticId !in staticMeshes))
 		{
 
-			RealmVertex* dataPtr = cast(RealmVertex*)malloc(RealmVertex.sizeof * mesh.positions.length);
-			submitMesh!(Mat,isStatic)(mesh,transform,mat,vertexData[0..mesh.positions.length]);
+			vertexData = RealmHeapAllocator!(RealmVertex)(mesh.positions.length);
+			submitMesh!(Mat,isStatic)(mesh,transform,mat,vertexData);
 			scope(exit)
 			{
-				free(dataPtr);
+				 RealmHeapAllocator!(RealmVertex).deallocate(vertexData.ptr);
 			}
 			
 		}
@@ -310,6 +321,19 @@ class Renderer
 
 	}
 
+	void renderDepthPrepass()
+	{
+		depthPrepass.startPass();
+		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
+
+		foreach(batch; orderedBatches)
+		{
+			batch.setPrepareDrawCallback(&prepareDrawLightpass);
+			batch.drawBatch!(false)(depthPrepassPipeline);
+
+		}
+	}
+
 	void update()
 	{
 		if(mainDirLight !is null)
@@ -318,16 +342,6 @@ class Renderer
 		}
 
 		renderLightSpace();
-		
-		
-
-
-		setViewport(0,0,mainFramebuffer.width,mainFramebuffer.height);
-		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
-		mainFramebuffer.bind(FrameBufferTarget.DRAW);
-
-		drawBuffers([DrawBufferTarget.COLOR]);
-		GraphicsSubsystem.clearScreen();
 		if(camera !is null)
 		{
 			mat4 vp = camera.projection * camera.view;
@@ -339,8 +353,21 @@ class Renderer
 			_globalData.farPlane = camera.farPlane;
 			_globalData.size[0..$] = camera.size.value_ptr[0..2].dup;
 		}
-
 		GraphicsSubsystem.updateGlobalData(&_globalData);
+		renderDepthPrepass();
+		
+
+
+		setViewport(0,0,mainFramebuffer.width,mainFramebuffer.height);
+		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
+		mainFramebuffer.bind(FrameBufferTarget.DRAW);
+
+		drawBuffers([DrawBufferTarget.COLOR]);
+		GraphicsSubsystem.clearScreen();
+		
+		
+
+		
 
 		foreach(batch; orderedBatches)
 		{
@@ -375,6 +402,11 @@ class Renderer
 	void prepareDrawLightpass(StandardShaderModel program)
 	{
 		lightPass.bindAttachments(program);
+	}
+
+	void prepareDrawDepthprepass(StandardShaderModel program)
+	{
+		depthPrepass.bindAttachments(program);
 	}
 	
 	
