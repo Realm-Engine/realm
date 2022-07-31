@@ -62,6 +62,7 @@ struct MeshCollider
 
 class PhysicsWorld
 {
+	import std.algorithm.setops;
 	alias GetColliderTransform = mat4 delegate();
 	alias SetColliderTransform = void delegate(mat4);
 	struct Colliders
@@ -101,6 +102,57 @@ class PhysicsWorld
 		colliders.physicsBodies[uuid] = physicsBody;
 		Logger.LogInfo("New collider: %s", uuid.toString());
 		return uuid;
+	}
+
+	public bool checkLineSegmentLineSegmentCollision(vec3 a1, vec3 a2, vec3 b1, vec3 b2,out vec3 hitPoint)
+	{
+		hitPoint = vec3(0);
+		vec3 a = a2 - a1;
+		vec3 b = b2 - b1;
+		float aDotB = b.x * a.y - b.y * a.x;
+		if(aDotB == 0)
+		{
+			return false;
+		}
+		vec3 c = b1 - a1;
+		float t = (c.x * b.y - c.y * b.x) / aDotB;
+		if(t < 0 || t > 1)
+		{
+			return false;
+		}
+		float u = (c.x * a.y - c.y * a.x ) / aDotB;
+		if(u < 0 || u > 1)
+		{
+			return false;
+		}
+		hitPoint = a1 + t * a;
+		return true;
+	}
+
+	public bool raycast(vec3 rayStart, vec3 rayEnd)
+	{
+		vec3 hitPoint;
+		bool hit = false;
+		foreach(id; colliders.ids)
+		{
+			mat4 transform = colliders.getColliderTransformDelegates[id]();
+			AABB aabb =  aabbTransformWorldSpace(colliders.boundingBoxes[id],transform);
+			auto segments = cartesianProduct(aabb.vertices,aabb.vertices);
+			foreach(segment ; segments)
+			{
+				if(checkLineSegmentLineSegmentCollision(rayStart,rayEnd,segment[0],segment[1],hitPoint))
+				{
+					hit = true;
+					Logger.LogInfo("X:%f, Y:%f, Z:%f",hitPoint.x,hitPoint.y,hitPoint.z);
+				}
+			}
+			if(hit)
+			{
+				break;
+			}
+
+		}
+		return hit;
 	}
 	
 	private bool checkCollision(UUID body1, UUID body2)
@@ -146,19 +198,12 @@ class PhysicsWorld
 		
 		
 		return false;
-
-		
-
-
-
-		
-
 	}
 
 
 	void tick(float dt)
 	{
-		import std.algorithm.setops;
+
 		auto collisionChecks = cartesianProduct(colliders.ids,colliders.ids);
 		reports.collisions.length = 0;
 		foreach(collisionCheck; collisionChecks)

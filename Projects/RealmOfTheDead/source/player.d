@@ -66,12 +66,12 @@ class Player
         transform = getComponent!(Transform);
         //transform.setParent(*camera);
         camera.setParent(transform);
-		camera.setRotationEuler(vec3(45,0,0));
+		camera.setRotationEuler(vec3(30,0,0));
         InputManager.registerInputEventCallback(&inputEvent);
         rotation = vec2(0,0);
         physicsBody = getComponent!(PhysicsBody)();
         transform.position = vec3(0,5,-7);
-        camera.transform.position = transform.position - vec3(0,-3,-5);
+        camera.transform.position = transform.position - vec3(0,-3,-3);
         vertexBuffer.length = mesh.positions.length;
         //physicsBody.active = false;
     }

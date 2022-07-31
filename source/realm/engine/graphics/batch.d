@@ -25,7 +25,11 @@ class Batch(T)
 	private VertexArrayObject vao;
 	private VertexBuffer!(T,BufferUsage.MappedWrite) vertexBuffer;
 	private ElementBuffer!(BufferUsage.MappedWrite) elementBuffer;
+
 	private DrawIndirectCommandBuffer!(BufferUsage.MappedWrite) cmdBuffer;
+
+	
+
 	private ShaderStorage!(float[16],BufferUsage.MappedWrite) objectToWorldMats;
 	//private ShaderStorage!(BufferUsage.MappedWrite) perObjectData;
 	private uint numElementsInFrame;
@@ -36,6 +40,7 @@ class Batch(T)
 	private uint cmdBufferBase;
 	private uint bufferAmount;
 	private uint maxElementsInFrame;
+	private uint maxIndicesInFrame;
 	private SamplerObject!(TextureType.TEXTURE2D)*[] textureAtlases;
 	alias BindShaderStorageCallback = void function();
 	private BindShaderStorageCallback bindShaderStorage;
@@ -91,6 +96,8 @@ class Batch(T)
 		cmdBuffer.store(amount * bufferAmount);
 		cmdBuffer.unbind();
 		objectToWorldMats.store(amount);
+
+		
 
 	}
 
@@ -160,6 +167,7 @@ class Batch(T)
 		vertexBuffer.store(numElements * bufferAmount);
 		elementBuffer.store(numFaces * bufferAmount);
 		this.capacity = numElements;
+		maxIndicesInFrame = numFaces;
 
 		
 	}
@@ -168,7 +176,7 @@ class Batch(T)
 	{
 
 		static assert(isMaterial!(Mat));
-		uint elementOffset = ( cmdBufferBase * (capacity * topology)) + numIndicesInFrame;
+		uint elementOffset = ( cmdBufferBase * (maxIndicesInFrame )) + numIndicesInFrame;
 		uint offset = ( cmdBufferBase * capacity) + numVerticesInFrame;
 		vertexBuffer.ptr[offset.. offset + vertices.length] = vertices;
 		elementBuffer.ptr[elementOffset .. elementOffset + faces.length] = faces;
@@ -178,7 +186,7 @@ class Batch(T)
 		cmd.firstIndex = numIndicesInFrame;
 		cmd.baseVertex = numVerticesInFrame;
 		cmd.baseInstance = 0;
-		cmdBuffer.ptr[( cmdBufferBase) * (maxElementsInFrame )  + numElementsInFrame] = cmd;
+		cmdBuffer.ptr[( cmdBufferBase * maxElementsInFrame )  + numElementsInFrame] = cmd;
 
 		numElementsInFrame++;
 		numVerticesInFrame+=vertices.length;
@@ -196,7 +204,7 @@ class Batch(T)
 	{
 		
 		static assert(isMaterial!(Mat));
-		uint elementOffset = ( cmdBufferBase * (capacity * topology)) + numIndicesInFrame;
+		uint elementOffset = ( cmdBufferBase * (maxIndicesInFrame)) + numIndicesInFrame;
 		uint offset = ( cmdBufferBase * capacity) + numVerticesInFrame;
 		vertexBuffer.ptr[offset.. offset + vertices.length] = vertices;
 		elementBuffer.ptr[elementOffset .. elementOffset + faces.length] = faces;
@@ -291,7 +299,7 @@ class Batch(T)
 	}
 
 
-	/// Reset baatch to initial, pre draw state, needs to be done at end of frame
+	/// Reset batch to initial, pre draw state, needs to be done at end of frame
 	void resetBatch()
 	{
 		cmdBufferBase = (cmdBufferBase + 1) % bufferAmount;

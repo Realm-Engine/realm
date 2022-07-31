@@ -54,13 +54,29 @@ class Gun
 
 	
 	
+	void processInput(float dt)
+	{
+		if(InputManager.getMouseButton(RealmMouseButton.ButtonLeft))
+		{
+			//Logger.LogInfo("Shoot");
+			vec3 rayStart = transform.getWorldPosition + vec3(0,0,5);
+			vec3 rayEnd = rayStart + ((transform.getWorldRotation *  vec3(1,0,0)) * 100);
+			
+			Debug.drawLine(rayStart,rayEnd);
 
+			if(physicsWorld.raycast(rayStart,rayEnd))
+			{
+				Logger.LogInfo("gun hit!");
+			}
+
+		}
+	}
 
 	void update(float dt)
 	{
 		vec3 front = transform.front();
 		vec3 position = transform.position;
-
+		processInput(dt);
 		//Logger.LogInfo("%f %f %f", position.x, position.y,position.z);
 		//processCollisions();
 		//transform.rotateEuler(vec3(0,0,0));
