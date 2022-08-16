@@ -15,6 +15,10 @@ import std.algorithm;
 import realm.engine.debugdraw;
 import realm.engine.container.stack;
 import std.string;
+private 
+{
+	import realm.engine.memory : RealmArenaAllocator;
+}
 static class RealmUI
 {
 	enum bool isValidUIMaterial(T) = (isMaterial!(T));
@@ -112,17 +116,18 @@ static class RealmUI
 	private static Camera uiCamera;
 	private static Mesh panelMesh;
 	private static Font font;
-	private static Stack!(UIElement,0,) containerStack;
+	private static Stack!(UIElement,0) containerStack;
 	private static Stack!(UITheme) themeStack;
 	private static UIElement parentContainer;
 	private static InputEvent _currentEvent;
 	private static UIElement focusedElement;
 
 	private static RealmVertex[] panel;
-
+	private static RealmArenaAllocator allocator;
 
 	static void initialize()
 	{
+		allocator = new RealmArenaAllocator(2048);
 		panelImage = readImageBytes("$EngineAssets/Images/ui-panel.png");
 		pressedButtonImage = readImageBytes("$EngineAssets/images/ui-button-pressed.png");
 		panelMesh = loadMesh("$EngineAssets/Models/ui-panel.obj");
@@ -150,8 +155,8 @@ static class RealmUI
 		font = Font.load(VirtualFS.getSystemPath("$EngineAssets/Fonts/arial.ttf"));
 		parentContainer = createElement(vec3(0),vec3(1),vec3(0));
 
-		containerStack = new Stack!(UIElement)(32);
-		themeStack = new Stack!(UITheme)(8);
+		containerStack = new Stack!(UIElement)(32,allocator);
+		themeStack = new Stack!(UITheme)(8,allocator);
 		containerPush(parentContainer);
 		themePush(UITheme(vec4(1),vec4(1)));
 		InputManager.registerInputEventCallback(&inputEvent);
@@ -164,6 +169,8 @@ static class RealmUI
 	{
 		_currentEvent = event;
 	}
+
+	
 
 	static UIElement createElement(vec3 position, vec3 scale, vec3 rotation)
 	{

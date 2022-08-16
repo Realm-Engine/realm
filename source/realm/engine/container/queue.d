@@ -7,7 +7,7 @@ private
 
 }
 
-class Queue(T,size_t Size = 0,alias A = RealmHeapAllocator)
+class Queue(T,size_t Size = 0,alias A = RealmArenaAllocator)
 {
 
 	
@@ -16,10 +16,10 @@ class Queue(T,size_t Size = 0,alias A = RealmHeapAllocator)
 	private Stack!(T,Size,A) _stack2;
 	
 
-	this(uint len)
+	this(uint len,A allocator)
 	{
-		_stack1 = new Stack!(T)(len);
-		_stack2 = new Stack!(T)(len);
+		_stack1 = new Stack!(T)(len, allocator);
+		_stack2 = new Stack!(T)(len, allocator);
 	}
 
 	///Put item on end of queue

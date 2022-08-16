@@ -7,6 +7,9 @@ import realm.engine.graphics.renderer;
 import realm.engine.graphics.material;
 import realm.engine.ui.realmui;
 import realm.engine.physics.core :physicsWorld,PhysicsBody;
+import realm.engine.graphics.renderpass;
+import realm.engine.memory;
+import core.lifetime;
 class RealmGame : RealmApp
 {
 
@@ -21,6 +24,9 @@ class RealmGame : RealmApp
 	private RealmUI.UIElement renderTime;
 	private RealmUI.UIElement debugPanel;
 	private RealmUI.UIElement deltaTime;
+
+	
+
 	this(int width, int height, const char* title,string[] args)
 	{
 		super(width,height,title,args);
@@ -31,14 +37,13 @@ class RealmGame : RealmApp
 		SimpleMaterial.initialze();
 		SimpleMaterial.reserve(4);
 
-
 	}
 
 	
 
 	override void start()
 	{
-		
+		import std.uuid;
 		auto windowSize = RealmApp.getWindowSize();
 		RealmUI.themePush(RealmUI.UITheme(vec4(1),vec4(0,0,0,1)));
 		
@@ -74,8 +79,9 @@ class RealmGame : RealmApp
 		floor.setBaseMap(Vector!(int,4)(255));
 		floor.getComponent!(Transform)().scale = vec3(10,1,10);
 		floor.getComponent!(Transform)().position = vec3(0,-2,0);
-		//floor.getComponent!(PhysicsBody)().active = false;
-		//gun.active = false;
+
+		
+		
 		
 
 	}

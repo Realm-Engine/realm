@@ -2,6 +2,11 @@ module realm.engine.input;
 import glfw3.api;
 import core.stdc.stdio;
 import realm.engine.container.queue;
+
+private
+{
+	import realm.engine.memory : RealmArenaAllocator;
+}
 enum InputActionType
 {
 	KeyAction,
@@ -81,10 +86,12 @@ class InputManager
 	private static double scrollY;
 	private static Queue!(InputEvent) _eventQueue;
 	private static InputEvent _lastEvent;
+	private static RealmArenaAllocator allocator;
 	static this()
 	{
 		scrollX = 0;
 		scrollY = 0;
+		allocator = new RealmArenaAllocator(4096);
 	}
 
     static KeyState getKey(RealmKey key)
@@ -194,7 +201,7 @@ class InputManager
     static void initialze(GLFWwindow* w)
     {
 		window = w;
-		_eventQueue = new Queue!(InputEvent)(64);
+		_eventQueue = new Queue!(InputEvent)(64,allocator);
 		glfwSetScrollCallback(w,&internalScrollCallback);
 		glfwSetKeyCallback(w,&internalKeyCallback);
 		glfwSetMouseButtonCallback(w,&internalMouseButtonCallback);

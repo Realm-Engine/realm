@@ -493,4 +493,15 @@ class DirectionalLight
 
 }
 
+template IsInterface(T,Members...)
+{
+	static foreach(member; Members)
+	{
+		static if(!__traits(hasMember,T,member))
+		{
+			static assert(false,T.stringof ~ " does not have member " ~ member ~ ". It must implement the member");
+		}
+	}
+
+}
 

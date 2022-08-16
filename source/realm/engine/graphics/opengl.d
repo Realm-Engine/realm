@@ -20,6 +20,14 @@ struct DrawElementsIndirectCommand
 }
 
 
+
+static void queueCommand(alias Command, Args...)(Args )
+{
+    string cmd = __traits(identifier, Command);
+    Logger.LogInfo("Command queued: %s",cmd );
+}
+
+
 mixin template OpenGLObject()
 {
     private uint id;
@@ -86,7 +94,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
     static assert(isValidBufferTarget!(bufferType),bufferType.stringof ~ " does not have a valid buffer type");
     mixin OpenGLObject;
 
-    private uint ringPtr;
+    private size_t ringPtr;
     private size_t ringSize;
     
 
@@ -116,6 +124,8 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
             unbind();
 
 		}
+
+       
         
         private void mapBuffer()
         out
@@ -131,7 +141,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
         do
 		{
 			glPtr = cast(T*) glMapBufferRange(bufferType, 0, ringSize, usage);
-
+            queueCommand!(glMapBufferRange)(bufferType, 0, ringSize, usage);
             Logger.Assert(glPtr !is null,"Could not map buffer: %s", bufferType.stringof);
 		}
 
@@ -200,7 +210,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
         return val;
 	}
 
-    uint bufferData(T* data, size_t length)
+    size_t bufferData(T* data, size_t length)
 	in
 	{
         assert(id > 0,"Trying to buffer data to non exsistent buffer");
@@ -208,7 +218,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 	}
     do
     {
-        uint dataStart = ringPtr;
+        size_t dataStart = ringPtr;
         glBufferSubData(bufferType, ringPtr, length * T.sizeof, data);
         ringPtr += length * T.sizeof % ringSize;
         return dataStart;
@@ -755,11 +765,16 @@ class GShaderProgramModel(T...)
 
 struct GFrameBufferAttachment
 {
+  
     GSamplerObject!(GTextureType.TEXTURE2D) texture;
+        
+	
+    
     int colorSlot = 0;
     GFrameBufferAttachmentType attachmentType;
     this(GFrameBufferAttachmentType type,int width, int height)
     {
+
         texture.create();
         TextureDesc desc;
         desc.wrap = GTextureWrapFunc.CLAMP_TO_BORDER;
@@ -846,7 +861,7 @@ struct GFrameBuffer
 
     
 
-    void create(int width, int height,GFrameBufferAttachmentType[] attachmentTypes)
+    void create(bool multisampled = false)(int width, int height,GFrameBufferAttachmentType[] attachmentTypes)
 	in(width * height >0,"Framebuffer area must be bigger than 0")
     {
         import std.algorithm.searching :find;
@@ -860,7 +875,12 @@ struct GFrameBuffer
             
             fbAttachments[type]= attachment;
             attachment.texture.bind();
+            
+            
+			
             glFramebufferTexture2D(GL_FRAMEBUFFER,type,GL_TEXTURE_2D,attachment.texture.ID(),0);
+			
+
             if(attachmentTypes.find(GFrameBufferAttachmentType.COLOR_ATTACHMENT).empty)
 			{
                 glDrawBuffer(GL_NONE);
@@ -966,6 +986,7 @@ struct GSamplerObject(GTextureType target)
 {
     import std.meta;
     enum is3dTexture = (target == GTextureType.TEXTURE2DARRAY || target == GTextureType.TEXTURE3D);
+    enum isMultisampled = (target == GTextureType.TEXTURE2D_MULTISAMPLE);
     mixin OpenGLObject;
     private GLenum wrapFunc;
     private GLenum filterFunc;
@@ -1077,15 +1098,33 @@ struct GSamplerObject(GTextureType target)
         glBindTexture(target,0);
     }
 
-    static if (target == GTextureType.TEXTURE2D)
+    static if (target == GTextureType.TEXTURE2D || target == GTextureType.TEXTURE2D_MULTISAMPLE)
     {
+        static if(target == GTextureType.TEXTURE2D_MULTISAMPLE)
+		{
+            private alias store2D =  glTexStorage2DMultisample;
+            private alias texImage2D = glTexImage2DMultisample;
+		}
+        static if(target == GTextureType.TEXTURE2D)
+		{
+            private alias store2D = glTexStorage2D;
+            private alias texImage2D = glTexImage2D;
+		}
+
         void store(int width, int height)
         in(width * height > 0,"Area must be greater than 1")
         {
 
             glBindTexture(target, id);
+            static if(target == GTextureType.TEXTURE2D)
+			{
+                store2D(target, mipLevels, internalFormat, width, height);
+			}
+            else
+			{
+                store2D(target, mipLevels, internalFormat, width, height,GL_TRUE);
+			}
 
-            glTexStorage2D(target, mipLevels, internalFormat, width, height);
             this.width = width;
             this.height = height;
 
@@ -1144,8 +1183,17 @@ struct GSamplerObject(GTextureType target)
         void uploadImage(int level, int border, ubyte* data)
         {
             glBindTexture(target, id);
-            glTexImage2D(target, level, internalFormat, width, height, border,
-                    format, dataType, data);
+            static if(target == GTextureType.TEXTURE2D)
+			{
+				texImage2D(target, level, internalFormat, width, height, border,
+						   format, dataType, data);
+			}
+            else
+			{
+				texImage2D(target, level, internalFormat, width, height, border,
+						   format, dataType, data,GL_TRUE);
+			}
+
             glBindTexture(target, 0);
         }
 
@@ -1172,6 +1220,8 @@ struct GSamplerObject(GTextureType target)
         }
 
     }
+
+
 
     static if(target == GTextureType.CUBEMAP)
     {
@@ -1216,6 +1266,13 @@ enum GQueryTarget : GLenum
     AnySamplesPassedDepthTest = GL_ANY_SAMPLES_PASSED,
     VerticesGenerated = GL_PRIMITIVES_GENERATED,
     TimeElapsed = GL_TIME_ELAPSED
+}
+
+struct GSyncObject
+{
+    
+
+
 }
 
 struct GQueryObject(bool isBuffer = false)
@@ -1405,7 +1462,8 @@ enum GTextureType : GLenum
     CUBEMAP = GL_TEXTURE_CUBE_MAP,
     TEXTURE2D = GL_TEXTURE_2D,
     TEXTURE3D = GL_TEXTURE_3D,
-    TEXTURE2DARRAY = GL_TEXTURE_2D_ARRAY
+    TEXTURE2DARRAY = GL_TEXTURE_2D_ARRAY,
+    TEXTURE2D_MULTISAMPLE
 
 }
 

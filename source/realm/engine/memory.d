@@ -1,36 +1,90 @@
 module realm.engine.memory;
 
+private
+{
+	import core.stdc.stdio;
+	import core.stdc.stdlib;
+	import std.conv;
+	import core.stdc.string;
+	import std.meta;
+}
+
+enum bool isPowerOfTwo(size_t x) = (x & (x-1)) == 0;
+
+
+alias MemoryInterface = AliasSeq!("allocate","deallocate");
 
 
 
+private void alignForward(size_t Alignment = (2 * (void*).sizeof))(ref size_t ptr)
+{
+	static assert(isPowerOfTwo!(Alignment));
 
-template RealmHeapAllocator(T)
+	size_t temp = ptr;
+	size_t mod = temp & (Alignment - 1);
+	if(mod != 0)
+	{
+		ptr += Alignment - mod;
+	}
+}
+
+
+class RealmArenaAllocator 
 {
 	
-	import core.stdc.stdlib;
-	import realm.engine.logging;
-	T[] allocate(size_t length) nothrow @nogc
-	in(length != 0, "Cant allocate size of '0'")
+	private ubyte[] buffer;
+	private size_t offset;
+	this(size_t size) nothrow @nogc
 	{
-		T* ptr = cast(T*)malloc(length * T.sizeof);
-		assert(ptr !is null,"Out of memory!");
-		return (ptr[0..length]);
+		buffer = (cast(ubyte*)malloc(size))[0..size];
+		offset = 0;
 	}
 
-	T[] reallocate(T* ptr,size_t newLength) nothrow @nogc
-	in(newLength >= 0, "Cant reallocate to negative size")
+	
+	private ubyte[] allocateAligned(T)(size_t count) nothrow @nogc
 	{
-		T* newPtr = cast(T*)realloc(ptr,newLength * T.sizeof);
-		assert(newPtr !is null, "Out of memory");
-		
-		return newPtr[0..newLength];
+		size_t ptr = cast(size_t)buffer.ptr + offset;
+
+		alignForward(ptr);
+		ptr -= cast(size_t)buffer.ptr;
+		printf("%d",ptr);
+		size_t length = __traits(initSymbol,T).length * count;
+		printf("%d",length);
+		if(length + ptr <= buffer.length)
+		{
+			auto mem = buffer[offset .. offset + length];
+			memset(mem.ptr,0,length);
+			offset += ptr + length;
+			return mem;
+
+		}
+		return null;
 	}
 
-	void deallocate(T* ptr) nothrow @nogc
+	ubyte[] allocate(T)(size_t count) nothrow @nogc
 	{
-		free(ptr);
+		return allocateAligned!(T)(count);
+	}
+
+	void deallocate()
+	{
+		offset = 0;
+
 	}
 	
+
+}
+
+
+
+
+class MemoryUtils
+{
+	import core.lifetime;
+	static void initializeMemory(T,Args...)(T* ptr, Args args)
+	{
+		emplace!(T)(ptr,args);
+	}
 
 
 }

@@ -7,6 +7,7 @@ import std.meta;
 import realm.engine.core;
 import std.typecons;
 import core.memory;
+import realm.engine.graphics.core : enableDebugging;
 class RealmApp
 {
 
@@ -84,6 +85,7 @@ class RealmApp
         InputManager.initialze(window);
         glfwSwapInterval(1);
         processArgs(args);
+        ///enableDebugging();
         
 
 

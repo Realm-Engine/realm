@@ -187,6 +187,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0, bool overri
 
     this()
     {
+     
         
         storageBufferPtr = &shaderStorageBuffer.ptr[numMaterials];
         materialIndex = numMaterials;

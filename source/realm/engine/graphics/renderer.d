@@ -30,9 +30,11 @@ class Renderer
 		double frameTime;
 	}
 
+
+	private static Mesh screenMesh;
+
 	import std.container.array;
 	import std.stdio;
-	//private Batch!RealmVertex batch;
 	private RealmVertex[][ulong] staticMeshes;
 	private Batch!(RealmVertex)[ulong] batches;
 	private Batch!(RealmVertex) lightSpaceBatch;
@@ -143,7 +145,7 @@ class Renderer
 		depthPrepassPipeline.useProgramStages(depthPrepassProgram);
 		enable(State.FrameBufferSRGB);
 
-
+		screenMesh = loadMesh("$EngineAssets/Models/screen_quad.obj");
 
 	
 	}
@@ -156,7 +158,7 @@ class Renderer
 		geometryPass = new Renderpass!(GeometryPassInputs,GeometryPassOutputs)(windowSize[0],windowSize[1]);
 		geometryPass.inputs.shadowMap = lightPass.getOutputs().shadowMap;
 		geometryPass.inputs.cameraDepthTexture = depthPrepass.getOutputs().cameraDepthTexture;
-		mainFramebuffer.create(windowSize[0],windowSize[1],[FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT]);
+		mainFramebuffer.create!(true)(windowSize[0],windowSize[1],[FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT]);
 		
 	}
 
@@ -251,7 +253,7 @@ class Renderer
 		if(!isStatic || (isStatic && staticId !in staticMeshes))
 		{
 
-			vertexData = RealmHeapAllocator!(RealmVertex)(mesh.positions.length);
+			vertexData = RealmHeapAllocator!(RealmVertex).allocate(mesh.positions.length);
 			submitMesh!(Mat,isStatic)(mesh,transform,mat,vertexData);
 			scope(exit)
 			{

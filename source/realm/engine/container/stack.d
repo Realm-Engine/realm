@@ -2,25 +2,14 @@ module realm.engine.container.stack;
 import std.traits;
 private
 {
+	import realm.engine.core : IsInterface;
 	import realm.engine.memory;
 }
-class Stack(T, size_t Size = 0,alias A = RealmHeapAllocator) 
+class Stack(T, size_t Size = 0,alias A = RealmArenaAllocator) 
 {
-	
-	static assert(__traits(isTemplate,A));
-	enum isClassAllocator = __traits(isFinalClass,A!(T));
-	static if(isClassAllocator == true)
-	{
-		
-		private A!(T) allocator;
-		alias Allocator = allocator;
-		
-	}
-	else
-	{
-		alias Allocator = A!(T);
-		
-	}
+	mixin IsInterface!(A,MemoryInterface);
+	//static assert(__traits(isTemplate,A));
+	private A allocator;
 
 	
 	enum isFixedSize = Size > 0;
@@ -39,19 +28,20 @@ class Stack(T, size_t Size = 0,alias A = RealmHeapAllocator)
 	private size_t index;
 	
 
-
+	this(A allocator)
+	{
+		this.allocator = allocator;
+	}
 	
 	static if(!isFixedSize)
 	{
-		this(size_t len,float growthFactor = 1.5f)
+		this(size_t len,A allocator,float growthFactor = 1.5f)
 		{
-			static if(isClassAllocator == true)
-			{
+			
+			this.allocator = allocator;
 
-				Allocator = new A!(T);
-			}
 			this.growthFactor = growthFactor;
-			arr = Allocator.allocate(len);
+			arr = cast(T[]) allocator.allocate!(T)(len);
 			index = 0;
 		}
 	}
@@ -68,7 +58,7 @@ class Stack(T, size_t Size = 0,alias A = RealmHeapAllocator)
 			if(index == arr.length)
 			{
 
-				arr = Allocator.reallocate(arr.ptr,cast(size_t)(cast(float)arr.length * growthFactor));
+				//arr = Allocator.reallocate!(T)(arr.ptr,cast(size_t)(cast(float)arr.length * growthFactor));
 			}
 		}
 
@@ -117,7 +107,7 @@ class Stack(T, size_t Size = 0,alias A = RealmHeapAllocator)
 	{
 		static if(!isFixedSize)
 		{
-			Allocator.deallocate(arr.ptr);
+			allocator.deallocate();
 		}
 	}
 

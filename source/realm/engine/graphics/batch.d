@@ -31,7 +31,6 @@ class Batch(T)
 	
 
 	private ShaderStorage!(float[16],BufferUsage.MappedWrite) objectToWorldMats;
-	//private ShaderStorage!(BufferUsage.MappedWrite) perObjectData;
 	private uint numElementsInFrame;
 	private uint numVerticesInFrame;
 	private uint numIndicesInFrame;
@@ -178,7 +177,7 @@ class Batch(T)
 		static assert(isMaterial!(Mat));
 		uint elementOffset = ( cmdBufferBase * (maxIndicesInFrame )) + numIndicesInFrame;
 		uint offset = ( cmdBufferBase * capacity) + numVerticesInFrame;
-		vertexBuffer.ptr[offset.. offset + vertices.length] = vertices;
+		vertexBuffer.ptr[offset .. offset + vertices.length] = vertices;
 		elementBuffer.ptr[elementOffset .. elementOffset + faces.length] = faces;
 		DrawElementsIndirectCommand cmd;
 		cmd.count = cast(uint)faces.length;
