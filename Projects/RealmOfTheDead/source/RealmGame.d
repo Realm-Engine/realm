@@ -24,7 +24,6 @@ class RealmGame : RealmApp
 	private RealmUI.UIElement renderTime;
 	private RealmUI.UIElement debugPanel;
 	private RealmUI.UIElement deltaTime;
-
 	
 
 	this(int width, int height, const char* title,string[] args)
@@ -81,8 +80,7 @@ class RealmGame : RealmApp
 		floor.getComponent!(Transform)().position = vec3(0,-2,0);
 
 		
-		
-		
+
 
 	}
 

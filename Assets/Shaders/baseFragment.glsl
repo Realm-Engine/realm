@@ -33,6 +33,7 @@ layout(location = 2) uniform sampler2D shadowMap;
 
 
 
+
 float shadowMapSample(vec4 lightSpace)
 {
 	vec3 projCoords = lightSpace.xyz/lightSpace.w;

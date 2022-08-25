@@ -19,8 +19,11 @@ import realm.engine.ui.realmui;
 import gl3n.frustum;
 import realm.engine.container.stack;
 import realm.engine.memory;
+import core.stdc.stdlib;
 alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "cameraNear" : UserDataVarTypes.FLOAT]);
 alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
+alias ScreenPassMaterialLayout = Alias!(["screenColor" : UserDataVarTypes.VECTOR]);
+alias ScreenPassMaterial = Alias!(Material!(ScreenPassMaterialLayout));
 
 class Renderer
 {
@@ -37,13 +40,17 @@ class Renderer
 	import std.stdio;
 	private RealmVertex[][ulong] staticMeshes;
 	private Batch!(RealmVertex)[ulong] batches;
-	private Batch!(RealmVertex) lightSpaceBatch;
+	private Batch!(RealmVertex) screenBatch;
+	
 	private RealmGlobalData _globalData;
 	private Camera* camera;
+	private Camera screenCamera;
 	private StandardShaderModel lightSpaceShaderProgram;
 	private StandardShaderModel depthPrepassProgram;
+	private StandardShaderModel screenPassProgram;
+	
 	private LightSpaceMaterial lightSpaceMaterial;
-	 
+	private ScreenPassMaterial screenPassMaterial; 
 	private DirectionalLight mainDirLight;
 	private Camera lightSpaceCamera;
 	private static mat4 shadowBias = mat4(vec4(0.5,0,0,0),vec4(0,0.5,0,0),vec4(0,0,0.5,0),vec4(0.5,0.5,0.5,1.0));
@@ -53,16 +60,18 @@ class Renderer
 	private QueryObject!() queryDevice;
 	private ShaderPipeline lightSpacePipeline;
 	private ShaderPipeline depthPrepassPipeline;
-	alias GeometryPassInputs = Alias!(["shadowMap" : ImageFormat.DEPTH,"cameraDepthTexture" : ImageFormat.DEPTH]);
-	alias GeometryPassOutputs = Alias!(["cameraScreenTexture" : ImageFormat.RGB8]);
+	alias GeometryPassInputs = Alias!(["shadowMap" : ImageFormat.DEPTH]);
+	alias GeometryPassOutputs = Alias!(["cameraDepthTexture" : ImageFormat.DEPTH,"cameraScreenTexture" : ImageFormat.RGB8]);
 	alias LightPassOutputs = Alias!(["shadowMap" : ImageFormat.DEPTH]);
 	alias DepthPrepassOutputs = Alias!(["cameraDepthTexture" : ImageFormat.DEPTH] );
-	private static FrameBuffer mainFramebuffer;
+	alias ScreenPassInputs = Alias!(["cameraScreenTexture" : ImageFormat.RGB8]);
 	
-	Renderpass!(null, DepthPrepassOutputs) depthPrepass;
+	//private static FrameBuffer mainFramebuffer;
+	
+	Renderpass!(null, null) depthPrepass;
 	Renderpass!(null,LightPassOutputs) lightPass;
 	Renderpass!(GeometryPassInputs,GeometryPassOutputs) geometryPass;
-	
+	Renderpass!(ScreenPassInputs,null) screenPass;
 	
 
 	static Renderer get()
@@ -123,20 +132,22 @@ class Renderer
 		GraphicsSubsystem.initialze();
 		GraphicsSubsystem.setClearColor(126,32,32,true);
 		GraphicsSubsystem.enableDepthTest();
+		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
 		_globalData.viewMatrix = _globalData.projectionMatrix = mat4.identity.value_ptr[0..16].dup;
-                
 		GraphicsSubsystem.updateGlobalData(&_globalData);
 		initRenderpasses();
 		enable(State.Blend);
 		blendFunc(BlendFuncType.SRC_ALPHA,BlendFuncType.ONE_MINUS_SRC_ALPHA);
-		
 		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(20,20),-20,20,0);
+		screenCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(windowSize[0],windowSize[1]),-1,100,0);
+		screenCamera.projBounds = ProjectionWindowBounds.ZERO_TO_ONE;
+		
 		Debug.initialze();
-
 		RealmUI.initialize();
 		queryDevice.create();
 		lightSpaceShaderProgram = loadShaderProgram("$EngineAssets/Shaders/lightSpace.shader","lightSpace");
 		depthPrepassProgram = loadShaderProgram("$EngineAssets/Shaders/depthPrepass.shader","Depth prepass");
+		screenPassProgram = loadShaderProgram("$EngineAssets/Shaders/screenPass.shader","Screen pass");
 		lightSpacePipeline = new ShaderPipeline;
 		lightSpacePipeline.create();
 		lightSpacePipeline.useProgramStages(lightSpaceShaderProgram);
@@ -146,19 +157,30 @@ class Renderer
 		enable(State.FrameBufferSRGB);
 
 		screenMesh = loadMesh("$EngineAssets/Models/screen_quad.obj");
-
+		ScreenPassMaterial.initialze();
+		ScreenPassMaterial.reserve(1);
+		screenPassMaterial = new ScreenPassMaterial;
+		ScreenPassMaterial.allocate(&screenMesh);
+		screenBatch = new Batch!RealmVertex(MeshTopology.TRIANGLE, screenPassProgram,ScreenPassMaterial.getOrder());
+		screenBatch.setShaderStorageCallback(&(ScreenPassMaterial.bindShaderStorage));
+		screenBatch.setPrepareDrawCallback(&prepareScreenPass);
+		screenBatch.initialize(ScreenPassMaterial.allocatedVertices(),ScreenPassMaterial.allocatedElements());
+		screenBatch.reserve(ScreenPassMaterial.getNumMaterialInstances());
+		
 	
 	}
 
 	void initRenderpasses()
 	{
 		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
-		depthPrepass = new Renderpass!(null,DepthPrepassOutputs)(windowSize[0],windowSize[1]);
+		screenPass = new Renderpass!(ScreenPassInputs,null)(windowSize[0],windowSize[1]);
+		depthPrepass = new Renderpass!(null,null)(windowSize[0],windowSize[1]);
 		lightPass = new Renderpass!(null,LightPassOutputs)(2048,2048);
 		geometryPass = new Renderpass!(GeometryPassInputs,GeometryPassOutputs)(windowSize[0],windowSize[1]);
 		geometryPass.inputs.shadowMap = lightPass.getOutputs().shadowMap;
-		geometryPass.inputs.cameraDepthTexture = depthPrepass.getOutputs().cameraDepthTexture;
-		mainFramebuffer.create!(true)(windowSize[0],windowSize[1],[FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT]);
+		screenPass.inputs.cameraScreenTexture = geometryPass.getOutputs().cameraScreenTexture;
+		//geometryPass.inputs.cameraDepthTexture = depthPrepass.getOutputs().cameraDepthTexture;
+		//mainFramebuffer.create!(true)(windowSize[0],windowSize[1],[FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT]);
 		
 	}
 
@@ -362,13 +384,13 @@ class Renderer
 			_globalData.size[0..$] = camera.size.value_ptr[0..2].dup;
 		}
 		GraphicsSubsystem.updateGlobalData(&_globalData);
-		renderDepthPrepass();
+		//renderDepthPrepass();
 		
 
-
-		setViewport(0,0,mainFramebuffer.width,mainFramebuffer.height);
+		
+		setViewport(0,0,geometryPass.getFramebuffer().width,geometryPass.getFramebuffer().height);
 		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
-		mainFramebuffer.bind(FrameBufferTarget.DRAW);
+		geometryPass.getFramebuffer().bind(FrameBufferTarget.DRAW);
 
 		drawBuffers([DrawBufferTarget.COLOR]);
 		GraphicsSubsystem.clearScreen();
@@ -384,8 +406,9 @@ class Renderer
 		}
 		Debug.flush();
 		RealmUI.flush();
-		mainFramebuffer.unbind(FrameBufferTarget.DRAW );
-		mainFramebuffer.blitToScreen(FrameMask.COLOR );
+		geometryPass.getFramebuffer().unbind(FrameBufferTarget.DRAW );
+		drawToScreen();
+		//geometryPass.getFramebuffer().blitToScreen(FrameMask.COLOR );
 		foreach(batch; orderedBatches)
 		{
 			batch.resetBatch();
@@ -395,6 +418,33 @@ class Renderer
 		
 		
 		
+	}
+
+	void drawToScreen()
+	{
+		
+		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
+		Transform transform = new Transform(vec3(0),vec3(0),vec3(windowSize[0],windowSize[1],1));
+		transform.updateTransformation();
+		GraphicsSubsystem.clearScreen();
+		screenCamera.update();
+		globalData.projectionMatrix[0..$] = screenCamera.projection.transposed.value_ptr[0..16].dup;
+		globalData.viewMatrix[0..$] = mat4.identity.transposed.value_ptr[0..16];
+		GraphicsSubsystem.updateGlobalData(Renderer.get.globalData);
+		RealmVertex[] vertices = (cast(RealmVertex*)alloca(RealmVertex.sizeof * screenMesh.positions.length))[0.. screenMesh.positions.length];
+		for(int i = 0; i < screenMesh.positions.length;i++)
+		{
+			RealmVertex vertex;
+			vertex.position = vec3(transform.transformation * vec4(screenMesh.positions[i],1.0));
+			vertex.texCoord = screenMesh.textureCoordinates[i];
+			vertex.normal = vec3(0,0,1);
+			vertex.tangent = screenMesh.tangents[i];
+			vertex.materialId = screenPassMaterial.instanceId;
+			vertices[i] = vertex;
+		}
+		screenBatch.submitVertices(vertices,screenMesh.faces,screenPassMaterial);
+		screenBatch.drawBatch!(false)();
+		screenBatch.resetBatch();
 	}
 
 	void prepareDrawGeometry(StandardShaderModel program)
@@ -415,6 +465,11 @@ class Renderer
 	void prepareDrawDepthprepass(StandardShaderModel program)
 	{
 		depthPrepass.bindAttachments(program);
+	}
+
+	void prepareScreenPass(StandardShaderModel program)
+	{
+		screenPass.bindAttachments(program);
 	}
 	
 	

@@ -21,11 +21,7 @@ struct DrawElementsIndirectCommand
 
 
 
-static void queueCommand(alias Command, Args...)(Args )
-{
-    string cmd = __traits(identifier, Command);
-    Logger.LogInfo("Command queued: %s",cmd );
-}
+
 
 
 mixin template OpenGLObject()
@@ -141,7 +137,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
         do
 		{
 			glPtr = cast(T*) glMapBufferRange(bufferType, 0, ringSize, usage);
-            queueCommand!(glMapBufferRange)(bufferType, 0, ringSize, usage);
+            
             Logger.Assert(glPtr !is null,"Could not map buffer: %s", bufferType.stringof);
 		}
 
@@ -843,12 +839,11 @@ struct GFrameBuffer
         fbAttachments[type] = attachment;
         attachment.texture.bind();
         glFramebufferTexture2D(GL_FRAMEBUFFER,type,GL_TEXTURE_2D,attachment.texture.ID(),0);
-        if(type == GFrameBufferAttachmentType.DEPTH_ATTACHMENT)
-		{
-            glDrawBuffer(GL_NONE);
-			glReadBuffer(GL_NONE);
-		}
+        
+        Logger.Assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE,"Framebuffer %d not complete error: %d",id, glCheckFramebufferStatus(GL_FRAMEBUFFER));
         attachment.texture.unbind();
+        
+        glBindFramebuffer(GL_FRAMEBUFFER,0);
         return &fbAttachments[type];
 
 	}

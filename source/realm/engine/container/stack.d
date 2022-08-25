@@ -2,12 +2,11 @@ module realm.engine.container.stack;
 import std.traits;
 private
 {
-	import realm.engine.core : IsInterface;
+
 	import realm.engine.memory;
 }
 class Stack(T, size_t Size = 0,alias A = RealmArenaAllocator) 
 {
-	mixin IsInterface!(A,MemoryInterface);
 	//static assert(__traits(isTemplate,A));
 	private A allocator;
 

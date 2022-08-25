@@ -438,7 +438,6 @@ static class RealmUI
 		Transform parent = UIElements.transforms[containerStack.peek()];
 		scope Transform copy = new Transform(transform);
 		copy.position += parent.position;
-		//copy.scale += parent.scale;
 		copy.rotation += parent.rotation;
 		copy.updateTransformation();
 		mat4 modelMatrix = copy.transformation;

@@ -43,13 +43,13 @@ class Renderpass(ImageFormat[string] passInputs,ImageFormat[string] passOutputs)
 	private Outputs outputs;
 	
 
-	public FrameBuffer getFramebuffer()
+	public ref FrameBuffer getFramebuffer()
 	{
 		return framebuffer;
 	}
 
 	
-	public Outputs getOutputs()
+	public ref Outputs getOutputs()
 	{
 		return outputs;
 	}
