@@ -57,5 +57,5 @@ vec4 fragment()
 
 	vec3 frag = (ambient + (1-shadow)) *  (color.rgb * lighting);
 	frag = mix(vec4(frag, 1.0), vec4(0.1, 0.1, 0.1, 1.0), fog).rgb;
-	return vec4(frag, color.a);
+	return vec4(frag, color.a) * getObjectData(color);
 }

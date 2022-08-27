@@ -1,6 +1,7 @@
 #shader shared
 struct Material {
-	vec4 color;
+	vec4 screenColor;
+	float gamma;
 };
 
 
@@ -24,8 +25,10 @@ vec4 vertex(REVertexData IN)
 #shader fragment screenFragment
 vec4 fragment()
 {
-	vec4 color = vec4(normalize(getObjectData(color).rgb), getObjectData(color).a);
-	return texture(cameraScreenTexture,RESurfaceDataIn.texCoord);
+	vec4 color = getObjectData(screenColor);
+	float gamma = getObjectData(gamma);
+	vec4 screenColor = texture(cameraScreenTexture, RESurfaceDataIn.texCoord) * color;
+	return vec4(pow(screenColor.rgb,vec3(1.0/gamma)),1.0);
 
 }
 

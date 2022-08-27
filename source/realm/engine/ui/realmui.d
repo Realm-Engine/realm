@@ -74,6 +74,8 @@ static class RealmUI
 	protected struct DropdownElements
 	{
 		mixin UIElementType!(TextMaterial);
+		static bool[UUID] showOptions;
+		static UIElement[][UUID] shownOptions;
 
 	}
 
@@ -179,8 +181,8 @@ static class RealmUI
 		material.setShaderProgram(uiProgram);
 		material.textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.textures.baseTexture = new Texture2D(&panelImage);
-		material.color = vec4(1,1,1,1);
 		material.packTextureAtlas();
+		material.color = vec4(1,1,1,1);
 		Transform transform = new Transform(position ,rotation,scale);		
 		UIElement element = {randomUUID()};
 		UIElements.transforms[element] = transform;
@@ -203,9 +205,6 @@ static class RealmUI
 		{
 			TextElements.layouts[element] = TextLayout(4,6,12);
 		}
-		
-
-		
 		
 	}
 
@@ -308,19 +307,72 @@ static class RealmUI
 
 	static T dropdown(T)(UIElement element, string[T] options, T selectedOption)
 	{
-		drawTextString(element,options[selectedOption]);
-		Transform transform = UIElements.transforms[element];
-		UIMaterial material = UIElements.materials[element];
-		RealmVertex[] panelVertices = panelVertices!(UIMaterial)(transform,material);
-		if(mouseOverElement(element,panelVertices) && _currentEvent.action == InputActionType.MouseAction)
+		if(element !in DropdownElements.showOptions)
 		{
-			foreach(s;options)
-			{
-				Logger.LogInfo("Option: %s",s);
-			}
+			DropdownElements.showOptions[element] =  false;
+		}
+		T newOption = selectedOption;
+		drawTextString(element,options[selectedOption]);
+		Transform selectedTransform = UIElements.transforms[element];
+		UIMaterial material = UIElements.materials[element];
+		RealmVertex[] selectedVertices = panelVertices(selectedTransform,material);
+		containerPush(element);
+		if(mouseOverElement(element,selectedVertices) && _currentEvent.action == InputActionType.MouseAction)
+		{
+			
+			DropdownElements.showOptions[element] = true;
 
 		}
-		return selectedOption;
+		if(DropdownElements.showOptions[element])
+		{
+			
+			if(element !in DropdownElements.shownOptions)
+			{
+				DropdownElements.shownOptions[element] = new UIElement[](options.length);
+				int numOptions = 0;
+				for(int i = 1; i <= options.length;i++)
+				{
+					if(options.keys[i-1] != selectedOption)
+					{
+						numOptions++;
+						vec3 position = vec3(0,-selectedTransform.scale.y * numOptions,0);
+
+						DropdownElements.shownOptions[element][i-1] = createElement(position,selectedTransform.scale,vec3(0));
+					}
+					
+				}
+
+			}
+			UIElement[] dropdownOptions = DropdownElements.shownOptions[element];
+			foreach(index,option; enumerate(options.values))
+			{
+				if(options.keys[index] != selectedOption)
+				{
+					UIElement optionElement = dropdownOptions[index];
+					if(button(optionElement,option) == ButtonState.RELEASED)
+					{
+						newOption = options.keys[index];
+					}
+				}
+				
+			}
+		}
+		if(newOption != selectedOption)
+		{
+			if(element in DropdownElements.shownOptions)
+			{
+				UIElement[] dropdownOptions = DropdownElements.shownOptions[element];
+				foreach(option;dropdownOptions)
+				{
+					deleteElement(option);
+					DropdownElements.shownOptions.remove(element);
+				}
+			}
+			
+			DropdownElements.showOptions[element] = false;
+		}
+		containerPop();
+		return newOption;
 
 
 	}
@@ -432,7 +484,7 @@ static class RealmUI
 	}
 	do
 	{
-
+		
 		RealmVertex[] vertices = panel.dup;
 		//vertices.length = panelMesh.positions.length;
 		Transform parent = UIElements.transforms[containerStack.peek()];

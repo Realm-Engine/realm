@@ -22,7 +22,7 @@ import realm.engine.memory;
 import core.stdc.stdlib;
 alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "cameraNear" : UserDataVarTypes.FLOAT]);
 alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
-alias ScreenPassMaterialLayout = Alias!(["screenColor" : UserDataVarTypes.VECTOR]);
+alias ScreenPassMaterialLayout = Alias!(["screenColor" : UserDataVarTypes.VECTOR, "gamma":UserDataVarTypes.FLOAT]);
 alias ScreenPassMaterial = Alias!(Material!(ScreenPassMaterialLayout));
 
 class Renderer
@@ -154,12 +154,14 @@ class Renderer
 		depthPrepassPipeline = new ShaderPipeline;
 		depthPrepassPipeline.create();
 		depthPrepassPipeline.useProgramStages(depthPrepassProgram);
-		enable(State.FrameBufferSRGB);
+		//enable(State.FrameBufferSRGB);
 
 		screenMesh = loadMesh("$EngineAssets/Models/screen_quad.obj");
 		ScreenPassMaterial.initialze();
 		ScreenPassMaterial.reserve(1);
 		screenPassMaterial = new ScreenPassMaterial;
+		screenPassMaterial.gamma = 2.2f;
+		screenPassMaterial.screenColor = vec4(1.0);
 		ScreenPassMaterial.allocate(&screenMesh);
 		screenBatch = new Batch!RealmVertex(MeshTopology.TRIANGLE, screenPassProgram,ScreenPassMaterial.getOrder());
 		screenBatch.setShaderStorageCallback(&(ScreenPassMaterial.bindShaderStorage));
@@ -340,8 +342,6 @@ class Renderer
 	{
 		//mainDirLight = light;
 		Transform lightTransform = mainDirLight.getComponent!(Transform);
-		//lightTransform.updateTransformation();
-		//mat4 modelMatrix = mainDirLight.transform.transformation;
 		vec4 direction = vec4(lightTransform.front.normalized(),1.0);
 		_globalData.mainLightDirection[0..$] = direction.value_ptr[0..4].dup;
 		_globalData.mainLightColor[0..$] = vec4(mainDirLight.color,0.0).value_ptr[0..4].dup;

@@ -34,7 +34,7 @@ class Gun
 		material.textures.normal = Vector!(int, 4)(0);
 		material.color = vec4(1);
 		material.textures.diffuse = new Texture2D(&diffuseImage);
-		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
+		material.textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		material.setShaderProgram(getEntityShader());
 		transform.position = vec3(-1.5,1,3);
@@ -76,7 +76,7 @@ class Gun
 	{
 		vec3 front = transform.front();
 		vec3 position = transform.position;
-		processInput(dt);
+		//processInput(dt);
 		//Logger.LogInfo("%f %f %f", position.x, position.y,position.z);
 		//processCollisions();
 		//transform.rotateEuler(vec3(0,0,0));
