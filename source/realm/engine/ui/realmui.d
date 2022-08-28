@@ -16,6 +16,7 @@ import realm.engine.debugdraw;
 import realm.engine.container.stack;
 import core.memory : GC;
 import std.string;
+import std.stdio;
 private 
 {
 	import realm.engine.memory : RealmArenaAllocator;
@@ -178,10 +179,18 @@ static class RealmUI
 	static UIElement createElement(vec3 position, vec3 scale, vec3 rotation)
 	{
 
+		TextureDesc desc =TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+		Texture2D texture = new Texture2D(&panelImage);
+		return createElement(position,scale,rotation,texture,desc);
+
+	}
+
+	static UIElement createElement(vec3 position, vec3 scale, vec3 rotation, Texture2D texture,TextureDesc textureDesc)
+	{
 		UIMaterial material = new UIMaterial;
 		material.setShaderProgram(uiProgram);
-		material.textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
-		material.textures.baseTexture = new Texture2D(&panelImage);
+		material.textures.settings = textureDesc;
+		material.textures.baseTexture = texture;
 		material.packTextureAtlas();
 		material.color = vec4(1,1,1,1);
 		Transform transform = new Transform(position ,rotation,scale);		
@@ -189,7 +198,6 @@ static class RealmUI
 		UIElements.transforms[element] = transform;
 		UIElements.materials[element] = material;
 		return element;
-
 	}
 
 	private static void newTextPanel(UIElement element)
@@ -209,22 +217,6 @@ static class RealmUI
 		
 	}
 
-	static UIElement createElement(vec3 position, vec3 scale, vec3 rotation,Texture2D texture,TextureDesc desc)
-	{
-
-		UIMaterial material = new UIMaterial;
-		material.setShaderProgram(uiProgram);
-		material.textures.settings = desc;
-		material.textures.baseTexture = texture;
-		material.color = vec4(1,1,1,1);
-		material.packTextureAtlas();
-		Transform transform = new Transform(position ,rotation,scale);		
-		UIElement element = {randomUUID()};
-		UIElements.transforms[element] = transform;
-		UIElements.materials[element] = material;
-		return element;
-
-	}
 
 	static void deleteElement(UIElement element)
 	{
@@ -441,26 +433,26 @@ static class RealmUI
 	
 	
 
-	static ButtonState button(UIElement element,string text)
+	static ButtonState button(UIElement element)
 	{
-		import std.stdio;
-		
 		Transform transform = UIElements.transforms[element];
 		UIMaterial material = UIElements.materials[element];
 
 		RealmVertex[] panelVertices = panelVertices!(UIMaterial)(transform,material);
-		
+
 		ButtonState result = ButtonState.NONE;
 		if(mouseOverElement(element,panelVertices) && _currentEvent.action == InputActionType.MouseAction)
 		{
 			if(_currentEvent.mouseEvent.state == KeyState.Press)
 			{
-				material.updateAtlas(pressedButtonImage,&material.baseTexture);
+				//material.updateAtlas(pressedButtonImage,&material.baseTexture);
+				material.color = vec4(0.8);
 				result = ButtonState.PRESSED;
 			}
 			else if(_currentEvent.mouseEvent.state == KeyState.Release)
 			{
-				material.updateAtlas(panelImage,&material.baseTexture);
+				//material.updateAtlas(panelImage,&material.baseTexture);
+				material.color = vec4(0.9);
 				result = ButtonState.RELEASED;
 			}
 			else
@@ -468,14 +460,22 @@ static class RealmUI
 				result = ButtonState.HOVER;
 				//material.updateAtlas(panelImage,&material.baseTexture);
 			}
-			
+
 		}
 		else
 		{
-			material.updateAtlas(panelImage,&material.baseTexture);
+			material.color = vec4(1);
 		}
 
 		drawPanel(element);
+		return result;
+	}
+
+	static ButtonState button(UIElement element,string text)
+	{
+		
+		
+		ButtonState result = button(element);
 		drawTextString(element,text);
 		
 		return result;
@@ -525,12 +525,12 @@ static class RealmUI
 		static if(is(Mat == UIMaterial))
 		{
 			
-			material.color = theme.panelColor;
+			material.color = vec4(material.color.r * theme.panelColor.r,material.color.g * theme.panelColor.g,material.color.g * theme.panelColor.b,material.color.a * theme.panelColor.a);
 		}
 		static if(is(Mat == TextMaterial))
 		{
 			
-			material.color = theme.textColor;
+			material.color= vec4(material.color.r * theme.textColor.r,material.color.g * theme.textColor.g,material.color.g * theme.textColor.b,material.color.a * theme.textColor.a);
 		}
 	}
 

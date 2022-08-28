@@ -26,7 +26,7 @@ vec4 vertex(REVertexData IN)
 #shader fragment debugFragment
 vec4 fragment()
 {
-	vec4 color = vec4(normalize(getObjectData(color).rgb), getObjectData(color).a);
+	vec4 color = getObjectData(color);	
 	return SAMPLE_TEXTURE(baseTexture, RESurfaceDataIn.texCoord) * color;
 
 }
