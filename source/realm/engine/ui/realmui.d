@@ -14,6 +14,7 @@ import realm.engine.ui.font;
 import std.algorithm;
 import realm.engine.debugdraw;
 import realm.engine.container.stack;
+import core.memory : GC;
 import std.string;
 private 
 {
@@ -227,17 +228,21 @@ static class RealmUI
 
 	static void deleteElement(UIElement element)
 	{
-		if(auto material = element in UIElements.materials)
+		if(element in UIElements.materials)
 		{
+			UIMaterial material = UIElements.materials[element];
 			UIElements.materials.remove(element);
 			UIElements.transforms.remove(element);
-			material.destroy();
+			destroy!(false)(material);
+			
 		}
-		if(auto material = element in TextElements.materials)
+		if(element in TextElements.materials)
 		{
+			TextMaterial material = TextElements.materials[element];
 			TextElements.materials.remove(element);
 			TextElements.transforms.remove(element);
-			material.destroy();
+			destroy!(false)(material);
+			
 		}
 	}
 
@@ -670,6 +675,8 @@ static class RealmUI
 		textBatch.resetBatch();
 		GraphicsSubsystem.enableDepthTest();
 		_currentEvent.action = InputActionType.None;
+		
+		
 		
 	}
 }

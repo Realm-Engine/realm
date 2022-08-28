@@ -208,10 +208,13 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0, bool overri
 
     ~this()
 	{
-		//textureAtlas.free();
-		//numMaterials--;
+		textureAtlas.free();
+       
+		numMaterials--;
 	}
 
+    
+    
 
     void writeUniformData()
     {
