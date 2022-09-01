@@ -23,9 +23,7 @@ class RealmGame : RealmApp
 	private RealmUI.UIElement renderTime;
 	private RealmUI.UIElement debugPanel;
 	private RealmUI.UIElement deltaTime;
-	private RealmUI.UIElement testDropdown;
-	private int chosenElement;
-	private vec3 playerColor;
+
 	this(int width, int height, const char* title,string[] args)
 	{
 		super(width,height,title,args);
@@ -40,7 +38,7 @@ class RealmGame : RealmApp
 
 	void initUI()
 	{
-		playerColor = vec3(1,1,1);
+
 		auto windowSize = RealmApp.getWindowSize();
 		RealmUI.themePush(RealmUI.UITheme(vec4(1),vec4(0,0,0,1)));
 		debugPanel =RealmUI.createElement(vec3(windowSize[0]-200,windowSize[1] - 200, 0),vec3(300,200,1),vec3(0));
@@ -48,8 +46,6 @@ class RealmGame : RealmApp
 		renderTime = RealmUI.createElement(vec3(0,0,0),vec3(300,25,1),vec3(0));
 		renderTime.textLayout = RealmUI.TextLayout(4,6,12);
 		deltaTime.textLayout =  RealmUI.TextLayout(4,6,12);
-		testDropdown = RealmUI.createElement(vec3(200,windowSize[1]-200,0),vec3(100,25,1),vec3(0));
-		chosenElement = 1;
 	}
 
 	override void start()
@@ -101,12 +97,10 @@ class RealmGame : RealmApp
 		float dt = getAppMetrics().deltaTime;
 		RealmUI.drawTextString(deltaTime,"Delta Time: %f",dt);
 		RealmUI.drawTextString(renderTime,"Frame draw time: %f", drawTime);
-		string[vec3] playerColorOptions = [vec3(1,1,1):"White",vec3(1,0,0):"Red",vec3(0,1,0) : "Green",vec3(0,0,1):"Blue"];
+		
 		
 
 		RealmUI.containerPop();
-		playerColor = RealmUI.dropdown(testDropdown,playerColorOptions,playerColor);
-		player.getMaterial().color = vec4(playerColor,1.0);
 	}
 	override void update()
 	{

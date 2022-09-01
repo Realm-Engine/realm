@@ -203,6 +203,7 @@ static class RealmUI
 	private static void newTextPanel(UIElement element)
 	{
 		TextMaterial material = new TextMaterial;
+		material.color = vec4(1);
 		TextElements.materials[element] = material;
 		TextElements.transforms[element] = UIElements.transforms[element];
 		material.setShaderProgram(textProgram);

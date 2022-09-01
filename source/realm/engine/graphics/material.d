@@ -313,7 +313,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0, bool overri
             return tilingOffset;
         }
        
-       //auto pbo = GraphicsSubsystem.startPixelTransfer((32 *32) * 4);
+        
         foreach(index,materialTexture; sortedTextures.enumerate(0))
 		{
 WriteImage:
