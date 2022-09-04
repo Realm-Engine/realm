@@ -10,6 +10,8 @@ import realm.engine.physics.core :physicsWorld,PhysicsBody;
 import realm.engine.graphics.renderpass;
 import realm.engine.memory;
 import core.lifetime;
+import std.exception;
+import std.conv;
 class RealmGame : RealmApp
 {
 
@@ -23,7 +25,9 @@ class RealmGame : RealmApp
 	private RealmUI.UIElement renderTime;
 	private RealmUI.UIElement debugPanel;
 	private RealmUI.UIElement deltaTime;
-
+	private RealmUI.UIElement graphicsPanel;
+	private RealmUI.UIElement gammaSlider;
+	float gamma = 1.0f;
 	this(int width, int height, const char* title,string[] args)
 	{
 		super(width,height,title,args);
@@ -46,6 +50,10 @@ class RealmGame : RealmApp
 		renderTime = RealmUI.createElement(vec3(0,0,0),vec3(300,25,1),vec3(0));
 		renderTime.textLayout = RealmUI.TextLayout(4,6,12);
 		deltaTime.textLayout =  RealmUI.TextLayout(4,6,12);
+		graphicsPanel = RealmUI.createElement(vec3(windowSize[0]-800,windowSize[1]-200,0),vec3(300,200,1),vec3(0));
+		gammaSlider = RealmUI.createElement(vec3(windowSize[0]-800,windowSize[1]-200,0),vec3(300,25,1),vec3(0));
+		
+		
 	}
 
 	override void start()
@@ -85,6 +93,8 @@ class RealmGame : RealmApp
 
 		
 
+		
+
 
 	}
 
@@ -97,10 +107,17 @@ class RealmGame : RealmApp
 		float dt = getAppMetrics().deltaTime;
 		RealmUI.drawTextString(deltaTime,"Delta Time: %f",dt);
 		RealmUI.drawTextString(renderTime,"Frame draw time: %f", drawTime);
+		RealmUI.containerPop();
 		
+		//RealmUI.containerPush(graphicsPanel);
+		
+		gamma = RealmUI.slider(gammaSlider,gamma);
+		Renderer.get.getScreenPassMaterial().gamma = 2.2f * gamma;
 		
 
-		RealmUI.containerPop();
+		
+		//RealmUI.containerPop();
+		
 	}
 	override void update()
 	{

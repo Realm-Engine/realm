@@ -154,7 +154,7 @@ class Renderer
 		depthPrepassPipeline = new ShaderPipeline;
 		depthPrepassPipeline.create();
 		depthPrepassPipeline.useProgramStages(depthPrepassProgram);
-		//enable(State.FrameBufferSRGB);
+
 
 		screenMesh = loadMesh("$EngineAssets/Models/screen_quad.obj");
 		ScreenPassMaterial.initialze();
@@ -171,6 +171,8 @@ class Renderer
 		
 	
 	}
+
+
 
 	void initRenderpasses()
 	{
@@ -445,6 +447,11 @@ class Renderer
 		screenBatch.submitVertices(vertices,screenMesh.faces,screenPassMaterial);
 		screenBatch.drawBatch!(false)();
 		screenBatch.resetBatch();
+	}
+
+	ref ScreenPassMaterial getScreenPassMaterial()
+	{
+		return screenPassMaterial;
 	}
 
 	void prepareDrawGeometry(StandardShaderModel program)

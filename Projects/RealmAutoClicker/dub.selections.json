@@ -1,0 +1,13 @@
+{
+	"fileVersion": 1,
+	"versions": {
+		"bindbc-freetype": "1.0.3",
+		"bindbc-loader": "1.0.1",
+		"derelict-gl3": "1.0.24",
+		"derelict-util": "2.1.0",
+		"gl3n": "1.4.1",
+		"glfw-d": "1.1.0",
+		"imagefmt": "2.1.2",
+		"realm": "~restructure"
+	}
+}

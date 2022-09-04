@@ -33,7 +33,7 @@ static class Debug
 		
 		debugBatch.reserve(16);
 		InputManager.registerInputEventCallback(&inputEvent);
-		//materialPool = new DebugMaterial[16];
+		
 		
 
 	}
@@ -43,15 +43,17 @@ static class Debug
 		active = active ^ true;
 	}
 
-	static void inputEvent(InputEvent e)
+	static bool inputEvent(InputEvent e)
 	{
 		if(e.action == InputActionType.KeyAction)
 		{
 			if(e.keyEvent.state == KeyState.Release && e.keyEvent.key == RealmKey.F1)
 			{
 				active = active ^ true;
+				return true;
 			}
 		}
+		return false;
 	}
 
 	static void drawLine(vec3 start, vec3 end, vec3 color = vec3(0,1,0))

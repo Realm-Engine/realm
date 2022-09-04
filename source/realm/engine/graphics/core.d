@@ -126,6 +126,8 @@ class Texture2D
                 
 	}
 
+	
+
 	this(ubyte r, ubyte g, ubyte b, ubyte a, int width, int height)
 	{
 		import std.range;

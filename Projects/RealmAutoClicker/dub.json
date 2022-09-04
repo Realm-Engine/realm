@@ -1,0 +1,16 @@
+{
+	"authors": [
+		"Nathan"
+	],
+	"description": "A minimal D application.",
+	"license": "proprietary",
+	"name": "realmautoclicker",
+	"dependencies": { "realm": "*" },
+	"targetPath": "./bin",
+	"workingDirectory": "../../",
+	"extraDependencyFiles": [
+		"../../Assets/Shaders/*.shader",
+		"./Assets/Models/*.obj",
+		"./Assets/Shaders/*.glsl"
+	]
+}

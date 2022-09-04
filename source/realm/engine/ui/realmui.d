@@ -11,7 +11,7 @@ import std.uuid;
 import bindbc.freetype;
 import realm.engine.input;
 import realm.engine.ui.font;
-import std.algorithm;
+import std.algorithm : map;
 import realm.engine.debugdraw;
 import realm.engine.container.stack;
 import core.memory : GC;
@@ -49,6 +49,20 @@ static class RealmUI
 			TextElements.layouts[id] = layout;
 		}
 
+		ref Mat getMaterial(Mat)()
+		{
+			static if(is(Mat == UIMaterial))
+			{
+
+				return UIElements.materials[id];
+			}
+			static if(is(Mat == TextMaterial))
+			{
+
+				return TextElements.materials[id];
+			}
+		}
+
 
 	}
 
@@ -79,6 +93,13 @@ static class RealmUI
 		static bool[UUID] showOptions;
 		static UIElement[][UUID] shownOptions;
 
+	}
+
+	protected struct SliderElements
+	{
+		static UIElement[UUID] sliders;
+		static bool[UUID] sliderHeld;
+		static Vector!(double,2) lastMousePosition;
 	}
 
 	struct UITheme
@@ -117,6 +138,7 @@ static class RealmUI
 	alias TextMaterial = Alias!(Material!(TextMaterialLayout,0,true));
 	private static IFImage panelImage;
 	private static IFImage pressedButtonImage;
+	private static IFImage sliderImage;
 	private static Camera uiCamera;
 	private static Mesh panelMesh;
 	private static Font font;
@@ -134,6 +156,7 @@ static class RealmUI
 		allocator = new RealmArenaAllocator(2048);
 		panelImage = readImageBytes("$EngineAssets/Images/ui-panel.png");
 		pressedButtonImage = readImageBytes("$EngineAssets/images/ui-button-pressed.png");
+		sliderImage = readImageBytes("$EngineAssets/images/ui-slider.png");
 		panelMesh = loadMesh("$EngineAssets/Models/ui-panel.obj");
 		panelMesh.calculateTangents();
 		uiProgram = loadShaderProgram("$EngineAssets/Shaders/ui.shader","UI");
@@ -169,13 +192,19 @@ static class RealmUI
 
 	}
 
-	static void inputEvent(InputEvent event)
+	static bool inputEvent(InputEvent event)
 	{
 		_currentEvent = event;
+		return true;
 	}
 
 	
-
+	static UIElement createElement(Transform transform)
+	{
+		TextureDesc desc =TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+		Texture2D texture = new Texture2D(&panelImage);
+		return createElement(transform.position,transform.scale,transform.getRotationEuler(),texture,desc);
+	}
 	static UIElement createElement(vec3 position, vec3 scale, vec3 rotation)
 	{
 
@@ -183,6 +212,11 @@ static class RealmUI
 		Texture2D texture = new Texture2D(&panelImage);
 		return createElement(position,scale,rotation,texture,desc);
 
+	}
+
+	static createElement(Transform transform, Texture2D texture, TextureDesc textureDesc)
+	{
+		return createElement(transform.position,transform.scale,transform.getRotationEuler(),texture,textureDesc);
 	}
 
 	static UIElement createElement(vec3 position, vec3 scale, vec3 rotation, Texture2D texture,TextureDesc textureDesc)
@@ -302,6 +336,62 @@ static class RealmUI
 		}
 	}
 	
+	static float slider(UIElement element,float value)
+	{
+		drawPanel(element);
+		Transform transform = UIElements.transforms[element];
+		float progress = clamp(value,0.0f,1.0f);
+		if(element !in SliderElements.sliders)
+		{
+			vec3 size = vec3(25,25,transform.scale.z);
+			vec3 position = transform.position - vec3((transform.scale.x/2) - (size.x/2),0,0);
+			
+			Texture2D sliderTexture = new Texture2D(&sliderImage);
+			TextureDesc desc =TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
+			UIElement newSlider = createElement(position,size,transform.getRotationEuler(),sliderTexture,desc);
+			SliderElements.sliders[element] = newSlider;
+			SliderElements.sliderHeld[element] = false;
+
+		}
+		containerPush(element);
+		UIElement slider = SliderElements.sliders[element];
+		Transform sliderTransform = UIElements.transforms[slider];
+		float x = transform.scale.x/-2 + (transform.scale.x/2 - transform.scale.x/-2) * progress;
+		sliderTransform.position = vec3(x,0,0);
+		ButtonState sliderState = button(slider);
+		if(sliderState == ButtonState.PRESSED && SliderElements.sliderHeld[element] == false)
+		{
+			SliderElements.sliderHeld[element] = true;
+			SliderElements.lastMousePosition = Vector!(double,2)(_currentEvent.mouseEvent.x,_currentEvent.mouseEvent.y);
+			
+		}
+		else if(SliderElements.sliderHeld[element])
+		{
+			if(_currentEvent.mouseEvent.state == KeyState.Release)
+			{
+				
+				SliderElements.sliderHeld[element] = false;
+			}
+			
+		}
+		if(SliderElements.sliderHeld[element])
+		{
+			if(InputManager.getMouseButton(RealmMouseButton.ButtonLeft) == KeyState.Press)
+			{
+				Vector!(double,2) currentMousePosition = Vector!(double,2)(InputManager.getMouseAxis(MouseAxis.X),0);
+				auto difference = currentMousePosition - SliderElements.lastMousePosition;
+				
+				
+				SliderElements.lastMousePosition = currentMousePosition;
+				progress += (difference.x/2) / (transform.scale.x/2);
+				Logger.LogInfo("%f",progress);
+			}
+		}
+		containerPop();
+		return clamp(progress,0.0f,1.0f);
+
+
+	}
 
 	static T dropdown(T)(UIElement element, string[T] options, T selectedOption)
 	{
@@ -446,25 +536,27 @@ static class RealmUI
 		{
 			if(_currentEvent.mouseEvent.state == KeyState.Press)
 			{
-				//material.updateAtlas(pressedButtonImage,&material.baseTexture);
+				
 				material.color = vec4(0.8);
 				result = ButtonState.PRESSED;
 			}
+			
 			else if(_currentEvent.mouseEvent.state == KeyState.Release)
 			{
-				//material.updateAtlas(panelImage,&material.baseTexture);
+				
 				material.color = vec4(0.9);
 				result = ButtonState.RELEASED;
 			}
 			else
 			{
 				result = ButtonState.HOVER;
-				//material.updateAtlas(panelImage,&material.baseTexture);
+				
 			}
 
 		}
 		else
 		{
+			
 			material.color = vec4(1);
 		}
 
@@ -526,12 +618,12 @@ static class RealmUI
 		static if(is(Mat == UIMaterial))
 		{
 			
-			material.color = vec4(material.color.r * theme.panelColor.r,material.color.g * theme.panelColor.g,material.color.g * theme.panelColor.b,material.color.a * theme.panelColor.a);
+			material.color = theme.panelColor;
 		}
 		static if(is(Mat == TextMaterial))
 		{
 			
-			material.color= vec4(material.color.r * theme.textColor.r,material.color.g * theme.textColor.g,material.color.g * theme.textColor.b,material.color.a * theme.textColor.a);
+			material.color= theme.textColor;
 		}
 	}
 
@@ -548,7 +640,7 @@ static class RealmUI
 
 	}
 
-
+	
 
 	
 	static void containerPush(UIElement element)
@@ -619,7 +711,7 @@ static class RealmUI
 		}
 		
 		
-		//Logger.LogInfo("%s", TextElements.strings[element]);
+		
 		drawTextString(element,text);
 		return text;
 	}

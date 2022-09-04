@@ -76,8 +76,8 @@ class InputManager
 
     
 	
-	alias InputEventCallbackDelegate = void delegate(InputEvent event);
-	alias InputEventCallbackFunction = void function(InputEvent event);
+	alias InputEventCallbackDelegate = bool delegate(InputEvent event);
+	alias InputEventCallbackFunction = bool function(InputEvent event);
 	alias ScrollCallback = void function(double xoffset, double yoffset) nothrow @nogc;
     private static InputEventCallbackDelegate[] inputEventDelegates;
 	private static InputEventCallbackFunction[] inputEventFunctions;
@@ -142,12 +142,14 @@ class InputManager
 	static KeyState getMouseButton(RealmMouseButton button)
 	{
 		int state = glfwGetMouseButton(window,button);
+		
 		switch(state)
 		{
             case GLFW_PRESS:
                 return KeyState.Press;
             case GLFW_RELEASE:
                 return KeyState.Release;
+			
             default:
                 return KeyState.Press;
 		}
@@ -175,6 +177,7 @@ class InputManager
 		InputEvent event;
 		double x = getMouseAxis(MouseAxis.X);
 		double y = getMouseAxis(MouseAxis.Y);
+		
 		event = MouseActionEvent(cast(RealmMouseButton) button, cast(KeyState)action,x,y);
 		_eventQueue.enqueue(event);
 	}
@@ -206,6 +209,7 @@ class InputManager
 		glfwSetKeyCallback(w,&internalKeyCallback);
 		glfwSetMouseButtonCallback(w,&internalMouseButtonCallback);
 		glfwSetCharCallback(w,&internalCharCallback);
+		glfwSetInputMode(w,GLFW_STICKY_MOUSE_BUTTONS,GLFW_TRUE);
     }
 
 	static void tick()
@@ -216,11 +220,17 @@ class InputManager
 			foreach(callback; inputEventDelegates)
 			{
 				
-				callback(event);
+				if(callback(event))
+				{
+					break;
+				}
 			}
 			foreach(f ; inputEventFunctions)
 			{
-				f(event);
+				if(f(event))
+				{
+					break;
+				}
 			}
 			_lastEvent = event;
 		}

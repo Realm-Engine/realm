@@ -82,9 +82,9 @@ class Player
         return vec2(mouse.x * 2.0f / windowSize[0] - 1.0f, 1.0f - 2.0f * mouse.y / windowSize[1]);
     }
 
-    void inputEvent(InputEvent event)
+    bool inputEvent(InputEvent event)
 	{
-
+        return false;
 
 	}
 
