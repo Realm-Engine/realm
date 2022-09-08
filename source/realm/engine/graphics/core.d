@@ -21,6 +21,7 @@ alias FrameBuffer = GFrameBuffer;
 alias FrameBufferAttachment = GFrameBufferAttachment;
 alias PixelBuffer = GPixelBuffer;
 alias ShaderStorage = GShaderStorage;
+alias DepthFunc = GDepthFunc;
 alias ShaderPipeline = GShaderPipeline;
 alias FrameBufferTarget = GFrameBufferTarget;
 alias ShaderProgramModel = GShaderProgramModel;
@@ -42,6 +43,7 @@ alias clear = gClear;
 alias cull = gCull;
 alias setViewport = gSetViewport;
 alias readBuffer = gReadBuffer;
+alias setDepthFunc = gSetDepthFunc;
 
 alias enableDebugging = gEnableDebugging;
 alias BufferUsage = GBufferUsage;

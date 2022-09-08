@@ -179,7 +179,7 @@ class Renderer
 		screenBatch.setPrepareDrawCallback(&prepareScreenPass);
 		screenBatch.initialize(ScreenPassMaterial.allocatedVertices(),ScreenPassMaterial.allocatedElements());
 		screenBatch.reserve(ScreenPassMaterial.getNumMaterialInstances());
-		
+		setDepthFunc(DepthFunc.LESS);
 		initSkybox();
 	
 	}
@@ -221,12 +221,12 @@ class Renderer
 		skyboxBatch.reserve(SkyboxMaterial.getNumMaterialInstances());
 
 		skyBox.create();
-		TextureDesc desc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER );
+		TextureDesc desc = TextureDesc(ImageFormat.RGB8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER );
 		skyBox.textureDesc = desc;
 		skyBox.store(128,128);
-		ubyte[4] y = [0,255,0,255];
-		ubyte[4] x = [255,0,0,255];	
-		ubyte[4] z = [0,0,255,255];
+		ubyte[3] y = [0,255,0];
+		ubyte[3] x = [255,0,0];	
+		ubyte[3] z = [0,0,255];
 		skyBox.clearFaces!(ubyte)(0,y,CubemapFace.POSITIVE_Y,CubemapFace.NEGATIVE_Y);
 		skyBox.clearFaces!(ubyte)(0,x,CubemapFace.POSITIVE_X,CubemapFace.NEGATIVE_X);
 		skyBox.clearFaces!(ubyte)(0,z,CubemapFace.POSITIVE_Z,CubemapFace.NEGATIVE_Z);
@@ -455,12 +455,13 @@ class Renderer
 		
 
 		
-		drawSkybox();
+		
 		foreach(batch; orderedBatches)
 		{
 			batch.setPrepareDrawCallback(&prepareDrawGeometry);
 			batch.drawBatch!(true)();
 		}
+		drawSkybox();
 		Debug.flush();
 		RealmUI.flush();
 		geometryPass.getFramebuffer().unbind(FrameBufferTarget.DRAW );
@@ -479,7 +480,7 @@ class Renderer
 
 	void drawSkybox()
 	{
-		disable(State.DepthTest);
+		setDepthFunc(DepthFunc.LESS_THAN_EQUAL);
 		Transform transform = new Transform();
 		RealmVertex[] vertices = (cast(RealmVertex*)alloca(RealmVertex.sizeof * skyboxMesh.positions.length))[0.. skyboxMesh.positions.length];
 		for(int i = 0; i < skyboxMesh.positions.length;i++)
@@ -495,7 +496,8 @@ class Renderer
 		skyboxBatch.submitVertices(vertices,skyboxMesh.faces,screenPassMaterial);
 		skyboxBatch.drawBatch!(false)();
 		skyboxBatch.resetBatch();
-		enable(State.DepthTest);
+		setDepthFunc(DepthFunc.LESS);
+		
 
 	}
 

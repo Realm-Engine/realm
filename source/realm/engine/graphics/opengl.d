@@ -1640,6 +1640,17 @@ enum GCubemapFace : GLenum
     
 }
 
+enum GDepthFunc : GLenum
+{
+    NEVER = GL_NEVER,
+    LESS = GL_LESS,
+    LESS_THAN_EQUAL = GL_LEQUAL,
+    EQUAL = GL_EQUAL,
+    GREATER_THAN_EQUAL = GL_GEQUAL,
+    GREATER = GL_GREATER,
+    NOT_EQUAL = GL_NOTEQUAL,
+    ALWAYS =GL_ALWAYS
+}
 
 
 
@@ -1768,6 +1779,11 @@ static void gBlendFunc(GBlendFuncType sfactor, GBlendFuncType dfactor)
 static void gBlendFuncSeperate(GBlendFuncType r, GBlendFuncType g, GBlendFuncType b, GBlendFuncType a)
 {
     glBlendFuncSeparate(r,g,b,a);
+}
+
+static void gSetDepthFunc(GDepthFunc func)
+{
+    glDepthFunc(func);
 }
 
 static void gClear(GFrameMask mask)
