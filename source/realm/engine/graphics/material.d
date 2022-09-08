@@ -149,7 +149,7 @@ enum bool isMaterial(T) = (__traits(hasMember, T, "shaderStorageBuffer") == true
 enum texturesMembers(T) = (__traits(allMembers, T.Textures));
 enum texturesAttributes(T, alias Member) = (__traits(getAttributes, __traits(getMember, T.Textures, Member)));
 enum isTexture(alias T) = (T == "Texture");
-class Material(UserDataVarTypes[string] uniforms = [],int order = 0, bool overrideTexturePacking = false)
+class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overrideTexturePacking = false)
 {
     import std.format;
     import std.stdio;
@@ -201,7 +201,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 0, bool overri
 		}
 
         
-        textureAtlas.slot = materialIndex + 3;
+        textureAtlas.slot = materialIndex + 4;
         shadows = true;
 		
     }

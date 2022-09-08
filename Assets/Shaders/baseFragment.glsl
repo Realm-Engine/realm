@@ -29,6 +29,7 @@ vec4 fragment();
 layout(location = 0) uniform sampler2D cameraDepthTexture;
 layout(location = 1) uniform sampler2DMS cameraScreenTexture;
 layout(location = 2) uniform sampler2D shadowMap;
+layout(location = 3) uniform samplerCube envSkybox;
 
 
 

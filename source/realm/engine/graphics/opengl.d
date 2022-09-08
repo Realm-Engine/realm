@@ -1075,6 +1075,7 @@ struct GSamplerObject(GTextureType target)
             texType = GL_TEXTURE_2D_MULTISAMPLE;
             glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,id);
 		}
+       
         
         wrapFunc = desc.wrap;
         filterFunc = desc.filter;
@@ -1286,6 +1287,15 @@ struct GSamplerObject(GTextureType target)
 		{
             bind();
             glClearTexSubImage(this,level,0,0,5 -(GCubemapFace.NEGATIVE_Z - face),width,height,1,format,dataType,color.ptr);
+            unbind();
+		}
+        void clearFaces(T)(int level, in T[] color,GCubemapFace[] faces...)
+		{
+            bind();
+            foreach(GCubemapFace face ;faces)
+			{
+                glClearTexSubImage(this,level,0,0,5 -(GCubemapFace.NEGATIVE_Z - face),width,height,1,format,dataType,color.ptr);
+			}
             unbind();
 		}
 	}

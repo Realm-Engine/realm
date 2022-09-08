@@ -25,7 +25,8 @@ alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "
 alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
 alias ScreenPassMaterialLayout = Alias!(["screenColor" : UserDataVarTypes.VECTOR,  "gamma":UserDataVarTypes.FLOAT]);
 alias ScreenPassMaterial = Alias!(Material!(ScreenPassMaterialLayout));
-
+alias SkyboxMaterialLayout = Alias!(["exposure" : UserDataVarTypes.FLOAT]);
+alias SkyboxMaterial = Alias!(Material!(SkyboxMaterialLayout,0));
 class Renderer
 {
 
@@ -35,13 +36,15 @@ class Renderer
 	}
 
 
-	private  Mesh screenMesh;
+	private Mesh screenMesh;
+	private Mesh skyboxMesh;
 
 	import std.container.array;
 	import std.stdio;
 	private RealmVertex[][ulong] staticMeshes;
 	private Batch!(RealmVertex)[ulong] batches;
 	private Batch!(RealmVertex) screenBatch;
+	private Batch!(RealmVertex) skyboxBatch;
 	
 	private RealmGlobalData _globalData;
 	private Camera* camera;
@@ -49,7 +52,9 @@ class Renderer
 	private StandardShaderModel lightSpaceShaderProgram;
 	private StandardShaderModel depthPrepassProgram;
 	private StandardShaderModel screenPassProgram;
+	private StandardShaderModel skyboxProgram;
 	
+	private SkyboxMaterial skyboxMaterial;
 	private LightSpaceMaterial lightSpaceMaterial;
 	private ScreenPassMaterial screenPassMaterial; 
 	private DirectionalLight mainDirLight;
@@ -67,6 +72,7 @@ class Renderer
 	alias DepthPrepassOutputs = Alias!(["cameraDepthTexture" : ImageFormat.DEPTH] );
 	alias ScreenPassInputs = Alias!(["cameraScreenTexture" : ImageFormat.RGB8]);
 	private SamplerObject!(TextureType.CUBEMAP) skyBox;
+	private RealmArenaAllocator arenaAllocator;
 	
 	//private static FrameBuffer mainFramebuffer;
 	
@@ -135,6 +141,8 @@ class Renderer
 		GraphicsSubsystem.setClearColor(126,32,32,true);
 		GraphicsSubsystem.enableDepthTest();
 		
+		arenaAllocator = new RealmArenaAllocator(2048);
+
 		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
 		_globalData.viewMatrix = _globalData.projectionMatrix = mat4.identity.value_ptr[0..16].dup;
 		GraphicsSubsystem.updateGlobalData(&_globalData);
@@ -194,17 +202,42 @@ class Renderer
 
 	void initSkybox()
 	{
+		skyboxMesh.positions = [vec3(-1,-1,1),vec3(1,-1,1),vec3(-1,1,1),vec3(1,1,1)];
+		skyboxMesh.faces = [0,1,2,1,3,2];
+		skyboxMesh.normals.length = 4;
+		skyboxMesh.textureCoordinates.length = 4;
+		skyboxMesh.tangents.length = 4;
+		skyboxProgram = loadShaderProgram("$EngineAssets/Shaders/skybox.shader","Skybox");
+		SkyboxMaterial.initialze();
+		SkyboxMaterial.reserve(1);
+		skyboxMaterial = new SkyboxMaterial;
+		skyboxMaterial.setShaderProgram(skyboxProgram);
+		SkyboxMaterial.allocate(&skyboxMesh);
+
+		skyboxBatch = new Batch!RealmVertex(MeshTopology.TRIANGLE, skyboxProgram,SkyboxMaterial.getOrder());
+		skyboxBatch.setShaderStorageCallback(&(SkyboxMaterial.bindShaderStorage));
+		skyboxBatch.setPrepareDrawCallback(&prepareDrawGeometry);
+		skyboxBatch.initialize(SkyboxMaterial.allocatedVertices(),SkyboxMaterial.allocatedElements());
+		skyboxBatch.reserve(SkyboxMaterial.getNumMaterialInstances());
+
 		skyBox.create();
 		TextureDesc desc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER );
 		skyBox.textureDesc = desc;
 		skyBox.store(128,128);
-		ubyte[4] clearColor = [15,185,237,255];
-		foreach(face; EnumMembers!CubemapFace)
-		{
-			skyBox.clearFace!(ubyte)(face,0,clearColor);
-		}
+		ubyte[4] y = [0,255,0,255];
+		ubyte[4] x = [255,0,0,255];	
+		ubyte[4] z = [0,0,255,255];
+		skyBox.clearFaces!(ubyte)(0,y,CubemapFace.POSITIVE_Y,CubemapFace.NEGATIVE_Y);
+		skyBox.clearFaces!(ubyte)(0,x,CubemapFace.POSITIVE_X,CubemapFace.NEGATIVE_X);
+		skyBox.clearFaces!(ubyte)(0,z,CubemapFace.POSITIVE_Z,CubemapFace.NEGATIVE_Z);
+		//foreach(face; EnumMembers!CubemapFace)
+		//{
+		//    skyBox.clearFace!(ubyte)(face,0,clearColor);
+		//}
 
 	}
+
+
 
 
 	void submitMesh(Mat, bool isStatic = false)(Mesh* mesh,Transform transform,Mat mat,ref RealmVertex[] vertexData)
@@ -297,11 +330,11 @@ class Renderer
 		if(!isStatic || (isStatic && staticId !in staticMeshes))
 		{
 
-			vertexData = RealmHeapAllocator!(RealmVertex).allocate(mesh.positions.length);
+			vertexData = cast(RealmVertex[])arenaAllocator.allocate!(RealmVertex)(mesh.positions.length);
 			submitMesh!(Mat,isStatic)(mesh,transform,mat,vertexData);
 			scope(exit)
 			{
-				 RealmHeapAllocator!(RealmVertex).deallocate(vertexData.ptr);
+				 arenaAllocator.deallocate();
 			}
 			
 		}
@@ -315,9 +348,12 @@ class Renderer
 
 	}
 
+	
+
 	void renderLightSpace() 
 	{
 	
+		
 		if(mainDirLight !is null)
 		{
 			lightPass.startPass();
@@ -384,6 +420,7 @@ class Renderer
 
 	void update()
 	{
+		
 		if(mainDirLight !is null)
 		{
 			updateMainLight();
@@ -418,7 +455,7 @@ class Renderer
 		
 
 		
-
+		drawSkybox();
 		foreach(batch; orderedBatches)
 		{
 			batch.setPrepareDrawCallback(&prepareDrawGeometry);
@@ -438,6 +475,28 @@ class Renderer
 		
 		
 		
+	}
+
+	void drawSkybox()
+	{
+		disable(State.DepthTest);
+		Transform transform = new Transform();
+		RealmVertex[] vertices = (cast(RealmVertex*)alloca(RealmVertex.sizeof * skyboxMesh.positions.length))[0.. skyboxMesh.positions.length];
+		for(int i = 0; i < skyboxMesh.positions.length;i++)
+		{
+			RealmVertex vertex;
+			vertex.position = vec3(transform.transformation * vec4(skyboxMesh.positions[i],1.0));
+			vertex.texCoord = screenMesh.textureCoordinates[i];
+			vertex.normal = vec3(0,0,1);
+			vertex.tangent = screenMesh.tangents[i];
+			vertex.materialId = skyboxMaterial.instanceId;
+			vertices[i] = vertex;
+		}
+		skyboxBatch.submitVertices(vertices,skyboxMesh.faces,screenPassMaterial);
+		skyboxBatch.drawBatch!(false)();
+		skyboxBatch.resetBatch();
+		enable(State.DepthTest);
+
 	}
 
 	void drawToScreen()
@@ -472,29 +531,43 @@ class Renderer
 		return screenPassMaterial;
 	}
 
+	void bindSkybox(StandardShaderModel program)
+	{
+		int loc = program.uniformLocation("envSkybox");
+		if(loc >= 0)
+		{
+
+
+			skyBox.setActive(loc);
+			program.setUniformInt(loc,loc);
+
+		}
+	}
+
 	void prepareDrawGeometry(StandardShaderModel program)
 	{
+
 		geometryPass.bindAttachments(program);
-
-		
-		
-
+		bindSkybox(program);
 
 	}
 
 	void prepareDrawLightpass(StandardShaderModel program)
 	{
 		lightPass.bindAttachments(program);
+		bindSkybox(program);
 	}
 
 	void prepareDrawDepthprepass(StandardShaderModel program)
 	{
 		depthPrepass.bindAttachments(program);
+		bindSkybox(program);
 	}
 
 	void prepareScreenPass(StandardShaderModel program)
 	{
 		screenPass.bindAttachments(program);
+		bindSkybox(program);
 	}
 	
 	

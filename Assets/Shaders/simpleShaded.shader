@@ -45,7 +45,8 @@ vec4 fragment()
 
 	vec3 ambient = vec3(0.1);
 	vec3 normal = RESurfaceDataIn.normal;
-	//normal = transformNormal(normal);
+	
+
 	vec4 color = SAMPLE_TEXTURE(diffuse, RESurfaceDataIn.texCoord);
 	vec3 lighting = calculateLighting(normal,ambient);
 	float bias = max(0.05 * (1.0 - dot(normal, mainLight.direction.xyz)), 0.005);
@@ -57,5 +58,5 @@ vec4 fragment()
 
 	vec3 frag = (ambient + (1-shadow)) *  (color.rgb * lighting);
 	frag = mix(vec4(frag, 1.0), vec4(0.1, 0.1, 0.1, 1.0), fog).rgb;
-	return vec4(frag, color.a) * getObjectData(color);
+	return vec4(frag , color.a) * getObjectData(color);
 }
