@@ -8,17 +8,16 @@ import realm.engine.core;
 import std.typecons;
 import core.memory;
 import realm.engine.graphics.core : enableDebugging;
+
 class RealmApp
 {
-
+    
     alias RealmKeyPressDelegate = void delegate(int, int);
     
     
 
     public static __gshared GLFWwindow* window;
     private bool shutdown;
-    private const GLMAX_VER = GLVersion.GL45;
-    private const GLMIN_VER = GLVersion.GL43;
     private AppMetrics appMetrics;
     
     
@@ -76,9 +75,11 @@ class RealmApp
         window = glfwCreateWindow(width, height, title, null, null);
         Logger.Assert(window !is null,"Could not create GLFW window");
         DerelictGL3.load();
+
         glfwMakeContextCurrent(window);
+
         
-        GLVersion glVer = DerelictGL3.reload(GLVersion.GL43, GLVersion.GL45);
+        GLVersion glVer = DerelictGL3.reload(GLVersion.GL43,GLVersion.GL45);
         Logger.LogInfo("Loaded OpenGL Version %d",glVer);
         
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);

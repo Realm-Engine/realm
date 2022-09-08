@@ -57,89 +57,89 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
 
     }
     
-struct MaterialTexture
-{
-    private const int TEXTURE_COLOR_SIZE = 32;
-    enum InternalType
-	{
-        TEXTURE,
-        COLOR
-	}
-    private InternalType type;
-    union
-	{
-		Texture2D texture;
-		Vector!(ubyte,4) color;
-	}
-
-	void opAssign(Texture2D texture)
-	{
-		this.texture = texture;
-        type = InternalType.TEXTURE;
-	}
-	void opAssign(Vector!(ubyte,4) c)
-	{
-		color = c;
-        type = InternalType.COLOR;
-	}
-
-    void opAssign(Vector!(int,4) c)
-	{
-        color.r = cast(ubyte)c.r;
-        color.g = cast(ubyte)c.g;
-        color.b = cast(ubyte)c.b;
-        color.a = cast(ubyte)c.a;
-        type = InternalType.COLOR;
-	}
-
+    struct MaterialTexture
+    {
+        private const int TEXTURE_COLOR_SIZE = 32;
+        enum InternalType
+    	{
+            TEXTURE,
+            COLOR
+    	}
+        private InternalType type;
+        union
+    	{
+            
+    		Texture2D texture;
+    		Vector!(ubyte,4) color;
+    	}
     
-    @property bool isTexture() 
-	{
-		return type == InternalType.TEXTURE;
-	}
-    @property bool isColor()
-	{
-        return type == InternalType.COLOR;
-	}
-
+    	void opAssign(Texture2D texture)
+    	{
+    		this.texture = texture;
+            type = InternalType.TEXTURE;
+    	}
+    	void opAssign(Vector!(ubyte,4) c)
+    	{
+    		color = c;
+            type = InternalType.COLOR;
+    	}
     
-
-    Vector!(ubyte,4) opCast(T : Vector!(ubyte,4))() 
-    in(isColor)
-	{
-        return color;
-	}
-    Texture2D opCast(T:Texture2D)() 
-    in(isTexture)
-	{
-        return texture;
-	}
+        void opAssign(Vector!(int,4) c)
+    	{
+            color.r = cast(ubyte)c.r;
+            color.g = cast(ubyte)c.g;
+            color.b = cast(ubyte)c.b;
+            color.a = cast(ubyte)c.a;
+            type = InternalType.COLOR;
+    	}
     
-
-    int width()
-	{
-        if(type == InternalType.TEXTURE)
-		{
-            return texture.w;
-		}
-        else
-		{
-            return TEXTURE_COLOR_SIZE;
-		}
-	}
-   int height()
-	{
-        if(type == InternalType.TEXTURE)
-		{
-            return texture.h;
-		}
-        else
-		{
-            return TEXTURE_COLOR_SIZE;
-		}
-	}
-
-}
+        
+        @property bool isTexture() 
+    	{
+    		return type == InternalType.TEXTURE;
+    	}
+        @property bool isColor()
+    	{
+            return type == InternalType.COLOR;
+    	}
+    
+        
+    
+        Vector!(ubyte,4) opCast(T : Vector!(ubyte,4))() 
+        in(isColor)
+    	{
+            return color;
+    	}
+        Texture2D opCast(T:Texture2D)() 
+        in(isTexture)
+    	{
+            return texture;
+    	}
+        
+    
+        int width()
+    	{
+            if(type == InternalType.TEXTURE)
+    		{
+                return texture.w;
+    		}
+            else
+    		{
+                return TEXTURE_COLOR_SIZE;
+    		}
+    	}
+       int height()
+    	{
+            if(type == InternalType.TEXTURE)
+    		{
+                return texture.h;
+    		}
+            else
+    		{
+                return TEXTURE_COLOR_SIZE;
+    		}
+    	}
+    }
 
 }
 

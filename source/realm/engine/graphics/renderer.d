@@ -20,9 +20,10 @@ import gl3n.frustum;
 import realm.engine.container.stack;
 import realm.engine.memory;
 import core.stdc.stdlib;
+import std.traits;
 alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "cameraNear" : UserDataVarTypes.FLOAT]);
 alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
-alias ScreenPassMaterialLayout = Alias!(["screenColor" : UserDataVarTypes.VECTOR, "gamma":UserDataVarTypes.FLOAT]);
+alias ScreenPassMaterialLayout = Alias!(["screenColor" : UserDataVarTypes.VECTOR,  "gamma":UserDataVarTypes.FLOAT]);
 alias ScreenPassMaterial = Alias!(Material!(ScreenPassMaterialLayout));
 
 class Renderer
@@ -34,7 +35,7 @@ class Renderer
 	}
 
 
-	private static Mesh screenMesh;
+	private  Mesh screenMesh;
 
 	import std.container.array;
 	import std.stdio;
@@ -65,6 +66,7 @@ class Renderer
 	alias LightPassOutputs = Alias!(["shadowMap" : ImageFormat.DEPTH]);
 	alias DepthPrepassOutputs = Alias!(["cameraDepthTexture" : ImageFormat.DEPTH] );
 	alias ScreenPassInputs = Alias!(["cameraScreenTexture" : ImageFormat.RGB8]);
+	private SamplerObject!(TextureType.CUBEMAP) skyBox;
 	
 	//private static FrameBuffer mainFramebuffer;
 	
@@ -132,6 +134,7 @@ class Renderer
 		GraphicsSubsystem.initialze();
 		GraphicsSubsystem.setClearColor(126,32,32,true);
 		GraphicsSubsystem.enableDepthTest();
+		
 		Tuple!(int,int) windowSize = RealmApp.getWindowSize();
 		_globalData.viewMatrix = _globalData.projectionMatrix = mat4.identity.value_ptr[0..16].dup;
 		GraphicsSubsystem.updateGlobalData(&_globalData);
@@ -169,6 +172,7 @@ class Renderer
 		screenBatch.initialize(ScreenPassMaterial.allocatedVertices(),ScreenPassMaterial.allocatedElements());
 		screenBatch.reserve(ScreenPassMaterial.getNumMaterialInstances());
 		
+		initSkybox();
 	
 	}
 
@@ -180,12 +184,26 @@ class Renderer
 		screenPass = new Renderpass!(ScreenPassInputs,null)(windowSize[0],windowSize[1]);
 		depthPrepass = new Renderpass!(null,null)(windowSize[0],windowSize[1]);
 		lightPass = new Renderpass!(null,LightPassOutputs)(2048,2048);
-		geometryPass = new Renderpass!(GeometryPassInputs,GeometryPassOutputs)(windowSize[0],windowSize[1]);
+		geometryPass = new Renderpass!(GeometryPassInputs,GeometryPassOutputs)(windowSize[0],windowSize[1],true);
+		
 		geometryPass.inputs.shadowMap = lightPass.getOutputs().shadowMap;
 		screenPass.inputs.cameraScreenTexture = geometryPass.getOutputs().cameraScreenTexture;
-		//geometryPass.inputs.cameraDepthTexture = depthPrepass.getOutputs().cameraDepthTexture;
-		//mainFramebuffer.create!(true)(windowSize[0],windowSize[1],[FrameBufferAttachmentType.COLOR_ATTACHMENT,  FrameBufferAttachmentType.DEPTH_ATTACHMENT]);
 		
+		
+	}
+
+	void initSkybox()
+	{
+		skyBox.create();
+		TextureDesc desc = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER );
+		skyBox.textureDesc = desc;
+		skyBox.store(128,128);
+		ubyte[4] clearColor = [15,185,237,255];
+		foreach(face; EnumMembers!CubemapFace)
+		{
+			skyBox.clearFace!(ubyte)(face,0,clearColor);
+		}
+
 	}
 
 

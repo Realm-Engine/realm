@@ -13,4 +13,5 @@
 		"./Assets/Models/*.obj",
 		"./Assets/Shaders/*.glsl"
 	]
+	
 }

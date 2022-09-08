@@ -7,8 +7,6 @@ private
 	import realm.engine.asset;
 }
 
-
-
 alias ShaderType = GShaderType;
 alias FrameBufferAttachmentType = GFrameBufferAttachmentType;
 alias TextureFilterfunc = GTextureFilterFunc;
@@ -35,6 +33,7 @@ alias QueryTarget = GQueryTarget;
 alias ShaderProgramStages = GShaderProgramStages;
 alias ShaderParameter = GShaderParameter;
 alias SizedImageFormat = GSizedImageFormat;
+alias CubemapFace = GCubemapFace;
 alias blendFunc = gBlendFunc;
 alias blendFuncSeperate = gBlendFuncSeperate;
 alias enable =gEnable;
@@ -107,9 +106,10 @@ struct TextureDesc
 {
 	ImageFormat fmt;
 
-	TextureFilterfunc filter;
-	TextureWrapFunc wrap;
-	int mipLevels;
+	TextureFilterfunc filter = TextureFilterfunc.LINEAR;
+	TextureWrapFunc wrap = TextureWrapFunc.CLAMP_TO_BORDER;
+	int mipLevels = 0;
+	bool isMultisampled = false;
 }
 
 class Texture2D

@@ -4,6 +4,7 @@ import std.format;
 import std.meta;
 import std.ascii;
 
+
 public
 {
     import std.uuid;
@@ -18,7 +19,12 @@ mixin template EntityRegistry(T...)
         import std.uni;
         import std.format;
         import std.uuid;
+        import std.meta;
     }
+
+    public alias EntityTypes = AliasSeq!T;
+    
+
     static foreach (Type; T)
     {
         pragma(msg,"Registering " ~ Type.stringof ~ " entity\nInternal name: "~  Type.mangleof ~ "\n");

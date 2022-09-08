@@ -1,4 +1,4 @@
-module realm.engine.graphics.renderpass;
+ module realm.engine.graphics.renderpass;
 
 private
 {
@@ -24,6 +24,7 @@ class Renderpass(ImageFormat[string] passInputs,ImageFormat[string] passOutputs)
 			static foreach(attachment ; passInputs.keys)
 			{
 				mixin("FrameBufferAttachment* " ~ attachment ~ ";");
+				
 			}
 		}
 	}
@@ -34,10 +35,11 @@ class Renderpass(ImageFormat[string] passInputs,ImageFormat[string] passOutputs)
 			static foreach(attachment; passOutputs.keys)
 			{
 				mixin("FrameBufferAttachment* " ~ attachment ~ ";");
+				
+				
 			}
 		}
 	}
-
 	private FrameBuffer framebuffer;
 	public Inputs inputs;
 	private Outputs outputs;
@@ -53,9 +55,7 @@ class Renderpass(ImageFormat[string] passInputs,ImageFormat[string] passOutputs)
 	{
 		return outputs;
 	}
-	
-
-	this(int width, int height)
+	this(int width, int height, bool multisampled = false)
 	out
 	{
 		import realm.engine.logging;
@@ -63,12 +63,13 @@ class Renderpass(ImageFormat[string] passInputs,ImageFormat[string] passOutputs)
 	}
 	do
 	{
-		int numColorAttachments = 0;
+		
 		framebuffer.create(width,height);
+		int numColorAttachments = 0;
 		static foreach(member; __traits(allMembers,Outputs))
 		{
 			{
-				
+
 				FrameBufferAttachmentType type;
 				ImageFormat format = passOutputs[member];
 				if(format == ImageFormat.DEPTH)
@@ -80,11 +81,11 @@ class Renderpass(ImageFormat[string] passInputs,ImageFormat[string] passOutputs)
 					type = FrameBufferAttachmentType.COLOR_ATTACHMENT;
 					numColorAttachments++;
 				}
+
 				
-				
-				__traits(getMember,outputs,member) = framebuffer.addAttachment(type,format);
-				
-				
+				__traits(getMember,outputs,member) = framebuffer.addAttachment(type,format,multisampled);
+
+
 
 			}
 		}

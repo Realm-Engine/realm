@@ -9,6 +9,8 @@ import realm.engine.ecs;
 import realm.engine.logging;
 import game.cards;
 import realm.engine.asset;
+import std.random;
+import std.range;
 __gshared GameEntityManager gameEntityManager;
 __gshared CardManager cardManager;
 
@@ -44,7 +46,9 @@ class RealmGame : RealmApp
 
 		player = gameEntityManager.instantiate!(Player);
 		infoBar = gameEntityManager.instantiate!(InfoBar)(windowSize[0],windowSize[1]);
-		cardManager.instantiate!(HouseCard)(houseImage,vec3(0));
+		cardManager.instantiateCard!(HouseCard)(houseImage,vec3(0));
+		cardManager.instantiateCard!(HouseCard)(houseImage,vec3(0));
+		cardManager.instantiateCard!(HouseCard)(houseImage,vec3(0));
 
 	}
 
@@ -68,14 +72,14 @@ class Player
 	mixin RealmEntity!("Player",TimerComponent);
 	ulong coins;
 	ulong tickSpeed;
-	TimerComponent* timer;
+	TimerComponent timer;
 	
 	void start()
 	{
-		tickSpeed = 1000;
-		timer = &(getComponent!(TimerComponent)());
-		(*timer).durration = tickSpeed;
-		(*timer).timerTickCallback = &timerTick;
+		tickSpeed = 500;
+		timer = getComponent!(TimerComponent)();
+		timer.durration = tickSpeed;
+		timer.timerTickCallback = &timerTick;
 	}
 	void update(float dt)
 	{
@@ -86,7 +90,19 @@ class Player
 
 	void timerTick()
 	{
-		coins++;
+		auto result = dice(16.repeat(6));
+		Logger.LogInfo("Roll: %d",result);
+		static foreach(Type; cardManager.EntityTypes)
+		{
+			foreach(card; cardManager.getEntities!(Type)())
+			{
+				if(card.getLuckyNumber() == result)
+				{
+					coins += card.getReward();
+					Logger.LogInfo("Won %d from %s",card.getReward(),card.entityName);
+				}
+			}
+		}
 	}
 
 }
@@ -112,26 +128,13 @@ class InfoBar
 		RealmUI.drawPanel(panel);
 		RealmUI.containerPush(panel);
 		RealmUI.drawTextString(playerCoins,"Coins: %d", player.coins);
-		RealmUI.drawTextString(tickSpeed,"Tick speed: %ds",player.tickSpeed/1000);
+		RealmUI.drawTextString(tickSpeed,"Tick speed: %fs",player.tickSpeed/1000);
 		RealmUI.containerPop();
 	}
 }
 
-struct DiceComponent
-{
-	void componentStart(E)(E parent)
-	{
 
-	}
-	void componentUpdate(E)(E parent)
-	{
-
-	}
-
-
-}
-
-struct TimerComponent
+class TimerComponent
 {
 	long durration;
 	import std.datetime.stopwatch;

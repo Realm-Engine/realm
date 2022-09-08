@@ -10,6 +10,8 @@ import realm.engine.logging;
 import std.file ;
 import std.format;
 import std.digest.md;
+import std.traits;
+
 struct DrawElementsIndirectCommand
 {
     uint count;
@@ -64,7 +66,7 @@ enum GState : GLenum
 {
     DepthTest = GL_DEPTH_TEST,
     Blend = GL_BLEND,
-    FrameBufferSRGB = GL_FRAMEBUFFER_SRGB,
+    MultiSample = GL_MULTISAMPLE,
     None
 }
 
@@ -761,14 +763,18 @@ class GShaderProgramModel(T...)
 
 struct GFrameBufferAttachment
 {
-  
-    GSamplerObject!(GTextureType.TEXTURE2D) texture;
+   
+   
+   GSamplerObject!(GTextureType.TEXTURE2D) texture;
         
+	
+    
+    
 	
     
     int colorSlot = 0;
     GFrameBufferAttachmentType attachmentType;
-    this(GFrameBufferAttachmentType type,int width, int height)
+    this(GFrameBufferAttachmentType type,int width, int height,bool multisampled = false)
     {
 
         texture.create();
@@ -789,21 +795,29 @@ struct GFrameBufferAttachment
         {
             desc.fmt = ImageFormat.DEPTH_STENCIL;
         }
+        desc.isMultisampled = multisampled;
         texture.textureDesc = desc;
         texture.store(width,height);
+       
         texture.uploadImage(0,0,null);
+		
+        
         attachmentType = type;
     }
-	this(GFrameBufferAttachmentType type,int width, int height,ImageFormat fmt)
+	this(GFrameBufferAttachmentType type,int width, int height,ImageFormat fmt,bool multisampled = false)
     {
         texture.create();
         TextureDesc desc;
         desc.wrap = GTextureWrapFunc.CLAMP_TO_BORDER;
         desc.filter = GTextureFilterFunc.LINEAR;
         desc.fmt = fmt;
+        desc.isMultisampled = multisampled;
         texture.textureDesc = desc;
         texture.store(width,height);
+       
         texture.uploadImage(0,0,null);
+		
+
         attachmentType = type;
     }
 }
@@ -832,13 +846,21 @@ struct GFrameBuffer
 
 	}
 
-    GFrameBufferAttachment* addAttachment(GFrameBufferAttachmentType type, ImageFormat format)
+    GFrameBufferAttachment* addAttachment(GFrameBufferAttachmentType type, ImageFormat format,bool multisampled = false)
 	{
         glBindFramebuffer(GL_FRAMEBUFFER,id);
-        GFrameBufferAttachment attachment = GFrameBufferAttachment(type,width,height,format);
+        GFrameBufferAttachment attachment = GFrameBufferAttachment(type,width,height,format,multisampled);
         fbAttachments[type] = attachment;
         attachment.texture.bind();
-        glFramebufferTexture2D(GL_FRAMEBUFFER,type,GL_TEXTURE_2D,attachment.texture.ID(),0);
+        if(!multisampled)
+		{
+            glFramebufferTexture2D(GL_FRAMEBUFFER,type,GL_TEXTURE_2D,attachment.texture.ID(),0);
+		}
+        else
+		{
+            glFramebufferTexture(GL_FRAMEBUFFER,type,attachment.texture.ID(),0);
+		}
+        
         
         Logger.Assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE,"Framebuffer %d not complete error: %d",id, glCheckFramebufferStatus(GL_FRAMEBUFFER));
         attachment.texture.unbind();
@@ -856,7 +878,7 @@ struct GFrameBuffer
 
     
 
-    void create(bool multisampled = false)(int width, int height,GFrameBufferAttachmentType[] attachmentTypes)
+    void create(int width, int height,GFrameBufferAttachmentType[] attachmentTypes)
 	in(width * height >0,"Framebuffer area must be bigger than 0")
     {
         import std.algorithm.searching :find;
@@ -981,7 +1003,8 @@ struct GSamplerObject(GTextureType target)
 {
     import std.meta;
     enum is3dTexture = (target == GTextureType.TEXTURE2DARRAY || target == GTextureType.TEXTURE3D);
-    enum isMultisampled = (target == GTextureType.TEXTURE2D_MULTISAMPLE);
+    
+
     mixin OpenGLObject;
     private GLenum wrapFunc;
     private GLenum filterFunc;
@@ -992,8 +1015,14 @@ struct GSamplerObject(GTextureType target)
     private int texSlot;
     private int channels;
     private int bpc;
+    private bool multisampled;
     int width;
     int height;
+    
+	static if (is3dTexture)
+    {
+        int depth;
+    }
     bool destroyed;
     
     invariant()
@@ -1008,36 +1037,45 @@ struct GSamplerObject(GTextureType target)
 
     @property filter(GTextureFilterFunc func)
 	{
-        glBindTexture(target,id);
+        bind();
         filterFunc = func;
 		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, func);
         glTexParameteri(target, GL_TEXTURE_MAG_FILTER, func);
-        glBindTexture(0,id);
+        unbind();
 	}
     @property wrap(GTextureWrapFunc func)
 	{
-		glBindTexture(target,id);
+		bind();
         wrapFunc = func;
 		glTexParameteri(target, GL_TEXTURE_WRAP_S, func);
         glTexParameteri(target, GL_TEXTURE_WRAP_T, func);
-        glBindTexture(0,id);
+        unbind();
 	}
 
     @property border(float[4] borderColor)
 	{
-		glBindTexture(target,id);
+		bind();
 		glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, borderColor.ptr);
-        glBindTexture(0,id);
+        unbind();
 	}
 
 
-    static if (is3dTexture)
-    {
-        int depth;
-    }
+
     @property textureDesc(TextureDesc desc)
     {
-        glBindTexture(target, id);
+        multisampled = desc.isMultisampled;
+        GLenum texType;
+        if(!desc.isMultisampled)
+		{
+            texType = target;
+            glBindTexture(target, id);
+		}
+        else
+		{   
+            texType = GL_TEXTURE_2D_MULTISAMPLE;
+            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,id);
+		}
+        
         wrapFunc = desc.wrap;
         filterFunc = desc.filter;
         internalFormat = desc.fmt.sizedFormat;
@@ -1046,13 +1084,15 @@ struct GSamplerObject(GTextureType target)
         mipLevels = 3;
         channels = desc.fmt.channels;
         bpc = desc.fmt.bpc;
-        glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapFunc);
-        glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapFunc);
-        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterFunc);
-        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterFunc);
+        glTexParameteri(texType, GL_TEXTURE_WRAP_S, wrapFunc);
+        glTexParameteri(texType, GL_TEXTURE_WRAP_T, wrapFunc);
+        glTexParameteri(texType, GL_TEXTURE_MIN_FILTER, filterFunc);
+        glTexParameteri(texType, GL_TEXTURE_MAG_FILTER, filterFunc);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glPixelStorei(GL_PACK_ALIGNMENT,1);
-        glBindTexture(target, 0);
+        
+        
+        unbind();
 
     }
 
@@ -1074,56 +1114,64 @@ struct GSamplerObject(GTextureType target)
     void setActive()
     {
         glActiveTexture(GL_TEXTURE0 + texSlot);
-        glBindTexture(target, id);
+        bind();
 
     }
 
     void setActive(int slot)
     {
         glActiveTexture(GL_TEXTURE0 + slot);
-        glBindTexture(target,id);
+        bind();
     }
 
-    void bind()
-    {
-        glBindTexture(target,id);
-    }
-    void unbind()
-    {
-        glBindTexture(target,0);
-    }
+    
 
-    static if (target == GTextureType.TEXTURE2D || target == GTextureType.TEXTURE2D_MULTISAMPLE)
+    static if (target == GTextureType.TEXTURE2D)
     {
-        static if(target == GTextureType.TEXTURE2D_MULTISAMPLE)
+   
+       
+        void bind()
 		{
-            private alias store2D =  glTexStorage2DMultisample;
-            private alias texImage2D = glTexImage2DMultisample;
+			if(!multisampled)
+			{
+				glBindTexture(target,id);
+			}
+			else
+			{
+				glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,id);
+			}
+
 		}
-        static if(target == GTextureType.TEXTURE2D)
+		void unbind()
 		{
-            private alias store2D = glTexStorage2D;
-            private alias texImage2D = glTexImage2D;
+			if(!multisampled)
+			{
+				glBindTexture(target,0);
+			}
+			else
+			{
+				glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,0);
+			}
 		}
 
         void store(int width, int height)
         in(width * height > 0,"Area must be greater than 1")
         {
 
-            glBindTexture(target, id);
-            static if(target == GTextureType.TEXTURE2D)
+            bind();
+            if(!multisampled)
 			{
-                store2D(target, mipLevels, internalFormat, width, height);
+                glTexStorage2D(target, mipLevels, internalFormat, width, height);
 			}
             else
 			{
-                store2D(target, mipLevels, internalFormat, width, height,GL_TRUE);
+                glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 8, internalFormat, width, height,GL_TRUE);
 			}
 
             this.width = width;
             this.height = height;
 
-            glBindTexture(target, 0);
+            unbind();
 
         }
     
@@ -1140,18 +1188,19 @@ struct GSamplerObject(GTextureType target)
 		}
 
         void clear(T)(int level,T[] color)
+        in(!multisampled,"Cant upload image to multisampled texture")
 		{
 
             glBindTexture(target,id);
-            //ubyte[4] clearColor = [255,255,255,255];
+
             glClearTexImage(this,level,format,dataType,color.ptr);
             glBindTexture(target,0);
 
 		}
 
         void clear(T)(int level, int xoffset,int yoffset, int width, int height,T[] color)
+        in(!multisampled,"Cant upload image to multisampled texture")
 		{
-            //[4] clearColor = [1,1,1,1];
             glBindTexture(target,id);
             glClearTexSubImage(this,level,xoffset,yoffset,0,width,height,1,format,dataType,color.ptr);
             glBindTexture(target,0);
@@ -1159,70 +1208,88 @@ struct GSamplerObject(GTextureType target)
 
 	
         void uploadSubImage(int level, int xoffset, int yoffset, int width, int height, ubyte* data)
-        //in(data !is null)
+        in(!multisampled,"Cant upload image to multisampled texture")
         {
-            //assert(data != null);
             glBindTexture(target, id);
             glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, dataType, data);
             glBindTexture(target, 0);
         }
 		void uploadSubImage(int level, int xoffset, int yoffset, int width, int height, ushort* data)
-			//in(data !is null)
+        in(!multisampled,"Cant upload image to multisampled texture")
         {
-            //assert(data != null);
+           
             glBindTexture(target, id);
             glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, dataType, data);
             glBindTexture(target, 0);
         }
 
         void uploadImage(int level, int border, ubyte* data)
+       
         {
-            glBindTexture(target, id);
-            static if(target == GTextureType.TEXTURE2D)
+            bind();
+            if(!multisampled)
 			{
-				texImage2D(target, level, internalFormat, width, height, border,
-						   format, dataType, data);
+				glTexImage2D(target, level, internalFormat, width, height, border,
+							 format, dataType, data);
+
 			}
             else
 			{
-				texImage2D(target, level, internalFormat, width, height, border,
-						   format, dataType, data,GL_TRUE);
+                glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,8,internalFormat,width,height,GL_TRUE);
 			}
 
-            glBindTexture(target, 0);
+          
+            unbind();
         }
 
 
     }
-    static if (target == GTextureType.TEXTURE2DARRAY || target == GTextureType.TEXTURE3D)
-    {
-        void store(int width, int height, int depth)
+
+    static if(target == TextureType.CUBEMAP)
+	{
+        invariant
+		{
+            assert(!multisampled,"Cubemaps can not be multisampled");
+		}
+
+        void bind()
+		{
+			glBindTexture(GL_TEXTURE_CUBE_MAP,id);
+
+		}
+		void unbind()
+		{
+			glBindTexture(GL_TEXTURE_CUBE_MAP,0);
+		}
+
+        void store(int width, int height)
         in(width * height > 0,"Area must be greater than 1")
         {
-            glBindTexture(target, id);
-            glTexStorage3D(target, mipLevels, internalFormat, width, height, depth);
-            glBindTexture(target, 0);
-            target.glGenerateMipmap();
+
+            bind();
+            glTexStorage2D(target, mipLevels, internalFormat, width, height);
+            this.width = width;
+            this.height = height;
+
+            unbind();
+
         }
 
-        void uploadSubImage(int level, int xoffset, int yoffset, int zoffset,int width, int height, int depth, ubyte* data)
-        in(data !is null)
-        {
-            glBindTexture(target, id);
-            glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width,
-                    height, depth, format, dataType, data);
-            glBindTexture(target, 0);
-        }
+        void uploadFace(GCubemapFace face, int level, int border, in ubyte[] data)
+		{
+            bind();
+            glTexSubImage2D(target,level,0,0,width,height,format,dataType,data.ptr);
+            unbind();
+		}
 
-    }
-
-
-
-    static if(target == GTextureType.CUBEMAP)
-    {
-
-    }
-
+        void clearFace(T)(GCubemapFace face, int level, in T[] color)
+		{
+            bind();
+            glClearTexSubImage(this,level,0,0,5 -(GCubemapFace.NEGATIVE_Z - face),width,height,1,format,dataType,color.ptr);
+            unbind();
+		}
+	}
+    
     void free()
 	{
         glDeleteTextures(1,&id);
@@ -1457,8 +1524,7 @@ enum GTextureType : GLenum
     CUBEMAP = GL_TEXTURE_CUBE_MAP,
     TEXTURE2D = GL_TEXTURE_2D,
     TEXTURE3D = GL_TEXTURE_3D,
-    TEXTURE2DARRAY = GL_TEXTURE_2D_ARRAY,
-    TEXTURE2D_MULTISAMPLE
+    TEXTURE2DARRAY = GL_TEXTURE_2D_ARRAY
 
 }
 
@@ -1550,6 +1616,19 @@ enum GCullFace : GLenum
     BACK = GL_BACK
 }
 
+enum GCubemapFace : GLenum
+{
+    POSITIVE_X =  GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+    POSITIVE_Y = GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+    POSITIVE_Z = GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+    NEGATIVE_X = GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+    NEGATIVE_Y = GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+    NEGATIVE_Z = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
+
+  
+
+    
+}
 
 
 

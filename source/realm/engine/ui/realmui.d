@@ -203,7 +203,7 @@ static class RealmUI
 	{
 		TextureDesc desc =TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER);
 		Texture2D texture = new Texture2D(&panelImage);
-		return createElement(transform.position,transform.scale,transform.getRotationEuler(),texture,desc);
+		return createElement(transform,texture,desc);
 	}
 	static UIElement createElement(vec3 position, vec3 scale, vec3 rotation)
 	{
@@ -214,10 +214,21 @@ static class RealmUI
 
 	}
 
-	static createElement(Transform transform, Texture2D texture, TextureDesc textureDesc)
+	static UIElement createElement(ref Transform transform, Texture2D texture, TextureDesc textureDesc)
 	{
-		return createElement(transform.position,transform.scale,transform.getRotationEuler(),texture,textureDesc);
+		UIMaterial material = new UIMaterial;
+		material.setShaderProgram(uiProgram);
+		material.textures.settings = textureDesc;
+		material.textures.baseTexture = texture;
+		material.packTextureAtlas();
+		material.color = vec4(1,1,1,1);	
+		UIElement element = {randomUUID()};
+		UIElements.transforms[element] = transform;
+		UIElements.materials[element] = material;
+		return element;
 	}
+
+	
 
 	static UIElement createElement(vec3 position, vec3 scale, vec3 rotation, Texture2D texture,TextureDesc textureDesc)
 	{
