@@ -107,7 +107,7 @@ static this()
 IFImage readImageBytes(string path)
 {
 	string sysPath = VirtualFS.getSystemPath(path);
-	IFImage img = read_image(sysPath,4);
+	IFImage img;
 	long fmtIndix = lastIndexOf(sysPath,'.');
 	string fmt = sysPath[fmtIndix+1..sysPath.length];
 	switch(fmt)

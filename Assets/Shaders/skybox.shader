@@ -27,5 +27,5 @@ vec4 fragment()
 {
 
 	
-	return texture(envSkybox, vec3(RESurfaceDataIn.eyeSpacePosition));
+	return texture(envSkybox, vec3(normalize(RESurfaceDataIn.eyeSpacePosition)));
 }

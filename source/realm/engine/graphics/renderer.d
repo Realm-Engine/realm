@@ -148,6 +148,7 @@ class Renderer
 		GraphicsSubsystem.updateGlobalData(&_globalData);
 		initRenderpasses();
 		enable(State.Blend);
+		enable(State.CullFace);
 		blendFunc(BlendFuncType.SRC_ALPHA,BlendFuncType.ONE_MINUS_SRC_ALPHA);
 		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(20,20),-20,20,0);
 		screenCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(windowSize[0],windowSize[1]),-1,100,0);
@@ -221,9 +222,9 @@ class Renderer
 		skyboxBatch.reserve(SkyboxMaterial.getNumMaterialInstances());
 
 		skyBox.create();
-		TextureDesc desc = TextureDesc(ImageFormat.RGB8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER );
+		TextureDesc desc = TextureDesc(ImageFormat.SRGB8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER );
 		skyBox.textureDesc = desc;
-		skyBox.store(128,128);
+		skyBox.store(2048,2048);
 		ubyte[3] y = [0,255,0];
 		ubyte[3] x = [255,0,0];	
 		ubyte[3] z = [0,0,255];
@@ -235,6 +236,38 @@ class Renderer
 		//    skyBox.clearFace!(ubyte)(face,0,clearColor);
 		//}
 
+	}
+
+	void setSkybox(in Skybox skybox)
+	{
+		if(skybox.getFaceType() == Skybox.FaceType.Colored)
+		{
+			static foreach(face; CubemapFaces)
+			{
+				{
+					ubyte[3] color;
+					color[0] = cast(ubyte)(skybox.faceColors[CubemapFaceIndex!(face)].r * 255.0f);
+					color[1] = cast(ubyte)(skybox.faceColors[CubemapFaceIndex!(face)].g * 255.0f);
+					color[2] = cast(ubyte)(skybox.faceColors[CubemapFaceIndex!(face)].b * 255.0f);
+					skyBox.clearFace!(ubyte)(face,0,color);
+				}
+			}
+		}
+		else if (skybox.getFaceType() == Skybox.FaceType.Cubemap)
+		{
+			static foreach(face; CubemapFaces)
+			{
+				{
+					const(IFImage) img = skybox.faceTextures[CubemapFaceIndex!(face)];
+					if(img.w * img.h > 0)
+					{
+						skyBox.uploadFace(face,0,0,img.buf8);
+					}
+				}
+
+				
+			}
+		}
 	}
 
 
@@ -425,12 +458,12 @@ class Renderer
 		{
 			updateMainLight();
 		}
-
+		
 		renderLightSpace();
+		cull(CullFace.BACK);
 		if(camera !is null)
 		{
-			//mat4 vp = camera.projection * camera.view;
-			//vp.transpose();
+
 			_globalData.viewMatrix[0..$] = camera.view.transposed.value_ptr[0..16].dup;
 			_globalData.projectionMatrix[0..$] = camera.projection.transposed.value_ptr[0..16].dup;
 			//_globalData.vp[0..$] = vp.value_ptr[0..16].dup;
@@ -441,10 +474,6 @@ class Renderer
 			_globalData.size[0..$] = camera.size.value_ptr[0..2].dup;
 		}
 		GraphicsSubsystem.updateGlobalData(&_globalData);
-		//renderDepthPrepass();
-		
-
-		
 		setViewport(0,0,geometryPass.getFramebuffer().width,geometryPass.getFramebuffer().height);
 		auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
 		geometryPass.getFramebuffer().bind(FrameBufferTarget.DRAW);
@@ -497,6 +526,7 @@ class Renderer
 		skyboxBatch.drawBatch!(false)();
 		skyboxBatch.resetBatch();
 		setDepthFunc(DepthFunc.LESS);
+		
 		
 
 	}

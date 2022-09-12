@@ -30,7 +30,7 @@ mixin template GameEntity(string name ,T...)
 		return entityShader;
 	}
 
-	SimpleMaterial getMaterial()
+	ref SimpleMaterial getMaterial()
 	{
 		return material;
 	}

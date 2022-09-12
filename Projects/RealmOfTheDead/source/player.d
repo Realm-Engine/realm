@@ -52,17 +52,14 @@ class Player
 		SimpleMaterial.allocate(mesh);
 		material.shinyness = 1.0f;
 		material.specularPower = 1.0f;
-		material.textures.normal = Vector!(int, 4)(0);
+		material.textures.normal = Vector!(int, 4)(0,0,255,0);
 		material.color = vec4(1);
-		material.textures.diffuse = Vector!(int, 4)(255);
-		material.textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
+
+		material.textures.diffuse = Vector!(int, 4)(65,123,67,256);
+		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		material.setShaderProgram(getEntityShader());
 
-        //camera.transform.setRotationEuler(vec3(0,90,0));
-        //camera.turn(vec2(90,-80));
-        //camera.update();
-		// setComponent!(Transform)(new Transform);
         transform = getComponent!(Transform);
         //transform.setParent(*camera);
         camera.setParent(transform);
@@ -122,10 +119,7 @@ class Player
             movementVector += transform.front.cross(vec3(0,1,0)).normalized() ;
 		}
         //Logger.LogInfo("DT: %f", dt);
-        if(!onGround)
-		{
-            movementVector.y -= 1 * dt;
-		}
+       
 
         
         transform.position += movementVector;
@@ -187,7 +181,7 @@ class Player
                 if(geo.entityName == "Floor")
 				{
                     onGround = true;
-                    Logger.LogInfo("On ground");
+                   
 				}
 				
 			}

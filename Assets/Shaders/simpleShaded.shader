@@ -43,10 +43,13 @@ vec3 calculateLighting(vec3 normal,vec3 ambient)
 vec4 fragment()
 {
 
-	vec3 ambient = vec3(0.1);
-	vec3 normal = RESurfaceDataIn.normal;
+	vec3 ambient = vec3(0.2);
+	vec3 normal = SAMPLE_TEXTURE(normal, RESurfaceDataIn.texCoord).rgb;
+	normal = normalize(RESurfaceDataIn.TBN * normal);
 	
-
+	
+	vec3 r = reflect(vec3(camera.direction), normalize(normal));
+	vec3 env = vec3(texture(envSkybox, r));
 	vec4 color = SAMPLE_TEXTURE(diffuse, RESurfaceDataIn.texCoord);
 	vec3 lighting = calculateLighting(normal,ambient);
 	float bias = max(0.05 * (1.0 - dot(normal, mainLight.direction.xyz)), 0.005);
@@ -57,6 +60,6 @@ vec4 fragment()
 	fog = 1.0 - clamp(exp(-0.1 * fog),0.0,1.0);
 
 	vec3 frag = (ambient + (1-shadow)) *  (color.rgb * lighting);
-	frag = mix(vec4(frag, 1.0), vec4(0.1, 0.1, 0.1, 1.0), fog).rgb;
-	return vec4(frag , color.a) * getObjectData(color);
+	//frag = mix(vec4(frag, 1.0), vec4(0.1, 0.1, 0.1, 1.0), fog).rgb;
+	return vec4(frag, color.a) * getObjectData(color);
 }

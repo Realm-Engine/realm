@@ -27,7 +27,9 @@ class RealmGame : RealmApp
 	private RealmUI.UIElement deltaTime;
 	private RealmUI.UIElement graphicsPanel;
 	private RealmUI.UIElement gammaSlider;
+	private GameGeometry sphere;
 	float gamma = 1.0f;
+	private Skybox skybox;
 	this(int width, int height, const char* title,string[] args)
 	{
 		super(width,height,title,args);
@@ -36,7 +38,7 @@ class RealmGame : RealmApp
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height) / 1,0.1,750,60);
 		Renderer.get.activeCamera = &cam;
 		SimpleMaterial.initialze();
-		SimpleMaterial.reserve(4);
+		SimpleMaterial.reserve(5);
 
 	}
 
@@ -53,7 +55,28 @@ class RealmGame : RealmApp
 		graphicsPanel = RealmUI.createElement(vec3(windowSize[0]-800,windowSize[1]-200,0),vec3(300,200,1),vec3(0));
 		gammaSlider = RealmUI.createElement(vec3(windowSize[0]-800,windowSize[1]-200,0),vec3(300,25,1),vec3(0));
 		
+
 		
+		
+	}
+
+	void initSkybox()
+	{
+		skybox = new Skybox;
+		IFImage[6] faces;
+		faces[CubemapFaceIndex!(CubemapFace.POSITIVE_Y)] = readImageBytes("$Assets/Images/skybox/top.jpg");
+		faces[CubemapFaceIndex!(CubemapFace.NEGATIVE_Y)] = readImageBytes("$Assets/Images/skybox/bottom.jpg");
+		faces[CubemapFaceIndex!(CubemapFace.POSITIVE_X)] = readImageBytes("$Assets/Images/skybox/right.jpg");
+		faces[CubemapFaceIndex!(CubemapFace.NEGATIVE_X)] = readImageBytes("$Assets/Images/skybox/left.jpg");
+		faces[CubemapFaceIndex!(CubemapFace.POSITIVE_Z)] = readImageBytes("$Assets/Images/skybox/front.jpg");
+		faces[CubemapFaceIndex!(CubemapFace.NEGATIVE_Z)] = readImageBytes("$Assets/Images/skybox/back.jpg");
+		static foreach(face; CubemapFaces)
+		{
+			skybox.setFace!(face)(faces[CubemapFaceIndex!(face)]);
+		}
+
+		
+	
 	}
 
 	override void start()
@@ -79,6 +102,17 @@ class RealmGame : RealmApp
 		geo.entityName = "Crates";
 		floor = _manager.instantiate!(GameGeometry)(generateFace(vec3(0,1,0),8));
 		floor.entityName = "Floor";
+		floor.active = false;
+		sphere = _manager.instantiate!(GameGeometry)(loadMesh("$EngineAssets/Models/sphere.obj"));
+		SimpleMaterial sphereMaterial = sphere.getMaterial();
+		sphereMaterial.color = vec4(1);
+		IFImage sphereNormal = readImageBytes("$EngineAssets/Images/Sphere-NormalMap.png");
+		sphere.getComponent!(Transform)().scale = vec3(5,5,5);
+		sphere.getComponent!(Transform)().position = vec3(0,10,0);
+		sphereMaterial.textures.normal = new Texture2D(&sphereNormal);
+		sphereMaterial.textures.diffuse = Vector!(int,4)(255);
+		sphereMaterial.packTextureAtlas();
+		
 		SimpleMaterial geoMaterial = geo.getMaterial();
 		geo.setBaseMap(readImageBytes("$Assets/Images/crates.png"));
 		geoMaterial.shinyness = 32.0f;
@@ -90,7 +124,9 @@ class RealmGame : RealmApp
 		floor.setBaseMap(Vector!(int,4)(255));
 		floor.getComponent!(Transform)().scale = vec3(10,1,10);
 		floor.getComponent!(Transform)().position = vec3(0,-2,0);
-
+		initSkybox();
+		Renderer.get.setSkybox(skybox);
+		skybox.freeFaces();
 		
 
 		

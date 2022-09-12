@@ -1,6 +1,8 @@
 module realm.engine.graphics.core;
 import gl3n.linalg;
 import std.format;
+import std.meta;
+import std.traits;
 import realm.engine.graphics.opengl;
 private
 {
@@ -51,6 +53,8 @@ alias drawBuffers = gDrawBuffers;
 
 alias StandardShaderModel = ShaderProgramModel!(ShaderType.VERTEX,ShaderType.FRAGMENT);
 alias ComputeShader = ShaderProgramModel!(ShaderType.COMPUTE);
+alias CubemapFaces = AliasSeq!(EnumMembers!GCubemapFace);
+enum CubemapFaceIndex(GCubemapFace face ) = 5-(GCubemapFace.NEGATIVE_Z - face);
 
 /// Used to encode information about data types for vertice layout
 enum VertexType : int
@@ -112,6 +116,59 @@ struct TextureDesc
 	TextureWrapFunc wrap = TextureWrapFunc.CLAMP_TO_BORDER;
 	int mipLevels = 0;
 	bool isMultisampled = false;
+}
+
+class Skybox
+{	
+	
+	enum FaceType
+	{
+		Cubemap,
+		Colored,
+		Equirectangular
+	}
+	
+	private FaceType faceType = FaceType.Cubemap;
+
+	union
+	{
+		IFImage[6] faceTextures;
+		vec4[6] faceColors;
+		IFImage equirectImage;
+	}
+
+	this()
+	{
+		faceType = FaceType.Cubemap;
+	}
+
+	this(vec4 color)
+	{
+		faceType = FaceType.Colored;
+		static foreach(face; CubemapFaces)
+		{
+			faceColors[CubemapFaceIndex!(face)] = color;
+		}
+	}
+
+	const FaceType getFaceType()
+	{
+		return faceType;
+	}
+	void setFace(CubemapFace Face)(ref IFImage image)
+	{
+		faceTextures[CubemapFaceIndex!(Face)] = image;
+	}
+
+	void freeFaces()
+	{
+		foreach(img; faceTextures)
+		{
+			img.free();
+		}
+	}
+
+
 }
 
 class Texture2D
@@ -188,6 +245,8 @@ enum ImageFormat : ImageFormatData
 	SRGBA8 = ImageFormatData(BaseImageFormat.RGBA,SizedImageFormat.SRGBA8,4,8)
 
 }
+
+
 
 
 /// Raw data structure holding global data for use by all shaders

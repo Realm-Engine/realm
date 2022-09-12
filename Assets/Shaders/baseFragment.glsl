@@ -16,7 +16,7 @@ in RESurfaceData
 	vec2 texCoord;
 	flat int objectId;
 	Material material;
-	vec3 normal;
+	smooth vec3 normal;
 	mat3 TBN;
 	vec4 lightSpacePosition;
 	vec4 eyeSpacePosition;

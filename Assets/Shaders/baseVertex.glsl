@@ -2,9 +2,9 @@
 
 layout(location = 0) in vec3 v_Position;
 layout(location = 1) in vec2 v_TexCoord;
-layout(location =2) in vec3 v_Normal;
-layout(location =3) in vec3 v_Tangent;
-layout(location =4) in int v_MaterialID;
+layout(location = 2) in vec3 v_Normal;
+layout(location = 3) in vec3 v_Tangent;
+layout(location = 4) in int v_MaterialID;
 
 out gl_PerVertex
 {
@@ -29,7 +29,7 @@ out RESurfaceData
 	vec2 texCoord;
 	flat int objectId;
 	Material material;
-	vec3 normal;
+	noperspective vec3 normal;
 	mat3 TBN;
 	vec4 lightSpacePosition;
 	vec4 eyeSpacePosition;

@@ -73,7 +73,7 @@ class Batch(T)
 		shaderPipeline.useProgramStages(program);
 
 		objectToWorldMats.create();
-		objectToWorldMats.bindBase(1);
+		objectToWorldMats.bindBase(2);
 		
 	}
 

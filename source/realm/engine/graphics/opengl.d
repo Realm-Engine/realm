@@ -11,7 +11,7 @@ import std.file ;
 import std.format;
 import std.digest.md;
 import std.traits;
-
+import std.meta;
 struct DrawElementsIndirectCommand
 {
     uint count;
@@ -67,6 +67,7 @@ enum GState : GLenum
     DepthTest = GL_DEPTH_TEST,
     Blend = GL_BLEND,
     MultiSample = GL_MULTISAMPLE,
+    CullFace = GL_CULL_FACE,
     None
 }
 
@@ -1279,7 +1280,7 @@ struct GSamplerObject(GTextureType target)
         void uploadFace(GCubemapFace face, int level, int border, in ubyte[] data)
 		{
             bind();
-            glTexSubImage2D(target,level,0,0,width,height,format,dataType,data.ptr);
+            glTexSubImage2D(face,level,0,0,width,height,format,dataType,data.ptr);
             unbind();
 		}
 
@@ -1635,10 +1636,10 @@ enum GCubemapFace : GLenum
     NEGATIVE_Y = GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
     NEGATIVE_Z = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
 
-  
-
     
 }
+
+
 
 enum GDepthFunc : GLenum
 {
