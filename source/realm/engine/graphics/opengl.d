@@ -96,12 +96,21 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
     private size_t ringPtr;
     private size_t ringSize;
     
-
+    
 
     static if (usage == GBufferUsage.MappedWrite  || usage == GBufferUsage.MappedRead)
     {
 
+        
         private T* glPtr;
+
+        this(uint id,size_t ringPtr,size_t ringSize,T[] dataPtr)
+		{
+            this.id = id;
+            this.ringPtr = ringPtr;
+            this.ringSize = ringSize;
+            this.glPtr = dataPtr.ptr;
+		}
 
         @property ptr()
         {
@@ -122,6 +131,36 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
             mapBuffer();
             unbind();
 
+		}
+
+        ref inout(T) opIndex(int i) inout
+	    in(i < ringSize,"Trying to access out of bounds")
+		{
+            return glPtr[i];
+		}
+
+		//T[] opIndex(ulong[2] range)
+		//{
+		//    ulong i = range[0];
+		//    ulong j = range[1];
+		//    return glPtr[i..j];
+		//}
+        auto ref opSlice(ulong start, ulong end)
+        in
+		{
+            assert(end>= 0 &&end <= ringSize,"Trying to slice out of bounds");
+            assert(start >=0 && start <= ringSize,"Tring to slice out of bounds");
+		}
+        do
+		{
+			ulong size = end-start;
+            assert(ringPtr < size,"Current pointer out of range of slice");
+            
+            return glPtr[start..end];
+		}
+        void opSliceAssign(T[] value, ulong i, ulong j)
+		{
+            glPtr[i..j] = value;
 		}
 
        
@@ -236,6 +275,11 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
     {
         return T.sizeof;
     }
+
+    ~this()
+	{
+        Logger.LogInfo("%s(%s) %d destroyed",bufferType.stringof,T.stringof, id);
+	}
 
 }
 

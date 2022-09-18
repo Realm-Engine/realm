@@ -177,8 +177,11 @@ class Batch(T)
 		static assert(isMaterial!(Mat));
 		uint elementOffset = ( cmdBufferBase * (maxIndicesInFrame )) + numIndicesInFrame;
 		uint offset = ( cmdBufferBase * capacity) + numVerticesInFrame;
-		vertexBuffer.ptr[offset .. offset + vertices.length] = vertices;
+		vertexBuffer[offset .. offset + vertices.length] = vertices;
 		elementBuffer.ptr[elementOffset .. elementOffset + faces.length] = faces;
+		auto slice = vertexBuffer[0 .. 2];
+		auto element = slice[0];
+		
 		DrawElementsIndirectCommand cmd;
 		cmd.count = cast(uint)faces.length;
 		cmd.instanceCount =cast(uint) faces.length / topology;
