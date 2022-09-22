@@ -46,9 +46,15 @@ mixin template OpenGLObject()
 enum GBufferUsage : GLenum
 {
     MappedRead = GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT,
-    MappedWrite = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT,
+    MappedWrite = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT,
     WriteOnlyTemp = GL_MAP_WRITE_BIT,
     Buffered = GL_DYNAMIC_STORAGE_BIT
+}
+
+enum GBufferStorageMode : GLenum
+{
+    Mutable = GL_NONE,
+    Immutable = GL_MAP_WRITE_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT
 }
 
 enum GBufferType : GLenum
@@ -93,9 +99,15 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
     static assert(isValidBufferTarget!(bufferType),bufferType.stringof ~ " does not have a valid buffer type");
     mixin OpenGLObject;
 
-    private size_t ringPtr;
-    private size_t ringSize;
-    
+    private size_t capacity;
+    private size_t len;
+
+   
+    pragma(inline)
+    size_t bufferCapacityBytes()
+	{
+        return capacity * T.sizeof;
+	}
     
 
     static if (usage == GBufferUsage.MappedWrite  || usage == GBufferUsage.MappedRead)
@@ -104,11 +116,11 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
         
         private T* glPtr;
 
-        this(uint id,size_t ringPtr,size_t ringSize,T[] dataPtr)
+        this(uint id,size_t cap,size_t len,T[] dataPtr)
 		{
             this.id = id;
-            this.ringPtr = ringPtr;
-            this.ringSize = ringSize;
+            this.capacity = cap;
+            this.len = len;
             this.glPtr = dataPtr.ptr;
 		}
 
@@ -118,11 +130,16 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 
         }
 
-        @property length()
-        {
-            return (ringSize / T.sizeof);
 
-        }
+		@property length(size_t size)
+		{
+			len = size;
+		}
+
+		@property length()
+		{
+			return len;
+		}
 
         void refreshPointer()
 		{
@@ -134,34 +151,41 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 		}
 
         ref inout(T) opIndex(int i) inout
-	    in(i < ringSize,"Trying to access out of bounds")
+	    in(i < capacity,"Trying to access out of bounds")
 		{
             return glPtr[i];
 		}
 
-		//T[] opIndex(ulong[2] range)
-		//{
-		//    ulong i = range[0];
-		//    ulong j = range[1];
-		//    return glPtr[i..j];
-		//}
+		
         auto ref opSlice(ulong start, ulong end)
         in
 		{
-            assert(end>= 0 &&end <= ringSize,"Trying to slice out of bounds");
-            assert(start >=0 && start <= ringSize,"Tring to slice out of bounds");
+            assert(end>= 0 &&end <= capacity,"Trying to slice out of bounds");
+            assert(start >=0 && start <= capacity,"Tring to slice out of bounds");
 		}
         do
 		{
 			ulong size = end-start;
-            assert(ringPtr < size,"Current pointer out of range of slice");
+            assert(len < size,"Current pointer out of range of slice");
             
             return glPtr[start..end];
 		}
         void opSliceAssign(T[] value, ulong i, ulong j)
 		{
+            capacity = j;
             glPtr[i..j] = value;
+            
 		}
+        void pushBack(T element)
+		{
+            if(len+1 >= capacity)
+			{
+                Logger.LogInfo("Buffer %d resizing to %d", id,capacity+1);
+                store(capacity + 1,glPtr);
+			}
+            glPtr[len++] = element;
+		}
+
 
        
         
@@ -174,11 +198,16 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 			
 			long bufferSize = getParameter!(long)(GL_BUFFER_SIZE);
 
-			assert(bufferSize == ringSize,"Buffer storage allocated less than requested");
+			assert(bufferSize == bufferCapacityBytes,"Buffer storage allocated less than requested");
 		}
         do
 		{
-			glPtr = cast(T*) glMapBufferRange(bufferType, 0, ringSize, usage);
+            if(glPtr != null)
+			{
+                glUnmapNamedBuffer(this);
+			}
+            
+			glPtr = cast(T*) glMapBufferRange(bufferType, 0, bufferCapacityBytes, usage);
             
             Logger.Assert(glPtr !is null,"Could not map buffer: %s", bufferType.stringof);
 		}
@@ -203,28 +232,34 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 
     }
 
-    
-
-    void store(size_t size)
-    in(size > 0, "Buffer size must be positive")
+    void store(size_t size,T* data)
+	in(size > 0, "Buffer size must be greater than zero")
 	out
 	{
-       
+
         long bufferSize = getParameter!(long)(GL_BUFFER_SIZE);
-        
-        assert(bufferSize == ringSize,"Buffer storage allocated less than requested");
+
+        assert(bufferSize == bufferCapacityBytes,"Buffer storage allocated less than requested");
 
 	}
     do
-    {
-    
-        glBufferStorage(bufferType, size * T.sizeof, null, usage);
-        ringPtr = 0;
-        ringSize = size * T.sizeof;
+	{
+        bind();
+        glBufferStorage(bufferType,size * T.sizeof,data,usage);
+        len = 0;
+        capacity = size;
         static if (usage == GBufferUsage.MappedWrite || usage == GBufferUsage.MappedRead)
         {
             mapBuffer();
         }
+        unbind();
+
+	}
+
+    void store(size_t size)
+    {
+    
+        store(size,null);
 
     }
 
@@ -252,13 +287,13 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 	in
 	{
         assert(id > 0,"Trying to buffer data to non exsistent buffer");
-        assert(length <= ringSize,"Cant write more data than allocated");
+        assert(length <= capacity,"Cant write more data than allocated");
 	}
     do
     {
-        size_t dataStart = ringPtr;
-        glBufferSubData(bufferType, ringPtr, length * T.sizeof, data);
-        ringPtr += length * T.sizeof % ringSize;
+        size_t dataStart = len;
+        glBufferSubData(bufferType, len, length * T.sizeof, data);
+        len += length  % capacity;
         return dataStart;
 
     }
@@ -268,7 +303,7 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
     void invalidate()
     {
         glInvalidateBufferData(id);
-        ringPtr = 0;
+        len = 0;
     }
 
     @property elementSize()

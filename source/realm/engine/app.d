@@ -86,7 +86,7 @@ class RealmApp
         InputManager.initialze(window);
         glfwSwapInterval(1);
         processArgs(args);
-        ///enableDebugging();
+        enableDebugging();
         
 
 

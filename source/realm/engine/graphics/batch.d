@@ -34,12 +34,13 @@ class Batch(T)
 	private uint numElementsInFrame;
 	private uint numVerticesInFrame;
 	private uint numIndicesInFrame;
+	private uint maxElementsInFrame;
+	private uint maxIndicesInFrame;
 	private uint capacity;
 	private MeshTopology topology;
 	private uint cmdBufferBase;
 	private uint bufferAmount;
-	private uint maxElementsInFrame;
-	private uint maxIndicesInFrame;
+
 	private SamplerObject!(TextureType.TEXTURE2D)*[] textureAtlases;
 	alias BindShaderStorageCallback = void function();
 	private BindShaderStorageCallback bindShaderStorage;
@@ -86,14 +87,12 @@ class Batch(T)
 	{
 		prepareDraw = cb;
 	}
-
-	/// Reserve number of primitive elements (i.e: triangles)
 	void reserve(size_t amount)
 	{
 		this.maxElementsInFrame = cast(uint)amount;
-		cmdBuffer.bind();
-		cmdBuffer.store(amount * bufferAmount);
-		cmdBuffer.unbind();
+		
+		//cmdBuffer.store(amount * bufferAmount);
+		
 		objectToWorldMats.store(amount);
 
 		
@@ -114,11 +113,6 @@ class Batch(T)
 
 		//uint stride = attributes.map!((a) => shaderVarElements( a.type) * shaderVarBytes(a.type)).fold!((a,b) => a+b);
 		bindAttributes();
-		//foreach(attribute; attributes)
-		//{
-		//
-		//    bindAttribute(attribute,stride);
-		//}
 		allocateBuffers(initialElements,numFaces);
 		vertexBuffer.unbind();
 		elementBuffer.unbind();
@@ -178,9 +172,7 @@ class Batch(T)
 		uint elementOffset = ( cmdBufferBase * (maxIndicesInFrame )) + numIndicesInFrame;
 		uint offset = ( cmdBufferBase * capacity) + numVerticesInFrame;
 		vertexBuffer[offset .. offset + vertices.length] = vertices;
-		elementBuffer.ptr[elementOffset .. elementOffset + faces.length] = faces;
-		auto slice = vertexBuffer[0 .. 2];
-		auto element = slice[0];
+		elementBuffer[elementOffset .. elementOffset + faces.length] = faces;
 		
 		DrawElementsIndirectCommand cmd;
 		cmd.count = cast(uint)faces.length;
@@ -188,7 +180,7 @@ class Batch(T)
 		cmd.firstIndex = numIndicesInFrame;
 		cmd.baseVertex = numVerticesInFrame;
 		cmd.baseInstance = 0;
-		cmdBuffer.ptr[( cmdBufferBase * maxElementsInFrame )  + numElementsInFrame] = cmd;
+		cmdBuffer.pushBack(cmd);
 
 		numElementsInFrame++;
 		numVerticesInFrame+=vertices.length;
@@ -216,7 +208,7 @@ class Batch(T)
 		cmd.firstIndex = numIndicesInFrame;
 		cmd.baseVertex = numVerticesInFrame;
 		cmd.baseInstance = 0;
-		cmdBuffer.ptr[( cmdBufferBase) * (maxElementsInFrame )  + numElementsInFrame] = cmd;
+		cmdBuffer.pushBack(cmd);
 		
 		numElementsInFrame++;
 		numVerticesInFrame+=vertices.length;
@@ -309,6 +301,7 @@ class Batch(T)
 		numVerticesInFrame = 0;
 		numIndicesInFrame = 0;
 		textureAtlases.length = 0;
+		cmdBuffer.length = 0;
 		
 	}
 
