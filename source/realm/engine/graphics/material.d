@@ -159,7 +159,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
     UniformLayout.UserData layout;
     alias layout this;
 
-    static ShaderStorage!(UniformLayout.UserData, BufferUsage.MappedWrite) shaderStorageBuffer;
+    static ShaderStorage!(UniformLayout.UserData, BufferStorageMode.Immutable) shaderStorageBuffer;
 
     private static uint numMaterials = 0;
     private uint materialIndex = 0;
@@ -199,9 +199,11 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
 		{
             textureAtlas.create();
 		}
-
+        
+        
         
         textureAtlas.slot = materialIndex + 4;
+        textureAtlas.label = "Material Texture Atlas %d".format(materialIndex);
         shadows = true;
 		
     }
@@ -222,6 +224,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
         Logger.Assert(storageBufferPtr !is null, "Shader storage buffer ptr is null");
        
         *storageBufferPtr = layout;
+        
         
         
 

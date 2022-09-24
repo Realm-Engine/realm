@@ -46,8 +46,9 @@ class GraphicsSubsystem
 
 		globalDataBuffer.bind();
 		globalDataBuffer.bindBase(0);
-		globalDataBuffer.bufferData(data,1);
+		globalDataBuffer[0] = *data;
 		globalDataBuffer.unbind();
+		globalDataBuffer.commit();
 	}
 	
 	static void drawMultiElementsIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(DrawElementsIndirectCommand* commands,int count)

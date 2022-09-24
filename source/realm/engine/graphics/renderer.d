@@ -222,7 +222,7 @@ class Renderer
 		skyboxBatch.reserve(SkyboxMaterial.getNumMaterialInstances());
 
 		skyBox.create();
-		TextureDesc desc = TextureDesc(ImageFormat.SRGB8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER );
+		TextureDesc desc = TextureDesc(ImageFormat.SRGB8,TextureFilterfunc.LINEAR,TextureWrapFunc.MIRROR );
 		skyBox.textureDesc = desc;
 		skyBox.store(2048,2048);
 		ubyte[3] y = [0,255,0];
