@@ -287,11 +287,11 @@ class Renderer
 			{
 				RealmVertex vertex;
 
-				vertex.position = vec3( modelMatrix * vec4(mesh.positions[i],1.0));
+				vertex.position = mesh.positions[i];
 
 				vertex.texCoord = mesh.textureCoordinates[i];
-				vertex.normal =  vec3(transInv * vec4(mesh.normals[i],1.0));
-				vertex.tangent = vec3(modelMatrix * vec4(mesh.tangents[i],1.0));
+				vertex.normal =  mesh.normals[i];
+				vertex.tangent = mesh.tangents[i];
 				vertex.materialId = mat.instanceId;
 				vertexData[i] = vertex;
 

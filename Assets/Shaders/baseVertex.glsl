@@ -52,10 +52,10 @@ struct REVertexData
 
 vec4 vertex(REVertexData IN);
 
-mat3 calculateTBN()
+mat3 calculateTBN(vec3 tangent, vec3 normal)
 {
-	vec3 T = normalize(v_Tangent);
-	vec3 N = normalize(v_Normal);
+	vec3 T = normalize(tangent);
+	vec3 N = normalize(normal);
 	T = normalize(T - dot(T,N) * N);
 
 	vec3 B = cross(N,T);
@@ -64,13 +64,14 @@ mat3 calculateTBN()
 
 #define objectTexture atlasTextures[v_MaterialID]
 #define getObjectData(v) IN.material.v
-
+#define OBJECT_TO_WORLD_T transpose(OBJECT_TO_WORLD)
+#define OBJECT_TO_WORLD objectToWorld[v_MaterialID]
 
 
 void main()
 {
 	REVertexData vertexData;
-	vertexData.tangent = v_Tangent;
+	vertexData.tangent =  v_Tangent;
 	vertexData.position = v_Position;
 	vertexData.texCoord = v_TexCoord;
 	vertexData.normal = v_Normal;

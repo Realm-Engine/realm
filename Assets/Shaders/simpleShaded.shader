@@ -14,16 +14,19 @@ struct Material
 #shader vertex simpleVertex
 vec4 vertex(REVertexData IN)
 {
-	mat4 vp = u_projection * u_view;
-    RESurfaceDataOut.TBN = calculateTBN();
+
+	vec4 worldSpace = OBJECT_TO_WORLD_T * vec4(IN.position, 1.0);
+	vec4 worldNormal = transpose(inverse(OBJECT_TO_WORLD_T)) * vec4(IN.normal, 1.0);
+	vec4 worldTangent = OBJECT_TO_WORLD_T * vec4(IN.tangent, 1.0);
+    RESurfaceDataOut.TBN = calculateTBN(worldTangent.xyz,worldNormal.xyz);
 	RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
-	RESurfaceDataOut.posCS = vp * vec4(IN.position, 1.0);
-	RESurfaceDataOut.posWS = IN.position;
+	RESurfaceDataOut.posCS = u_projection * u_view * worldSpace;
+	RESurfaceDataOut.posWS = vec3(worldSpace);
 	RESurfaceDataOut.texCoord = IN.texCoord;
-	RESurfaceDataOut.normal = IN.normal;
-	RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * vec4(IN.position, 1.0);
-	RESurfaceDataOut.eyeSpacePosition = u_view * vec4(IN.position,1.0);
+	RESurfaceDataOut.normal = worldNormal.xyz;
+	RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * worldSpace;
+	RESurfaceDataOut.eyeSpacePosition = u_view * worldSpace;
 	return RESurfaceDataOut.posCS;
 }
 #shader fragment simpleFragment

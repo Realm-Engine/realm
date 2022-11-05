@@ -9,7 +9,7 @@ struct Material
 vec4 vertex(REVertexData IN)
 {
 	mat4 vp = transpose(u_projection * u_view);
-	RESurfaceDataOut.TBN = calculateTBN();
+	
 	RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
 	RESurfaceDataOut.posCS = vp * vec4(IN.position, 1.0);

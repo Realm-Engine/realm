@@ -9,10 +9,10 @@ struct Material
 vec4 vertex(REVertexData IN)
 {
 	mat4 vp = u_projection * u_view;
-	RESurfaceDataOut.TBN = calculateTBN();
+	vec4 worldSpace = OBJECT_TO_WORLD_T * vec4(IN.position, 1.0);
 	RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
-	RESurfaceDataOut.posCS = vp * vec4(IN.position, 1.0);
+	RESurfaceDataOut.posCS = vp * worldSpace;
 	RESurfaceDataOut.posWS = IN.position;
 	RESurfaceDataOut.texCoord = IN.texCoord;
 	RESurfaceDataOut.normal = IN.normal;
