@@ -37,6 +37,8 @@ alias ShaderProgramStages = GShaderProgramStages;
 alias ShaderParameter = GShaderParameter;
 alias SizedImageFormat = GSizedImageFormat;
 alias CubemapFace = GCubemapFace;
+alias BufferUsage = GBufferUsage;
+alias BufferStorageMode = GBufferStorageMode;
 alias blendFunc = gBlendFunc;
 alias blendFuncSeperate = gBlendFuncSeperate;
 alias enable =gEnable;
@@ -48,7 +50,7 @@ alias readBuffer = gReadBuffer;
 alias setDepthFunc = gSetDepthFunc;
 
 alias enableDebugging = gEnableDebugging;
-alias BufferUsage = GBufferUsage;
+
 alias drawBuffers = gDrawBuffers;
 
 alias StandardShaderModel = ShaderProgramModel!(ShaderType.VERTEX,ShaderType.FRAGMENT);

@@ -12,6 +12,7 @@ import std.format;
 import std.digest.md;
 import std.traits;
 import std.meta;
+import core.stdc.string;
 struct DrawElementsIndirectCommand
 {
     uint count;
@@ -29,6 +30,19 @@ struct DrawElementsIndirectCommand
 mixin template OpenGLObject()
 {
     private uint id;
+    
+    private string getLabel(GLenum Identifier)(string name)
+	{
+            
+	}
+
+    private void setLabel(GLenum Identifier)(string name)
+	{
+        
+        auto cLabel = toStringz(name);
+        ulong len = strlen(cLabel);
+        glObjectLabel(Identifier,id,cast(int)len,cLabel);
+	}
 
     invariant
 	{
@@ -43,12 +57,28 @@ mixin template OpenGLObject()
     alias ID this;
 }
 
+mixin template GLObjectLabelImpl(GLenum Identifier)
+{
+    
+    @property label(string label)
+	{
+        setLabel!(Identifier)(label);
+	}
+
+}
+
 enum GBufferUsage : GLenum
 {
     MappedRead = GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT,
-    MappedWrite = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT,
+    MappedWrite = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT,
     WriteOnlyTemp = GL_MAP_WRITE_BIT,
     Buffered = GL_DYNAMIC_STORAGE_BIT
+}
+
+enum GBufferStorageMode : GLenum
+{
+    Mutable = GL_NONE,
+    Immutable = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT
 }
 
 enum GBufferType : GLenum
@@ -88,73 +118,194 @@ enum bool isValidBufferTarget(GLenum T) = (T == GL_ARRAY_BUFFER
 
 enum bool isMappedBuffer(T) = (T == GBufferUsage.MappedWrite || T == GBufferUsage.WriteOnlyTemp || T == GBufferUsage.MappedRead);
 
-mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
-{
-    static assert(isValidBufferTarget!(bufferType),bufferType.stringof ~ " does not have a valid buffer type");
-    mixin OpenGLObject;
 
-    private size_t ringPtr;
-    private size_t ringSize;
+mixin template BufferImmutableStorageModeImpl(GBufferType BufferType,T)
+{
+	private T* glPtr;
+	@property ptr()
+	{
+		return glPtr;
+
+	}
+	
     
 
+	@property length()
+	{
+		return _length;
+	}
 
-    static if (usage == GBufferUsage.MappedWrite  || usage == GBufferUsage.MappedRead)
+	void refreshPointer()
+	{
+		bind();
+		glUnmapBuffer(BufferType);
+		mapBuffer();
+		unbind();
+
+	}
+
+	ref inout(T) opIndex(int i) inout
+	in(i < _capacity,"Trying to access out of bounds")
+	{
+         return glPtr[i];
+	}
+   
+
+
+	auto ref opSlice(ulong start, ulong end)
+	in
+	{
+		assert(end>= 0 &&end <= _capacity,"Trying to slice out of bounds");
+		assert(start >=0 && start <= _capacity,"Tring to slice out of bounds");
+	}
+	do
+	{
+		ulong size = end-start;
+		assert(_capacity < size,"Current pointer out of range of slice");
+
+		return glPtr[start..end];
+	}
+	void opSliceAssign(T[] value, ulong i, ulong j)
+	{
+		
+		glPtr[i..j] = value;
+
+	}
+	private void mapBuffer()
+	out
+	{
+        
+		GLboolean mapped = cast(GLboolean)getParameter!(int)(GL_BUFFER_MAPPED);
+		assert(mapped == GL_TRUE,"Could not map buffer");
+
+		long bufferSize = getParameter!(long)(GL_BUFFER_SIZE);
+
+		assert(bufferSize == bufferCapacityBytes,"Buffer storage allocated less than requested");
+        
+	}
+	do
+	{
+		if(glPtr != null)
+		{
+			glUnmapNamedBuffer(this);
+		}
+
+		glPtr = cast(T*) glMapBufferRange(BufferType, 0, bufferCapacityBytes, GBufferStorageMode.Immutable);
+
+		Logger.Assert(glPtr !is null,"Could not map buffer: %s", BufferType.stringof);
+	}
+
+    void store(size_t size,T* data)
+	in(size > 0, "Buffer size must be greater than zero")
+	out
+	{
+
+        long bufferSize = getParameter!(long)(GL_BUFFER_SIZE);
+
+        assert(bufferSize == bufferCapacityBytes,"Buffer storage allocated less than requested");
+
+	}
+    do
+	{
+        bind();
+        glBufferStorage(BufferType,size * T.sizeof,data,GBufferStorageMode.Immutable );
+        _length = size;
+        _capacity = size;
+        mapBuffer();
+        
+        unbind();
+
+	}
+
+    void store(size_t size)
     {
 
-        private T* glPtr;
-
-        @property ptr()
-        {
-            return glPtr;
-
-        }
-
-        @property length()
-        {
-            return (ringSize / T.sizeof);
-
-        }
-
-        void refreshPointer()
-		{
-            bind();
-            glUnmapBuffer(bufferType);
-            mapBuffer();
-            unbind();
-
-		}
-
-       
-        
-        private void mapBuffer()
-        out
-		{
-            
-			GLboolean mapped = getParameter!(GLboolean)(GL_BUFFER_MAPPED);
-			assert(mapped == GL_TRUE,"Could not map buffer");
-			
-			long bufferSize = getParameter!(long)(GL_BUFFER_SIZE);
-
-			assert(bufferSize == ringSize,"Buffer storage allocated less than requested");
-		}
-        do
-		{
-			glPtr = cast(T*) glMapBufferRange(bufferType, 0, ringSize, usage);
-            
-            Logger.Assert(glPtr !is null,"Could not map buffer: %s", bufferType.stringof);
-		}
+        store(size,null);
 
     }
 
+    void commit()
+	{
+        //glFlushMappedNamedBufferRange(id,0,length*T.sizeof);
+	}
+}
+
+mixin template BufferMutableStorageModeImpl(GBufferType BufferType,T)
+{
+    import std.container.array;
+    import core.stdc.stdlib;
+    private T[] dataArray;
+    
+    @property length()
+	{
+        return dataArray.length;
+	}
+
+
+    void store(size_t size)
+	{
+        
+        _length = size;
+        _capacity = size;
+        dataArray = cast(T[])(malloc(T.sizeof * size)[0..size * T.sizeof]);
+        
+	}
+
+    ref inout(T) opIndex(int i) inout
+	{
+        return dataArray[i];
+	}
+
+    auto ref opSlice(ulong start, ulong end)
+	{
+        return dataArray[start..end];
+	}
+    void opSliceAssign(T[] value, ulong i, ulong j)
+	{
+        dataArray[i..j] = value;
+	}
+
+    void opIndexAssign(T value, ulong i)
+	{
+        dataArray[i] = value;
+	}
+
+    void commit()
+	{
+        glNamedBufferData(id,dataArray.length * T.sizeof,dataArray.ptr,GL_DYNAMIC_DRAW);
+	}
+
+    ~this()
+	{
+        free(dataArray.ptr);
+	}
+}
+
+mixin template OpenGLBuffer(GBufferType BufferType, T, GBufferStorageMode StorageMode)
+{
+    static assert(isValidBufferTarget!(BufferType),BufferType.stringof ~ " does not have a valid buffer type");
+    mixin OpenGLObject;
+    //mixin ParameterQuery!(GLenum);
+    mixin GLObjectLabelImpl!(GL_BUFFER);
+    
+    private size_t _capacity;
+    private size_t _length;
+    
+    @property capacity()
+	{
+        return _capacity;
+	}
+
+   
     void bind()
     {
-        glBindBuffer(bufferType, id);
+        glBindBuffer(BufferType, id);
 
     }
 
     void unbind()
     {
-        glBindBuffer(bufferType, 0);
+        glBindBuffer(BufferType, 0);
     }
 
     void create()
@@ -164,79 +315,46 @@ mixin template OpenGLBuffer(GBufferType bufferType, T, GBufferUsage usage)
 
     }
 
-    
-
-    void store(size_t size)
-    in(size > 0, "Buffer size must be positive")
-	out
+    pragma(inline)
+    size_t bufferCapacityBytes()
 	{
-       
-        long bufferSize = getParameter!(long)(GL_BUFFER_SIZE);
-        
-        assert(bufferSize == ringSize,"Buffer storage allocated less than requested");
-
-	}
-    do
-    {
-    
-        glBufferStorage(bufferType, size * T.sizeof, null, usage);
-        ringPtr = 0;
-        ringSize = size * T.sizeof;
-        static if (usage == GBufferUsage.MappedWrite || usage == GBufferUsage.MappedRead)
-        {
-            mapBuffer();
-        }
-
-    }
-
-
-
-    private T getParameter(T)(GLenum param)
-	{
-        import std.traits;
-        T val;
-        static if(isIntegral!(T))
-		{
-            static if(T.sizeof == 4 || T.sizeof == 1)
-			{
-                glGetNamedBufferParameteriv(id,param,cast(GLint*) &val);
-			}
-            static if(T.sizeof == 8)
-			{
-                glGetNamedBufferParameteri64v(id,param,&val);
-			}
-		}  
-        return val;
+        return capacity * T.sizeof;
 	}
 
-    size_t bufferData(T* data, size_t length)
-	in
-	{
-        assert(id > 0,"Trying to buffer data to non exsistent buffer");
-        assert(length <= ringSize,"Cant write more data than allocated");
-	}
-    do
-    {
-        size_t dataStart = ringPtr;
-        glBufferSubData(bufferType, ringPtr, length * T.sizeof, data);
-        ringPtr += length * T.sizeof % ringSize;
-        return dataStart;
-
-    }
-
-
-
-    void invalidate()
-    {
-        glInvalidateBufferData(id);
-        ringPtr = 0;
-    }
 
     @property elementSize()
     {
         return T.sizeof;
     }
 
+    
+
+	private T getParameter(T)(GLenum param)
+	{
+		import std.traits;
+		T val;
+		static if(isIntegral!(T))
+		{
+			static if(T.sizeof == 4 || T.sizeof == 1)
+			{
+				glGetNamedBufferParameteriv(id,param,cast(GLint*) &val);
+			}
+			static if(T.sizeof == 8)
+			{
+				glGetNamedBufferParameteri64v(id,param,&val);
+			}
+		}  
+		return val;
+	}
+    
+    static if(StorageMode == GBufferStorageMode.Immutable)
+	{
+        mixin BufferImmutableStorageModeImpl!(BufferType,T);
+	}
+    static if(StorageMode == GBufferStorageMode.Mutable)
+	{
+        mixin BufferMutableStorageModeImpl!(BufferType,T);
+	}
 }
 
 
@@ -396,33 +514,33 @@ mixin template ParameterQuery(T)
     V getParameter(V)(T param)
 	{
         V result;
-        static if(__traits(isArithmetic,T))
+        static if(__traits(isArithmetic,V))
 		{
 			static if(__traits(isIntegral,V))
 			{
-				static if(T.sizeof == 4)
+				static if(V.sizeof == 4)
 				{
 					glGetIntegerv(param,&result);
 				}
-				static if(T.sizeof == 8)
+				static if(V.sizeof == 8)
 				{
 					glGetInteger64v(param,&result);
 				}
 			}
 			static if(__traits(isFloating,V))
 			{
-				static if(T.sizeof == 4)
+				static if(V.sizeof == 4)
 				{
 					glGetFloatv(param,&result);
 				}
-				static if(T.sizeof == 8)
+				static if(V.sizeof == 8)
 				{
 					glGetDoublev(param,&result);
 				}
 			}
 		}
 
-        static if(!__traits(isArithmetic,T))
+        static if(is(typeof(V) == bool ))
 		{
             glGetBooleanv(param,&result);
 		}
@@ -433,33 +551,33 @@ mixin template ParameterQuery(T)
 	V getParameter(V)(T param,uint index)
 	{
         V result;
-        static if(__traits(isArithmetic,T))
+        static if(__traits(isArithmetic,V))
 		{
 			static if(__traits(isIntegral,V))
 			{
-				static if(T.sizeof == 4)
+				static if(V.sizeof == 4)
 				{
 					glGetIntegeri_v(param,index,&result);
 				}
-				static if(T.sizeof == 8)
+				static if(V.sizeof == 8)
 				{
 					glGetInteger64i_v(param,index,&result);
 				}
 			}
 			static if(__traits(isFloating,V))
 			{
-				static if(T.sizeof == 4)
+				static if(V.sizeof == 4)
 				{
 					glGetFloati_v(param,index,&result);
 				}
-				static if(T.sizeof == 8)
+				static if(V.sizeof == 8)
 				{
 					glGetDoublei_v(param,index,&result);
 				}
 			}
 		}
 
-        static if(!__traits(isArithmetic,T))
+        static if(!__traits(isArithmetic,V))
 		{
             glGetBooleani_v(param,index,&result);
 		}
@@ -954,19 +1072,19 @@ struct GFrameBuffer
 
 }
 
-struct GPixelBuffer(GBufferUsage usage)
+struct GPixelBuffer(GBufferStorageMode usage)
 {
     mixin OpenGLBuffer!(GBufferType.PixelBuffer,ubyte,usage);
 
 }
 
-struct VertexBuffer(T, GBufferUsage usage)
+struct VertexBuffer(T, GBufferStorageMode usage)
 {
     mixin OpenGLBuffer!(GBufferType.Vertex, T, usage);
     private uint size;
 }
 
-struct ElementBuffer(GBufferUsage usage)
+struct ElementBuffer(GBufferStorageMode usage)
 {
     mixin OpenGLBuffer!(GBufferType.Element, uint, usage);
     private uint size;
@@ -976,7 +1094,7 @@ struct ElementBuffer(GBufferUsage usage)
 struct ShaderBlock
 {
 
-    mixin OpenGLBuffer!(GBufferType.Uniform, RealmGlobalData, GBufferUsage.Buffered);
+    mixin OpenGLBuffer!(GBufferType.Uniform, RealmGlobalData, GBufferStorageMode.Mutable);
     void bindBase(uint bindPoint)
     {
         glBindBufferBase(GL_UNIFORM_BUFFER, bindPoint, id);
@@ -984,7 +1102,7 @@ struct ShaderBlock
 
 }
 
-struct GShaderStorage(T, GBufferUsage usage)
+struct GShaderStorage(T, GBufferStorageMode usage)
 {
     mixin OpenGLBuffer!(GBufferType.ShaderStorage, T, usage);
     void bindBase(uint bindPoint)
@@ -994,7 +1112,7 @@ struct GShaderStorage(T, GBufferUsage usage)
     }
 }
 
-struct DrawIndirectCommandBuffer(GBufferUsage usage)
+struct DrawIndirectCommandBuffer(GBufferStorageMode usage)
 {
     mixin OpenGLBuffer!(GBufferType.DrawIndirect, DrawElementsIndirectCommand, usage);
 }
@@ -1007,6 +1125,7 @@ struct GSamplerObject(GTextureType target)
     
 
     mixin OpenGLObject;
+    mixin GLObjectLabelImpl!(GL_TEXTURE);
     private GLenum wrapFunc;
     private GLenum filterFunc;
     private GLenum internalFormat;
@@ -1086,12 +1205,16 @@ struct GSamplerObject(GTextureType target)
         mipLevels = 3;
         channels = desc.fmt.channels;
         bpc = desc.fmt.bpc;
-        glTexParameteri(texType, GL_TEXTURE_WRAP_S, wrapFunc);
-        glTexParameteri(texType, GL_TEXTURE_WRAP_T, wrapFunc);
-        glTexParameteri(texType, GL_TEXTURE_MIN_FILTER, filterFunc);
-        glTexParameteri(texType, GL_TEXTURE_MAG_FILTER, filterFunc);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glPixelStorei(GL_PACK_ALIGNMENT,1);
+        if(!desc.isMultisampled)
+		{
+			glTexParameteri(texType, GL_TEXTURE_WRAP_S, wrapFunc);
+			glTexParameteri(texType, GL_TEXTURE_WRAP_T, wrapFunc);
+			glTexParameteri(texType, GL_TEXTURE_MIN_FILTER, filterFunc);
+			glTexParameteri(texType, GL_TEXTURE_MAG_FILTER, filterFunc);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			glPixelStorei(GL_PACK_ALIGNMENT,1);
+		}
+
         
         
         unbind();
@@ -1323,8 +1446,8 @@ struct GSamplerObject(GTextureType target)
 	ubyte[] readPixels(int level)
 	{
 		ubyte[] result;
-        size_t len =  (width * height) * channels * bpc;
-        result.length = len;
+        size_t length =  (width * height) * channels * bpc;
+        result.length = length;
         bind();
 		glGetTexImage(target,level,format,dataType,cast(void*)result.ptr);
         unbind();
@@ -1341,12 +1464,7 @@ enum GQueryTarget : GLenum
     TimeElapsed = GL_TIME_ELAPSED
 }
 
-struct GSyncObject
-{
-    
 
-
-}
 
 struct GQueryObject(bool isBuffer = false)
 {
@@ -1354,7 +1472,7 @@ struct GQueryObject(bool isBuffer = false)
     private bool queryEnded;
     static if(isBuffer)
 	{
-        mixin OpenGLBuffer!(GBufferType.Query,int,GBufferUsage.Buffered);
+        mixin OpenGLBuffer!(GBufferType.Query,int,GBufferStorageMode.Immutable);
 	}
     static if(!isBuffer)
 	{
@@ -1565,7 +1683,7 @@ enum GSizedImageFormat : GLenum
     RGBA32F = GL_RGBA32F,
     SRGB8 = GL_SRGB8,
     SRGBA8 = GL_SRGB8_ALPHA8,
-    DEPTH = GL_DEPTH_COMPONENT,
+    DEPTH = GL_DEPTH_COMPONENT16,
     DEPTH_STENCIL = GL_DEPTH_STENCIL,
     RED32F = GL_R32F,
     RGB32F = GL_RGB32F

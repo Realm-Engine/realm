@@ -23,23 +23,24 @@ class Batch(T)
 	import std.stdio;
 	private StandardShaderModel program;
 	private VertexArrayObject vao;
-	private VertexBuffer!(T,BufferUsage.MappedWrite) vertexBuffer;
-	private ElementBuffer!(BufferUsage.MappedWrite) elementBuffer;
+	private VertexBuffer!(T,BufferStorageMode.Immutable) vertexBuffer;
+	private ElementBuffer!(BufferStorageMode.Immutable) elementBuffer;
 
-	private DrawIndirectCommandBuffer!(BufferUsage.MappedWrite) cmdBuffer;
+	private DrawIndirectCommandBuffer!(BufferStorageMode.Immutable) cmdBuffer;
 
 	
 
-	private ShaderStorage!(float[16],BufferUsage.MappedWrite) objectToWorldMats;
+	private ShaderStorage!(float[16],BufferStorageMode.Immutable) objectToWorldMats;
 	private uint numElementsInFrame;
 	private uint numVerticesInFrame;
 	private uint numIndicesInFrame;
+	private uint maxElementsInFrame;
+	private uint maxIndicesInFrame;
 	private uint capacity;
 	private MeshTopology topology;
 	private uint cmdBufferBase;
 	private uint bufferAmount;
-	private uint maxElementsInFrame;
-	private uint maxIndicesInFrame;
+
 	private SamplerObject!(TextureType.TEXTURE2D)*[] textureAtlases;
 	alias BindShaderStorageCallback = void function();
 	private BindShaderStorageCallback bindShaderStorage;
@@ -61,6 +62,7 @@ class Batch(T)
 		vertexBuffer.create();
 		elementBuffer.create();
 		cmdBuffer.create();
+		
 		this.numElementsInFrame= 0;
 		this.capacity = 0;
 		cmdBufferBase = 0;
@@ -75,6 +77,7 @@ class Batch(T)
 		objectToWorldMats.create();
 		objectToWorldMats.bindBase(2);
 		
+		
 	}
 
 	void setShaderStorageCallback(BindShaderStorageCallback cb)
@@ -86,14 +89,12 @@ class Batch(T)
 	{
 		prepareDraw = cb;
 	}
-
-	/// Reserve number of primitive elements (i.e: triangles)
 	void reserve(size_t amount)
 	{
 		this.maxElementsInFrame = cast(uint)amount;
-		cmdBuffer.bind();
-		cmdBuffer.store(amount * bufferAmount);
-		cmdBuffer.unbind();
+		
+		cmdBuffer.store(amount);
+		
 		objectToWorldMats.store(amount);
 
 		
@@ -114,11 +115,6 @@ class Batch(T)
 
 		//uint stride = attributes.map!((a) => shaderVarElements( a.type) * shaderVarBytes(a.type)).fold!((a,b) => a+b);
 		bindAttributes();
-		//foreach(attribute; attributes)
-		//{
-		//
-		//    bindAttribute(attribute,stride);
-		//}
 		allocateBuffers(initialElements,numFaces);
 		vertexBuffer.unbind();
 		elementBuffer.unbind();
@@ -177,15 +173,16 @@ class Batch(T)
 		static assert(isMaterial!(Mat));
 		uint elementOffset = ( cmdBufferBase * (maxIndicesInFrame )) + numIndicesInFrame;
 		uint offset = ( cmdBufferBase * capacity) + numVerticesInFrame;
-		vertexBuffer.ptr[offset .. offset + vertices.length] = vertices;
-		elementBuffer.ptr[elementOffset .. elementOffset + faces.length] = faces;
+		vertexBuffer[offset .. offset + vertices.length] = vertices;
+		elementBuffer[elementOffset .. elementOffset + faces.length] = faces;
+		
 		DrawElementsIndirectCommand cmd;
 		cmd.count = cast(uint)faces.length;
 		cmd.instanceCount =cast(uint) faces.length / topology;
 		cmd.firstIndex = numIndicesInFrame;
 		cmd.baseVertex = numVerticesInFrame;
 		cmd.baseInstance = 0;
-		cmdBuffer.ptr[( cmdBufferBase * maxElementsInFrame )  + numElementsInFrame] = cmd;
+		cmdBuffer[( cmdBufferBase * maxElementsInFrame )  + numElementsInFrame] = cmd;
 
 		numElementsInFrame++;
 		numVerticesInFrame+=vertices.length;
@@ -205,15 +202,15 @@ class Batch(T)
 		static assert(isMaterial!(Mat));
 		uint elementOffset = ( cmdBufferBase * (maxIndicesInFrame)) + numIndicesInFrame;
 		uint offset = ( cmdBufferBase * capacity) + numVerticesInFrame;
-		vertexBuffer.ptr[offset.. offset + vertices.length] = vertices;
-		elementBuffer.ptr[elementOffset .. elementOffset + faces.length] = faces;
+		vertexBuffer[offset.. offset + vertices.length] = vertices;
+		elementBuffer[elementOffset .. elementOffset + faces.length] = faces;
 		DrawElementsIndirectCommand cmd;
 		cmd.count = cast(uint)faces.length;
 		cmd.instanceCount =cast(uint) faces.length / topology;
 		cmd.firstIndex = numIndicesInFrame;
 		cmd.baseVertex = numVerticesInFrame;
 		cmd.baseInstance = 0;
-		cmdBuffer.ptr[( cmdBufferBase) * (maxElementsInFrame )  + numElementsInFrame] = cmd;
+		cmdBuffer[( cmdBufferBase * maxElementsInFrame )  + numElementsInFrame] = cmd;
 		
 		numElementsInFrame++;
 		numVerticesInFrame+=vertices.length;
@@ -222,7 +219,7 @@ class Batch(T)
 		textureAtlases~=material.getTextureAtlas();
 		materialId = Mat.materialId();
 
-		//submitVertices!(Mat)(vertices,faces,material);
+		
 	}
 
 
@@ -271,6 +268,7 @@ class Batch(T)
 			//writeln(offset);
 			GraphicsSubsystem.drawMultiElementsIndirect!(shape)(offset, numElementsInFrame);
 			shaderPipeline.unbind();
+			
 			unbindBuffers();
 		}
 
@@ -292,6 +290,8 @@ class Batch(T)
 			//writeln(offset);
 			GraphicsSubsystem.drawMultiElementsIndirect!(shape)(offset, numElementsInFrame);
 			pipelineOverride.unbind();
+
+
 			unbindBuffers();
 		}
 
@@ -306,6 +306,8 @@ class Batch(T)
 		numVerticesInFrame = 0;
 		numIndicesInFrame = 0;
 		textureAtlases.length = 0;
+
+		
 		
 	}
 

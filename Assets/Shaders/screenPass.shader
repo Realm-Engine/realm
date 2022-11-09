@@ -28,13 +28,14 @@ vec4 fragment()
 	vec4 color = getObjectData(screenColor);
 	float gamma = getObjectData(gamma);
 	vec4 screenColor = vec4(0);
+	
 	for (int i = 0; i < 8; i++)
 	{
-		screenColor = max(screenColor,texelFetch(cameraScreenTexture, ivec2(gl_FragCoord.xy),i));
+		screenColor += texelFetch(cameraScreenTexture, ivec2(gl_FragCoord.xy),i);
 	}
 
 	
-	return vec4(pow(screenColor.rgb,vec3(1.0/gamma)),1.0);
+	return vec4(pow(screenColor.rgb/8.0,vec3(1.0/gamma)),1.0);
 
 }
 
