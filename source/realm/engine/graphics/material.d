@@ -203,7 +203,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
         
         
         textureAtlas.slot = materialIndex + 4;
-        textureAtlas.label = "Material Texture Atlas %d".format(materialIndex);
+        //textureAtlas.label = "Material Texture Atlas %d".format(materialIndex);
         shadows = true;
 		
     }
