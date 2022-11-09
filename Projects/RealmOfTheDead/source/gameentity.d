@@ -20,7 +20,7 @@ mixin template GameEntity(string name ,T...)
 	
 	mixin RealmEntity!(name, T);
 	private SimpleMaterial material;
-
+	public bool isStatic = true;
 	static StandardShaderModel getEntityShader()
 	{
 		if(entityShader is null)

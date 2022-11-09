@@ -256,7 +256,7 @@ struct RealmGlobalData
 	float[16] viewMatrix;
 	float[16] projectionMatrix;
 
-	//float[16] vp;
+	float[16] vp;
 	float[4] mainLightDirection;
 	float[4] mainLightColor;
 	float[16] lightSpaceMatrix;

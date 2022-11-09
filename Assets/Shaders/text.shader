@@ -11,7 +11,7 @@ struct Material {
 #shader vertex textVertex
 vec4 vertex(REVertexData IN)
 {
-	mat4 vp = u_projection * u_view;
+	mat4 vp = u_projection;
 	
 	RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;

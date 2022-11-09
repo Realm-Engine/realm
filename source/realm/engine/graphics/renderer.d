@@ -301,6 +301,7 @@ class Renderer
 
 
 		AABB boundingBox = aabbTransformWorldSpace(mesh.getLocalBounds(),transform.transformation);
+		
 		mat4 vp  = camera.projection * camera.view;
 		Frustum frustum = Frustum(vp );
 
@@ -400,7 +401,7 @@ class Renderer
 			float[16] lightSpaceDup = lightSpaceMatrix.value_ptr[0..16].dup;
 			_globalData.viewMatrix[0..$] = lightSpaceCamera.view.transposed.value_ptr[0..16].dup;
 			_globalData.projectionMatrix[0..$] = lightSpaceCamera.projection.transposed.value_ptr[0..16].dup;
-			//_globalData.vp[0..$] = lightSpaceDup;
+			_globalData.vp[0..$] = lightSpaceDup;
 			_globalData.lightSpaceMatrix[0..$] =  lightSpaceDup;
 			GraphicsSubsystem.updateGlobalData(&_globalData);
 
@@ -453,7 +454,7 @@ class Renderer
 
 	void update()
 	{
-		
+		mat4 vp = camera.projection * camera.view;
 		if(mainDirLight !is null)
 		{
 			updateMainLight();
@@ -466,7 +467,8 @@ class Renderer
 
 			_globalData.viewMatrix[0..$] = camera.view.transposed.value_ptr[0..16].dup;
 			_globalData.projectionMatrix[0..$] = camera.projection.transposed.value_ptr[0..16].dup;
-			//_globalData.vp[0..$] = vp.value_ptr[0..16].dup;
+			
+			_globalData.vp[0..$] = vp.transposed.value_ptr[0..16].dup;
 			_globalData.camPosition[0..$] = camera.transform.position.value_ptr[0..4].dup;
 			_globalData.camDirection[0..$] = camera.transform.front.value_ptr[0..4].dup;
 			_globalData.nearPlane = camera.nearPlane;

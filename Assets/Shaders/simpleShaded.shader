@@ -21,7 +21,7 @@ vec4 vertex(REVertexData IN)
     RESurfaceDataOut.TBN = calculateTBN(worldTangent.xyz,worldNormal.xyz);
 	RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
-	RESurfaceDataOut.posCS = u_projection * u_view * worldSpace;
+	RESurfaceDataOut.posCS = u_vp * worldSpace;
 	RESurfaceDataOut.posWS = vec3(worldSpace);
 	RESurfaceDataOut.texCoord = IN.texCoord;
 	RESurfaceDataOut.normal = worldNormal.xyz;

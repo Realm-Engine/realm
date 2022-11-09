@@ -102,13 +102,14 @@ class RealmGame : RealmApp
 		geo.entityName = "Crates";
 		floor = _manager.instantiate!(GameGeometry)(generateFace(vec3(0,1,0),8));
 		floor.entityName = "Floor";
-		floor.active = false;
+		floor.active = true;
 		sphere = _manager.instantiate!(GameGeometry)(loadMesh("$EngineAssets/Models/sphere.obj"));
 		SimpleMaterial sphereMaterial = sphere.getMaterial();
 		sphereMaterial.color = vec4(1);
 		IFImage sphereNormal = readImageBytes("$EngineAssets/Images/Sphere-NormalMap.png");
 		sphere.getComponent!(Transform)().scale = vec3(5,5,5);
 		sphere.getComponent!(Transform)().position = vec3(0,10,0);
+		sphere.active = false;
 		sphereMaterial.textures.normal = new Texture2D(&sphereNormal);
 		sphereMaterial.textures.diffuse = Vector!(int,4)(255);
 		sphereMaterial.packTextureAtlas();

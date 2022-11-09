@@ -55,7 +55,15 @@ class GameGeometry
 	void update(float dt)
 	{
 		updateComponents();
-		Renderer.get.submitMesh!(SimpleMaterial,false)(mesh,transform,material,vertexBuffer);
+		if(isStatic)
+		{
+			Renderer.get.submitMesh!(SimpleMaterial,true)(mesh,transform,material,vertexBuffer);
+		}
+		else
+		{
+			Renderer.get.submitMesh!(SimpleMaterial,false)(mesh,transform,material,vertexBuffer);
+		}
+		
 	}
 
 
