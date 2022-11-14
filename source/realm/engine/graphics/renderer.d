@@ -21,6 +21,8 @@ import realm.engine.container.stack;
 import realm.engine.memory;
 import core.stdc.stdlib;
 import std.traits;
+import realm.engine.graphics.renderlayer;
+import realm.engine.container.stack;
 alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "cameraNear" : UserDataVarTypes.FLOAT]);
 alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
 alias ScreenPassMaterialLayout = Alias!(["screenColor" : UserDataVarTypes.VECTOR,  "gamma":UserDataVarTypes.FLOAT]);
@@ -74,6 +76,9 @@ class Renderer
 	private SamplerObject!(TextureType.CUBEMAP) skyBox;
 	private RealmArenaAllocator arenaAllocator;
 	
+	
+	
+
 	//private static FrameBuffer mainFramebuffer;
 	
 	Renderpass!(null, null) depthPrepass;
@@ -182,8 +187,11 @@ class Renderer
 		screenBatch.reserve(ScreenPassMaterial.getNumMaterialInstances());
 		setDepthFunc(DepthFunc.LESS);
 		initSkybox();
+		
 	
 	}
+
+	
 
 
 
@@ -504,9 +512,6 @@ class Renderer
 		}
 
 		long timeElapsed = 0;
-		
-		
-		
 	}
 
 	void drawSkybox()
@@ -577,6 +582,8 @@ class Renderer
 
 		}
 	}
+
+	
 
 	void prepareDrawGeometry(StandardShaderModel program)
 	{

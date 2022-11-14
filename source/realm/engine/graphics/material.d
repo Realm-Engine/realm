@@ -159,11 +159,10 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
     UniformLayout.UserData layout;
     alias layout this;
 
-    static ShaderStorage!(UniformLayout.UserData, BufferStorageMode.Immutable) shaderStorageBuffer;
+    static ShaderStorage!(UniformLayout.UserData, BufferStorageMode.Mutable) shaderStorageBuffer;
 
     private static uint numMaterials = 0;
     private uint materialIndex = 0;
-    private UniformLayout.UserData* storageBufferPtr;
 
     private SamplerObject!(TextureType.TEXTURE2D) textureAtlas;
     private static StandardShaderModel program;
@@ -187,10 +186,15 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
 
     this()
     {
-     
-        storageBufferPtr = &shaderStorageBuffer.ptr[numMaterials];
+        
+        //storageBufferPtr = &shaderStorageBuffer.ptr[numMaterials];
+        
         materialIndex = numMaterials;
         numMaterials++;
+		if(shaderStorageBuffer.length < numMaterials)
+		{
+		    shaderStorageBuffer.resize(numMaterials);
+		}
         if(texturesMembers!(UniformLayout).length >1 )
 		{
             textureAtlas.create();
@@ -221,9 +225,9 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
     void writeUniformData()
     {
         
-        Logger.Assert(storageBufferPtr !is null, "Shader storage buffer ptr is null");
+        //Logger.Assert(storageBufferPtr !is null, "Shader storage buffer ptr is null");
        
-        *storageBufferPtr = layout;
+        shaderStorageBuffer[materialIndex] = layout;
         
         
         
@@ -455,7 +459,7 @@ WriteImage:
 
     static void reserve(size_t numItems)
     {
-        shaderStorageBuffer.store(numItems);
+        //shaderStorageBuffer.store(numItems);
 
     }
     static void allocate(Mesh* mesh)
@@ -498,3 +502,9 @@ WriteImage:
 
 
 }
+
+alias BlinnPhongMaterial = Alias!(Material!(["ambient" : UserDataVarTypes.VECTOR,
+											 "diffuse" : UserDataVarTypes.TEXTURE2D,
+											 "normal" : UserDataVarTypes.TEXTURE2D,
+											 "specular" : UserDataVarTypes.TEXTURE2D,
+											 "shininess" : UserDataVarTypes.FLOAT]));

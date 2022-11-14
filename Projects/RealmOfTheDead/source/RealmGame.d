@@ -12,6 +12,7 @@ import realm.engine.memory;
 import core.lifetime;
 import std.exception;
 import std.conv;
+import realm.engine.staticgeometry;
 class RealmGame : RealmApp
 {
 
@@ -28,6 +29,7 @@ class RealmGame : RealmApp
 	private RealmUI.UIElement graphicsPanel;
 	private RealmUI.UIElement gammaSlider;
 	private GameGeometry sphere;
+	private StaticGeometryLayer geoLayer;
 	float gamma = 1.0f;
 	private Skybox skybox;
 	this(int width, int height, const char* title,string[] args)
@@ -39,6 +41,22 @@ class RealmGame : RealmApp
 		Renderer.get.activeCamera = &cam;
 		SimpleMaterial.initialze();
 		SimpleMaterial.reserve(5);
+
+	}
+
+	private void constructStaticGeometry()
+	{
+		GeometryList geoList;
+		foreach(geo; _manager.getEntities!(GameGeometry))
+		{
+			geoList.meshes ~= (geo.getComponent!(Mesh)());
+			geoList.transforms ~= geo.getComponent!(Transform)();
+			SimpleMaterial mat = geo.getMaterial();
+			BlinnPhongMaterial blinnPhongMat;
+
+
+
+		}
 
 	}
 

@@ -13,7 +13,7 @@ import std.digest.md;
 import std.traits;
 import std.meta;
 import core.stdc.string;
-struct DrawElementsIndirectCommand
+struct GDrawElementsIndirectCommand
 {
     uint count;
     uint instanceCount;
@@ -234,51 +234,85 @@ mixin template BufferMutableStorageModeImpl(GBufferType BufferType,T)
 {
     import std.container.array;
     import core.stdc.stdlib;
-    private T[] dataArray;
     
+    bool bufferStoreCreated;
+
+
     @property length()
 	{
-        return dataArray.length;
+        return _length;
 	}
 
 
     void store(size_t size)
 	{
         
-        _length = size;
-        _capacity = size;
-        dataArray = cast(T[])(malloc(T.sizeof * size)[0..size * T.sizeof]);
+        scope(success)
+		{
+            _length = size;
+			_capacity = size;
+		    bufferStoreCreated = true;
+		}
+        glNamedBufferData(id,size*T.sizeof,null,GL_DYNAMIC_DRAW);
+        
         
 	}
-
-    ref inout(T) opIndex(int i) inout
+    void resize(size_t size)
+    in
 	{
-        return dataArray[i];
+	    assert(size >= length, "Can only grow buffers");
+        
 	}
-
-    auto ref opSlice(ulong start, ulong end)
+    do
 	{
-        return dataArray[start..end];
+		scope(success)
+		{
+            _length = size;
+			_capacity = size;
+		    bufferStoreCreated = true;
+		}
+        bind();
+        if(_length > 0)
+		{
+            T* bufferPtr = cast(T*)glMapBuffer(BufferType,GL_READ_ONLY);
+			auto tmp = bufferPtr[0..length].dup;
+			glUnmapBuffer(BufferType);
+			glBufferData(BufferType,size * T.sizeof,tmp.ptr,GL_DYNAMIC_DRAW);
+		}
+        else
+		{
+		    glBufferData(BufferType,size * T.sizeof,null,GL_DYNAMIC_DRAW);
+		}
+		
+        unbind();
 	}
     void opSliceAssign(T[] value, ulong i, ulong j)
 	{
-        dataArray[i..j] = value;
+		if(!bufferStoreCreated)
+		{
+		    store(j+ 1);
+		}
+        glNamedBufferSubData(id,i * T.sizeof,(j - 1 + 1) * T.sizeof,value.ptr,GL_DYNAMIC_DRAW);
 	}
 
     void opIndexAssign(T value, ulong i)
 	{
-        dataArray[i] = value;
+        if(!bufferStoreCreated)
+		{
+		    store(1);
+            return;
+		}
+
+        glNamedBufferSubData(id,i* T.sizeof,T.sizeof,&value);
 	}
 
-    void commit()
-	{
-        glNamedBufferData(id,dataArray.length * T.sizeof,dataArray.ptr,GL_DYNAMIC_DRAW);
-	}
 
-    ~this()
-	{
-        free(dataArray.ptr);
-	}
+    
+    
+    
+
+
+   
 }
 
 mixin template OpenGLBuffer(GBufferType BufferType, T, GBufferStorageMode StorageMode)
@@ -1078,13 +1112,13 @@ struct GPixelBuffer(GBufferStorageMode usage)
 
 }
 
-struct VertexBuffer(T, GBufferStorageMode usage)
+struct GVertexBuffer(T, GBufferStorageMode usage)
 {
     mixin OpenGLBuffer!(GBufferType.Vertex, T, usage);
     private uint size;
 }
 
-struct ElementBuffer(GBufferStorageMode usage)
+struct GElementBuffer(GBufferStorageMode usage)
 {
     mixin OpenGLBuffer!(GBufferType.Element, uint, usage);
     private uint size;
@@ -1094,7 +1128,7 @@ struct ElementBuffer(GBufferStorageMode usage)
 struct ShaderBlock
 {
 
-    mixin OpenGLBuffer!(GBufferType.Uniform, RealmGlobalData, GBufferStorageMode.Mutable);
+    mixin OpenGLBuffer!(GBufferType.Uniform, RealmGlobalData, GBufferStorageMode.Immutable);
     void bindBase(uint bindPoint)
     {
         glBindBufferBase(GL_UNIFORM_BUFFER, bindPoint, id);
@@ -1112,7 +1146,7 @@ struct GShaderStorage(T, GBufferStorageMode usage)
     }
 }
 
-struct DrawIndirectCommandBuffer(GBufferStorageMode usage)
+struct GDrawIndirectCommandBuffer(GBufferStorageMode usage)
 {
     mixin OpenGLBuffer!(GBufferType.DrawIndirect, DrawElementsIndirectCommand, usage);
 }
@@ -1575,7 +1609,7 @@ struct GQueryObject(bool isBuffer = false)
 	}
 }
 
-struct VertexArrayObject
+struct GVertexArrayObject
 {
     mixin OpenGLObject;
     void create()
