@@ -92,6 +92,23 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
             color.a = cast(ubyte)c.a;
             type = InternalType.COLOR;
     	}
+        void opAssign(MaterialTexture other)
+		{
+            type = other.type;
+		    if(other.type == InternalType.TEXTURE)
+			{
+			    texture = other.texture;
+                
+			}
+            else
+			{
+			    color.r = cast(ubyte)other.color.r;
+				color.g = cast(ubyte)other.color.g;
+				color.b = cast(ubyte)other.color.b;
+				color.a = cast(ubyte)other.color.a;
+				
+			}
+		}
     
         
         @property bool isTexture() 
@@ -224,14 +241,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
 
     void writeUniformData()
     {
-        
-        //Logger.Assert(storageBufferPtr !is null, "Shader storage buffer ptr is null");
-       
         shaderStorageBuffer[materialIndex] = layout;
-        
-        
-        
-
     }
 
         
@@ -507,4 +517,5 @@ alias BlinnPhongMaterial = Alias!(Material!(["ambient" : UserDataVarTypes.VECTOR
 											 "diffuse" : UserDataVarTypes.TEXTURE2D,
 											 "normal" : UserDataVarTypes.TEXTURE2D,
 											 "specular" : UserDataVarTypes.TEXTURE2D,
-											 "shininess" : UserDataVarTypes.FLOAT]));
+											 "shininess" : UserDataVarTypes.FLOAT,
+											 "padding" : UserDataVarTypes.FLOAT]));

@@ -292,7 +292,7 @@ mixin template BufferMutableStorageModeImpl(GBufferType BufferType,T)
 		{
 		    store(j+ 1);
 		}
-        glNamedBufferSubData(id,i * T.sizeof,(j - 1 + 1) * T.sizeof,value.ptr,GL_DYNAMIC_DRAW);
+        glNamedBufferSubData(id,i * T.sizeof,(j - 1 + 1) * T.sizeof,value.ptr);
 	}
 
     void opIndexAssign(T value, ulong i)

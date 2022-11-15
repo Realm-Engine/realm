@@ -39,24 +39,54 @@ class RealmGame : RealmApp
 		VirtualFS.registerPath!("Projects/RealmOfTheDead/Assets")("Assets");
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height) / 1,0.1,750,60);
 		Renderer.get.activeCamera = &cam;
+		BlinnPhongMaterial.initialze();
 		SimpleMaterial.initialze();
 		SimpleMaterial.reserve(5);
+		
+		geoLayer = new StaticGeometryLayer;
 
 	}
 
 	private void constructStaticGeometry()
 	{
+		geoLayer.initialize();
 		GeometryList geoList;
 		foreach(geo; _manager.getEntities!(GameGeometry))
 		{
 			geoList.meshes ~= (geo.getComponent!(Mesh)());
 			geoList.transforms ~= geo.getComponent!(Transform)();
 			SimpleMaterial mat = geo.getMaterial();
-			BlinnPhongMaterial blinnPhongMat;
+			BlinnPhongMaterial blinnPhongMat = new BlinnPhongMaterial;
+			blinnPhongMat.textures.settings = mat.textures.settings;
+			blinnPhongMat.ambient = mat.color;
+			if(mat.textures.diffuse.isTexture)
+			{
+				blinnPhongMat.textures.diffuse = mat.textures.diffuse.texture;
+				
+			}
+			else
+			{
+				blinnPhongMat.textures.diffuse = mat.textures.diffuse.color;
+				
+			}
+			if(mat.textures.normal.isTexture)
+			{
+				blinnPhongMat.textures.normal = mat.textures.normal.texture;
+			}
+			else
+			{
+				blinnPhongMat.textures.normal = mat.textures.normal.color;
+			}
+			
 
-
-
+			blinnPhongMat.textures.specular = Vector!(int,4)(cast(int)(mat.specularPower * 255.0f));
+			blinnPhongMat.shininess = mat.shinyness;
+			blinnPhongMat.packTextureAtlas();
+			geoList.materials ~= blinnPhongMat;
 		}
+
+		geoLayer.submitGeometryList(geoList);
+
 
 	}
 
@@ -123,29 +153,34 @@ class RealmGame : RealmApp
 		floor.active = true;
 		sphere = _manager.instantiate!(GameGeometry)(loadMesh("$EngineAssets/Models/sphere.obj"));
 		SimpleMaterial sphereMaterial = sphere.getMaterial();
-		sphereMaterial.color = vec4(1);
+		sphereMaterial.color = vec4(0.01f);
 		IFImage sphereNormal = readImageBytes("$EngineAssets/Images/Sphere-NormalMap.png");
-		sphere.getComponent!(Transform)().scale = vec3(5,5,5);
-		sphere.getComponent!(Transform)().position = vec3(0,10,0);
+		sphere.getComponent!(Transform)().scale = vec3(2,2,2);
+		sphere.getComponent!(Transform)().position = vec3(0,5,0);
 		sphere.active = false;
 		sphereMaterial.textures.normal = new Texture2D(&sphereNormal);
-		sphereMaterial.textures.diffuse = Vector!(int,4)(255);
+		sphereMaterial.textures.diffuse = Vector!(int,4)(200,162,213,255);
+		sphereMaterial.specularPower = 1.0f;
 		sphereMaterial.packTextureAtlas();
 		
 		SimpleMaterial geoMaterial = geo.getMaterial();
 		geo.setBaseMap(readImageBytes("$Assets/Images/crates.png"));
-		geoMaterial.shinyness = 32.0f;
+		geoMaterial.shinyness = 16.0f;
 		geoMaterial.specularPower = 1.0f;
-		geoMaterial.color = vec4(1);
-		
+		geoMaterial.color = vec4(0.01);
+		geoMaterial.textures.normal = Vector!(int,4)(0,0,255,255);
+
 		geo.getComponent!(Transform).position = vec3(0,0,5);
 		
 		floor.setBaseMap(Vector!(int,4)(255));
 		floor.getComponent!(Transform)().scale = vec3(10,1,10);
 		floor.getComponent!(Transform)().position = vec3(0,-2,0);
+		constructStaticGeometry();
 		initSkybox();
 		Renderer.get.setSkybox(skybox);
 		skybox.freeFaces();
+		
+		
 		
 
 		
@@ -182,7 +217,7 @@ class RealmGame : RealmApp
 		_manager.updateEntities(dt / 100);
 		physicsWorld.tick(dt / 100);
 		drawUI();
-		Renderer.get.update();
+		Renderer.get.update(geoLayer);
 
 	}
 

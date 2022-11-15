@@ -7,7 +7,8 @@ import realm.engine.graphics.material;
 abstract class RenderLayer
 {
 	abstract void initialize();
-	abstract void flush();
+	abstract void onDraw(string RenderpassName,Renderpass)(Renderpass pass);
+	
 
 	
 }

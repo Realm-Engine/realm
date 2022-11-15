@@ -32,16 +32,18 @@ vec4 vertex(REVertexData IN)
 
 
 
-vec3 lambertianDiffuse(vec3 normal)
+float lambertAmount(vec3 normal)
 {
-	float amount = max(dot(normal), vec3(-mainLight.direction), 0.0);
-	return amount * mainLight.color.rgb;
+	float amount = max(dot(normal, vec3(-mainLight.direction)), 0.0);
+	return amount;
 }
 
-float specularAmount(vec3 normal, vec3 dirToViewer, vec3 matSpecularColor, float shininess)
+float specularAmount(vec3 normal, vec3 viewDir, vec3 matSpecularColor, float shininess)
 {
-	vec3 r = reflect(-mainLight.direction.xyz, normalize(normal));
-	return pow(max(dot(dirToViewer, r), 0.0), shininess);
+	vec3 reflectDir = reflect(-mainLight.direction.xyz, normal);
+	float specAngle = max(dot(viewDir, reflectDir), 0.0);
+	
+	return pow(specAngle, shininess/4.0);
 }
 
 
@@ -49,14 +51,26 @@ vec4 fragment()
 {
 	vec3 ambient = getObjectData(ambient).rgb;
 	vec3 normal = SAMPLE_TEXTURE(normal, RESurfaceDataIn.texCoord).rgb;
-	vec4 diffuse = SAMPLE_TEXTURE(diffuse, RESurfaceDataIn.texCoord).rgb;
+	normal = normalize(RESurfaceDataIn.TBN * normal);
+	vec4 diffuse = SAMPLE_TEXTURE(diffuse, RESurfaceDataIn.texCoord);
 	vec3 specular = SAMPLE_TEXTURE(specular, RESurfaceDataIn.texCoord).rgb;
 	float shininess = getObjectData(shininess);
 	
 
-	vec3 lambert = lambertianDiffuse(normal);
-	float spec = specularAmount(normal, (camera.position.xyz - RESurfaceDataIn.posWS), specular, shininess);
-	return vec4(diffuse.rgb + (lambert + ambient) + vec3(spec), diffuse.a);
+	float lambert = lambertAmount(normal);
+	
+	float spec = 0.0;
+	if (lambert > 0.0)
+	{
+		spec = specularAmount(normal, normalize(camera.direction.xyz), specular, shininess);
+
+	}
+	
+	float bias = max(0.05 * (1.0 - dot(normal, mainLight.direction.xyz)), 0.005);
+	float shadow = calculateShadow(RESurfaceDataIn.lightSpacePosition, bias);
+	
+	
+	return vec4(((lambert * diffuse.rgb) + (spec * specular)) * (ambient + 1- shadow), 1.0);
 
 
 }

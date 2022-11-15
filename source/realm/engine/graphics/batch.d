@@ -118,6 +118,7 @@ class Batch(T)
 		allocateBuffers(initialElements,numFaces);
 		vertexBuffer.unbind();
 		elementBuffer.unbind();
+		vao.unbind();
 
 	}
 
@@ -154,6 +155,7 @@ class Batch(T)
 		vao.unbind();
 		elementBuffer.bind();
 		cmdBuffer.unbind();
+		vertexBuffer.unbind();
 	}
 		
 	/// Allocate number of vertices and primitive elements

@@ -85,6 +85,7 @@ class Renderer
 	Renderpass!(null,LightPassOutputs) lightPass;
 	Renderpass!(GeometryPassInputs,GeometryPassOutputs) geometryPass;
 	Renderpass!(ScreenPassInputs,null) screenPass;
+	enum RenderpassName(alias Pass) = __traits(identifier,Pass);
 	
 
 	static Renderer get()
@@ -392,7 +393,7 @@ class Renderer
 
 	
 
-	void renderLightSpace() 
+	void renderLightSpace(Layers...)(Layers renderLayers)
 	{
 	
 		
@@ -415,14 +416,17 @@ class Renderer
 
 
 			auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
-
+			
 			foreach(batch; orderedBatches)
 			{
 				batch.setPrepareDrawCallback(&prepareDrawLightpass);
 				batch.drawBatch!(false)(lightSpacePipeline);
 
 			}
-
+			foreach(layer; renderLayers)
+			{
+				layer.onDraw!(RenderpassName!(lightPass))(lightPass);
+			}
 			
 			
 			//cull(CullFace.BACK);
@@ -460,15 +464,15 @@ class Renderer
 		}
 	}
 
-	void update()
+	void update(Layers...)(Layers renderLayers)
 	{
 		mat4 vp = camera.projection * camera.view;
 		if(mainDirLight !is null)
 		{
 			updateMainLight();
 		}
-		
-		renderLightSpace();
+
+		renderLightSpace(renderLayers);
 		cull(CullFace.BACK);
 		if(camera !is null)
 		{
@@ -499,6 +503,10 @@ class Renderer
 		{
 			batch.setPrepareDrawCallback(&prepareDrawGeometry);
 			batch.drawBatch!(true)();
+		}
+		foreach(layer; renderLayers)
+		{
+			layer.onDraw!(RenderpassName!(geometryPass))(geometryPass);
 		}
 		drawSkybox();
 		Debug.flush();
