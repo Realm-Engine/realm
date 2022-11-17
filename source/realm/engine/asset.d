@@ -85,7 +85,7 @@ static class VirtualFS
 		    }
 		}
         string virtualPath = '$'~ prefix ~ "\\" ~systemPath[sysDir.length + 1..$];
-        Logger.LogInfo("Virtual path: %s", virtualPath);
+        
         return virtualPath;
         
 	}
@@ -129,8 +129,9 @@ static class ShaderLibrary
         return (name in library) !is null;
     }
 
-    static StandardShaderModel getShader(string name)
+    static StandardShaderModel getShader(string virtualPath)
     {
+        string name = VirtualFS.getFileName(virtualPath);
         if (hasShader(name))
         {
             return library[name];
@@ -144,7 +145,8 @@ static class ShaderLibrary
         auto dir = dirEntries(path, "*.shader", SpanMode.depth);
         foreach (entry; dir)
         {
-            library[virtualPath] = loadShaderProgram(VirtualFS.getVirtualPath(entry));
+            Logger.LogInfo("Loading shader %s into Shader Library", entry);
+            library[VirtualFS.getFileName(entry)] = loadShaderProgram(VirtualFS.getVirtualPath(entry));
         }
     }
 

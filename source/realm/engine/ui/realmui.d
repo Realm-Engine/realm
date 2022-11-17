@@ -159,8 +159,8 @@ static class RealmUI
 		sliderImage = readImageBytes("$EngineAssets/images/ui-slider.png");
 		panelMesh = loadMesh("$EngineAssets/Models/ui-panel.obj");
 		panelMesh.calculateTangents();
-		uiProgram = loadShaderProgram("$EngineAssets/Shaders/ui.shader","UI");
-		textProgram = loadShaderProgram("$EngineAssets/Shaders/text.shader","Text");
+		uiProgram = ShaderLibrary.getShader("$EngineAssets/Shaders/ui.shader");
+		textProgram = ShaderLibrary.getShader("$EngineAssets/Shaders/text.shader");
 		UIMaterial.initialze();
 		UIMaterial.reserve(32);
 		UIMaterial.allocate(512,512);

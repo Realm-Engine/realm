@@ -43,7 +43,7 @@ class StaticGeometryLayer : RenderLayer
 	{
 		if(geoShader is null)
 		{
-			geoShader = loadShaderProgram("$EngineAssets/Shaders/blinnphong.shader","Blinn Phong");
+			geoShader = ShaderLibrary.getShader("$EngineAssets/Shaders/blinnphong.shader");
 			
 		}
 		vao.create();
@@ -144,6 +144,7 @@ class StaticGeometryLayer : RenderLayer
 
 	void onDraw(string RenderpassName,Renderpass)(Renderpass pass) if(RenderpassName == "geometryPass" || RenderpassName == "lightPass")
 	{
+		
 
 		geoShader.use();
 		pass.bindAttachments(geoShader);

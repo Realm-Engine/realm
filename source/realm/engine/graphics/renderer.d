@@ -163,9 +163,9 @@ class Renderer
 		Debug.initialze();
 		RealmUI.initialize();
 		queryDevice.create();
-		lightSpaceShaderProgram = loadShaderProgram("$EngineAssets/Shaders/lightSpace.shader","lightSpace");
-		depthPrepassProgram = loadShaderProgram("$EngineAssets/Shaders/depthPrepass.shader","Depth prepass");
-		screenPassProgram = loadShaderProgram("$EngineAssets/Shaders/screenPass.shader","Screen pass");
+		lightSpaceShaderProgram = ShaderLibrary.getShader("$EngineAssets/Shaders/lightSpace.shader");
+		depthPrepassProgram = ShaderLibrary.getShader("$EngineAssets/Shaders/depthPrepass.shader");
+		screenPassProgram = ShaderLibrary.getShader("$EngineAssets/Shaders/screenPass.shader");
 		lightSpacePipeline = new ShaderPipeline;
 		lightSpacePipeline.create();
 		lightSpacePipeline.useProgramStages(lightSpaceShaderProgram);
@@ -217,7 +217,7 @@ class Renderer
 		skyboxMesh.normals.length = 4;
 		skyboxMesh.textureCoordinates.length = 4;
 		skyboxMesh.tangents.length = 4;
-		skyboxProgram = loadShaderProgram("$EngineAssets/Shaders/skybox.shader","Skybox");
+		skyboxProgram = ShaderLibrary.getShader("$EngineAssets/Shaders/skybox.shader");
 		SkyboxMaterial.initialze();
 		SkyboxMaterial.reserve(1);
 		skyboxMaterial = new SkyboxMaterial;
