@@ -37,25 +37,7 @@ class StaticGeometryLayer : RenderLayer
 	private uint numVertices;
 	private uint numIndices;
 	private uint numElements;
-	void bindAttributes()
-	{
-		import realm.engine.graphics.opengl : bindAttribute;
-		import std.meta;
-		RealmVertex vertex;
-		uint stride = 0;
-
-		stride += RealmVertex.sizeof;
-
-		int offset = 0;
-		int index = 0;
-		static foreach(member; __traits(allMembers,RealmVertex))
-		{
-
-			bindAttribute!(Alias!(typeof(__traits(getMember,vertex,member))))(index,offset,stride);
-			index += 1;
-			offset += (typeof(__traits(getMember,vertex,member))).sizeof;
-		}
-	}
+	
 
 	override void initialize()
 	{
@@ -78,7 +60,7 @@ class StaticGeometryLayer : RenderLayer
 		vertexBuffer.bind();
 		elementBuffer.bind();
 		cmdBuffer.bind();
-		bindAttributes();
+		bindAttributes!(RealmVertex)();
 		vertexBuffer.store(numVertices);
 		elementBuffer.store(numIndices);
 		cmdBuffer.store(numElements);
