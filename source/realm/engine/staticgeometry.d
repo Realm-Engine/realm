@@ -11,7 +11,7 @@ private
 	import std.range;
 	
 }
-private static StandardShaderModel geoShader;
+
 
 
 struct GeometryList
@@ -27,7 +27,7 @@ struct GeometryList
 class StaticGeometryLayer : RenderLayer
 {
 	
-	
+	private StandardShaderModel geoShader;
 	private VertexArrayObject vao;
 	private VertexBuffer!(RealmVertex,BufferStorageMode.Immutable) vertexBuffer;
 	private ElementBuffer!(BufferStorageMode.Immutable) elementBuffer;
@@ -41,11 +41,10 @@ class StaticGeometryLayer : RenderLayer
 
 	override void initialize()
 	{
-		if(geoShader is null)
-		{
-			geoShader = ShaderLibrary.getShader("$EngineAssets/Shaders/blinnphong.shader");
+
+		geoShader = ShaderLibrary.getShader("$EngineAssets/Shaders/blinnphong.shader");
 			
-		}
+
 		vao.create();
 		vertexBuffer.create();
 		elementBuffer.create();
