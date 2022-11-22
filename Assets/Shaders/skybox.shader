@@ -17,7 +17,7 @@ vec4 vertex(REVertexData IN)
 	RESurfaceDataOut.texCoord = IN.texCoord;
 	RESurfaceDataOut.normal = IN.normal;
 	RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * vec4(IN.position, 1.0);
-	RESurfaceDataOut.eyeSpacePosition =vec4(mat3(u_view) * IN.position,1.0);
+	RESurfaceDataOut.eyeSpacePosition =vec4(mat3(vp) * IN.position,1.0);
 	return RESurfaceDataOut.posCS;
 }
 #shader fragment skyboxFragment
@@ -25,7 +25,5 @@ vec4 vertex(REVertexData IN)
 
 vec4 fragment()
 {
-
-	
 	return texture(envSkybox, vec3(normalize(RESurfaceDataIn.eyeSpacePosition)));
 }

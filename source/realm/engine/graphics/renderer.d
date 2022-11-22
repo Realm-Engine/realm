@@ -530,7 +530,7 @@ class Renderer
 		for(int i = 0; i < skyboxMesh.positions.length;i++)
 		{
 			RealmVertex vertex;
-			vertex.position = vec3(transform.transformation * vec4(skyboxMesh.positions[i],1.0));
+			vertex.position = vec3( vec4(skyboxMesh.positions[i],1.0));
 			vertex.texCoord = screenMesh.textureCoordinates[i];
 			vertex.normal = vec3(0,0,1);
 			vertex.tangent = screenMesh.tangents[i];
