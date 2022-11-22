@@ -306,6 +306,10 @@ mixin template BufferMutableStorageModeImpl(GBufferType BufferType,T)
         glNamedBufferSubData(id,i* T.sizeof,T.sizeof,&value);
 	}
 
+    void clear()
+	{
+	    glNamedBufferData(id,length * T.sizeof,null,GL_DYNAMIC_DRAW);
+	}
 
     
     
