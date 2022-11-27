@@ -42,7 +42,7 @@ class RealmGame : RealmApp
 		cam = new Camera(CameraProjection.PERSPECTIVE,vec2(cast(float)width,cast(float)height) / 1,0.1,750,60);
 		Renderer.get.activeCamera = &cam;
 		BlinnPhongMaterial.initialze();
-		
+		BlinnPhongMaterial.reserve(4);
 		//BlinnPhongMaterial.reserve(5);
 		
 		geoLayer = new StaticGeometryLayer;
@@ -194,7 +194,7 @@ class RealmGame : RealmApp
 		_manager.updateEntities(dt / 100);
 		physicsWorld.tick(dt / 100);
 		drawUI();
-		Renderer.get.update(dynamicObjectLayer);
+		Renderer.get.update(geoLayer,dynamicObjectLayer);
 
 	}
 

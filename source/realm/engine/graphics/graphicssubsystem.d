@@ -49,6 +49,11 @@ class GraphicsSubsystem
 		globalDataBuffer[0] = *data;
 		globalDataBuffer.unbind();
 	}
+
+	static void drawElement(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(DrawElementsIndirectCommand command)
+	{
+		glDrawElementsInstancedBaseVertexBaseInstance(shape,command.count,GL_UNSIGNED_INT,cast(void*)(command.firstIndex * uint.sizeof),command.instanceCount,command.baseVertex,command.baseInstance);
+	}
 	
 	static void drawMultiElementsIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(DrawElementsIndirectCommand[] commands)
 	{

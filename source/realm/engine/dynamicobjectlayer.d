@@ -68,14 +68,15 @@ class DynamicObjectLayer : RenderLayer
 		{
 			RealmVertex vertex;
 			vertex.position = mesh.positions[i];
-			vertex.position = mesh.positions[i];
+			//vertex.position = mesh.positions[i];
 			vertex.texCoord = mesh.textureCoordinates[i];
 			vertex.normal =  mesh.normals[i];
 			vertex.tangent = mesh.tangents[i];
 			vertex.materialId = material.instanceId;
+			vertices[i] = vertex;
 		}
 		vertexBuffer[numVertices..numVertices + mesh.positions.length] = vertices;
-		elementBuffer[numIndices..(numIndices)] = mesh.faces;
+		elementBuffer[numIndices..(numIndices) + mesh.faces.length] = mesh.faces;
 		DrawElementsIndirectCommand cmd;
 		cmd.count = cast(uint)mesh.faces.length;
 		cmd.instanceCount = cast(uint)mesh.faces.length / 3;
@@ -126,10 +127,10 @@ class DynamicObjectLayer : RenderLayer
 		}
 		objectToWorldMats.bindBase(2);
 		BlinnPhongMaterial.bindShaderStorage();
-		GraphicsSubsystem.drawMultiElementsIndirect!(PrimitiveShape.TRIANGLE)(drawCommands);
-		vertexBuffer.clear();
-		elementBuffer.clear();
-		objectToWorldMats.clear();
+		foreach(cmd; drawCommands)
+		{
+			GraphicsSubsystem.drawElement(cmd);
+		}
 		shader.unbind();
 		vao.unbind();
 		vertexBuffer.unbind();
