@@ -139,7 +139,10 @@ class StaticGeometryLayer : RenderLayer
 
 	}
 
-	
+	override void renderBegin()
+	{
+
+	}
 
 	void onDraw(string RenderpassName,Renderpass)(Renderpass pass) if(RenderpassName == "geometryPass" || RenderpassName == "lightPass")
 	{
@@ -167,6 +170,10 @@ class StaticGeometryLayer : RenderLayer
 		cmdBuffer.unbind();
 
 		
+	}
+	override void renderEnd()
+	{
+
 	}
 
 }

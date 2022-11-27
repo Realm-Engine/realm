@@ -23,13 +23,13 @@ class GameGeometry
 		mesh = &getComponent!(Mesh)();
 		transform = getComponent!(Transform)();
 		*mesh = geo;
-		material = new SimpleMaterial;
-		SimpleMaterial.allocate(mesh);
+		material = new BlinnPhongMaterial;
+		
 		material.textures.normal = Vector!(int,4)(0,0,255,0);
 		material.setShaderProgram(getEntityShader());
-		material.shinyness = 16;
-		material.specularPower = 1.0f;
-		material.color = vec4(0.1);
+		material.shininess = 16;
+		material.textures.specular = Vector!(int,4)(255);
+		material.ambient = vec4(0.1);
 		vertexBuffer.length = geo.positions.length;
 
 	}

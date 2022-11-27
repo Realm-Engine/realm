@@ -8,7 +8,8 @@ abstract class RenderLayer
 {
     abstract void initialize();
     abstract void onDraw(string RenderpassName, Renderpass)(Renderpass pass);
-
+    abstract void renderBegin();
+    abstract void renderEnd();
     void bindAttributes(T)()
     {
         import realm.engine.graphics.opengl : bindAttribute;

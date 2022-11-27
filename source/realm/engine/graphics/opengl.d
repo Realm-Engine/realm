@@ -1904,6 +1904,11 @@ void drawMultiIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(int cou
     glMultiDrawElementsIndirect(shape, GL_UNSIGNED_INT, null, count, 0);
 }
 
+void drawMultiIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(DrawElementsIndirectCommand[] commands)
+{
+    glMultiDrawElementsIndirect(shape,GL_UNSIGNED_INT,commands.ptr,commands.length,0);
+}
+
 void drawElements(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(uint count)
 {
     glDrawElements(shape, count, GL_UNSIGNED_INT, null);

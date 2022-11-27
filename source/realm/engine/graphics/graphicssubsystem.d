@@ -50,9 +50,10 @@ class GraphicsSubsystem
 		globalDataBuffer.unbind();
 	}
 	
-	static void drawMultiElementsIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(DrawElementsIndirectCommand* commands,int count)
+	static void drawMultiElementsIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(DrawElementsIndirectCommand[] commands)
 	{
-		glMultiDrawElementsIndirect(shape,GL_UNSIGNED_INT,commands,count,0);
+		//Logger.LogInfo("%d", cast(int)commands.length);
+		glMultiDrawElementsIndirect(shape,GL_UNSIGNED_INT,cast(void*) commands.ptr,cast(int)commands.length,0);
 	}
 
 	static void drawMultiElementsIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(int offset, int count)

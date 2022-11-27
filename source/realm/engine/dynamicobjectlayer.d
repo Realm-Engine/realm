@@ -12,8 +12,11 @@ private
 
 }
 
-struct ObjectRecord
+struct DynamicObjectDrawInfo
 {
+	DrawElementsIndirectCommand drawCommand;
+	BlinnPhongMaterial material;
+
 	
 }
 
@@ -25,9 +28,12 @@ class DynamicObjectLayer : RenderLayer
 	private VertexArrayObject vao;
 	private VertexBuffer!(RealmVertex,BufferStorageMode.Mutable) vertexBuffer;
 	private ElementBuffer!(BufferStorageMode.Mutable) elementBuffer;
-	private DrawIndirectCommandBuffer!(BufferStorageMode.Mutable) cmdBuffer;
+	//private DrawIndirectCommandBuffer!(BufferStorageMode.Mutable) cmdBuffer;
 	private ShaderStorage!(float[16],BufferStorageMode.Mutable) objectToWorldMats;
 	private SamplerObject!(TextureType.TEXTURE2D)*[] textureAtlases;
+	private DrawElementsIndirectCommand[] drawCommands;	
+
+
 	private uint numVertices;
 	private uint numIndices;
 	private uint numObjects;
@@ -42,7 +48,7 @@ class DynamicObjectLayer : RenderLayer
 		vao.create();
 		vertexBuffer.create();
 		elementBuffer.create();
-		cmdBuffer.create();
+		//cmdBuffer.create();
 		objectToWorldMats.create();
 		objectToWorldMats.bindBase(2);
 		vao.bind();
@@ -54,12 +60,8 @@ class DynamicObjectLayer : RenderLayer
 		vao.unbind();
 	}
 
-	void submitObject(Mesh mesh, Transform transform, BlinnPhongMaterial material)
+	DynamicObjectDrawInfo createDynamicObject(Mesh mesh, BlinnPhongMaterial material)
 	{
-		uint elementOffset = 0;
-
-
-
 		RealmVertex[] vertices;
 		vertices.length = mesh.positions.length;
 		for(int i = 0; i < mesh.positions.length;i++)
@@ -74,25 +76,41 @@ class DynamicObjectLayer : RenderLayer
 		}
 		vertexBuffer[numVertices..numVertices + mesh.positions.length] = vertices;
 		elementBuffer[numIndices..(numIndices)] = mesh.faces;
-		
 		DrawElementsIndirectCommand cmd;
 		cmd.count = cast(uint)mesh.faces.length;
 		cmd.instanceCount = cast(uint)mesh.faces.length / 3;
 		cmd.firstIndex = numIndices;
 		cmd.baseVertex = numVertices;
 		cmd.baseInstance  = 0;
-		cmdBuffer[numObjects] = cmd;
+		textureAtlases ~= material.getTextureAtlas();
+		DynamicObjectDrawInfo drawInfo;
+		drawInfo.drawCommand = cmd;
+		drawInfo.material = material;
 		numObjects++;
 		numVertices += vertices.length;
 		numIndices += mesh.faces.length;
-		material.writeUniformData();
-		textureAtlases~=material.getTextureAtlas();
-		mat4 objectToWorld = transform.transformation;
-		float[16] objectToWorldData = objectToWorld.value_ptr[0..16].dup;
-		objectToWorldMats[material.instanceId] = objectToWorldData;
-		
+		return drawInfo;
+
+	
 
 	}
+
+	void drawObject(DynamicObjectDrawInfo drawInfo,Transform transform)
+	{
+		drawCommands ~= drawInfo.drawCommand;
+		BlinnPhongMaterial material = drawInfo.material;
+		material.writeUniformData();
+
+		mat4 objectToWorld = transform.transformation;
+		objectToWorldMats[material.instanceId] = objectToWorld.value_ptr[0..16];
+
+	}
+
+	override void renderBegin()
+	{
+
+	}
+
 	void onDraw(string RenderpassName,Renderpass)(Renderpass pass) if(RenderpassName == "geometryPass" || RenderpassName == "lightPass")
 	{
 		shader.use();
@@ -100,7 +118,6 @@ class DynamicObjectLayer : RenderLayer
 		vao.bind();
 		vertexBuffer.bind();
 		elementBuffer.bind();
-		cmdBuffer.bind();
 		foreach(i,texture; textureAtlases.enumerate(0))
 		{
 			texture.setActive();
@@ -109,17 +126,21 @@ class DynamicObjectLayer : RenderLayer
 		}
 		objectToWorldMats.bindBase(2);
 		BlinnPhongMaterial.bindShaderStorage();
-		GraphicsSubsystem.drawMultiElementsIndirect!(PrimitiveShape.TRIANGLE)(0,numObjects);
+		GraphicsSubsystem.drawMultiElementsIndirect!(PrimitiveShape.TRIANGLE)(drawCommands);
 		vertexBuffer.clear();
 		elementBuffer.clear();
-		cmdBuffer.clear();
 		objectToWorldMats.clear();
 		shader.unbind();
 		vao.unbind();
 		vertexBuffer.unbind();
 		elementBuffer.unbind();
-		cmdBuffer.unbind();
 		
+		
+	}
+
+	override void renderEnd()
+	{
+		drawCommands.length = 0;
 	}
 
 }

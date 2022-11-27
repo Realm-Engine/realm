@@ -13,6 +13,7 @@ private
 	import realm.engine.graphics.core;
 	import realm.engine.graphics.material;
 	import realm.engine.graphics.renderer;
+    import realm.engine.dynamicobjectlayer;
 }
 
 
@@ -34,7 +35,9 @@ class Player
     float gravity = 9.82;
     bool onGround;
     private RealmVertex[] vertexBuffer;
-    void start(Camera* cam)
+    private DynamicObjectDrawInfo drawInfo;
+    private DynamicObjectLayer layer;
+    void start(Camera* cam,DynamicObjectLayer layer)
     {
 
         lastX = float.max;
@@ -48,12 +51,12 @@ class Player
 		//collider.setSize(2,5,2);
         mesh = &(getComponent!(Mesh)());
         *mesh = loadMesh("$Assets/Models/Player.obj");
-        material = new SimpleMaterial;
-		SimpleMaterial.allocate(mesh);
-		material.shinyness = 1.0f;
-		material.specularPower = 1.0f;
+        material = new BlinnPhongMaterial();
+		//BlinnPhongMaterial.allocate(mesh);
+		material.shininess = 1.0f;
+		material.textures.specular = Vector!(int,4)(255);
 		material.textures.normal = Vector!(int, 4)(0,0,255,0);
-		material.color = vec4(1);
+		material.ambient = vec4(1);
 
 		material.textures.diffuse = Vector!(int, 4)(65,123,67,256);
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
@@ -70,6 +73,10 @@ class Player
         transform.position = vec3(0,5,-10);
         camera.transform.position = transform.position - vec3(0,-3,-3);
         vertexBuffer.length = mesh.positions.length;
+        this.layer = layer;
+        drawInfo = layer.createDynamicObject(*mesh,material);
+        
+        
         //physicsBody.active = false;
     }
 
@@ -196,7 +203,8 @@ class Player
         camera.update();
         updateComponents();
         processCollisions();
-        Renderer.get.submitMesh!(SimpleMaterial,false)(mesh,transform,material,vertexBuffer);
+        layer.drawObject(drawInfo,transform);
+        //Renderer.get.submitMesh!(BlinnPhongMaterial,false)(mesh,transform,material,vertexBuffer);
 
         
         

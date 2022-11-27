@@ -466,6 +466,10 @@ class Renderer
 
 	void update(Layers...)(Layers renderLayers)
 	{
+		foreach(layer; renderLayers)
+		{
+			layer.renderBegin();
+		}
 		mat4 vp = camera.projection * camera.view;
 		if(mainDirLight !is null)
 		{
@@ -517,6 +521,11 @@ class Renderer
 		foreach(batch; orderedBatches)
 		{
 			batch.resetBatch();
+		}
+
+		foreach(layer; renderLayers)
+		{
+			layer.renderEnd();
 		}
 
 		long timeElapsed = 0;

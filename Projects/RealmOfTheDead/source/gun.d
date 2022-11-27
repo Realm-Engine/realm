@@ -27,12 +27,12 @@ class Gun
 		transform = getComponent!(Transform)();
 		*mesh = loadMesh("$Assets/Models/gun.obj");
 		transform.setParent(player);
-		material = new SimpleMaterial;
-		SimpleMaterial.allocate(mesh);
-		material.shinyness = 1.0f;
-		material.specularPower = 1.0f;
+		material = new BlinnPhongMaterial;
+		BlinnPhongMaterial.allocate(mesh);
+		material.shininess = 1.0f;
+		material.textures.specular = Vector!(int,4)(255);
 		material.textures.normal = Vector!(int, 4)(0);
-		material.color = vec4(1);
+		material.ambient = vec4(1);
 		material.textures.diffuse = new Texture2D(&diffuseImage);
 		material.textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
@@ -81,7 +81,7 @@ class Gun
 		//processCollisions();
 		//transform.rotateEuler(vec3(0,0,0));
 		updateComponents();
-		Renderer.get.submitMesh!(SimpleMaterial,false)(mesh,transform,material,vertexBuffer);
+		Renderer.get.submitMesh!(BlinnPhongMaterial,false)(mesh,transform,material,vertexBuffer);
 	}
 
 }
