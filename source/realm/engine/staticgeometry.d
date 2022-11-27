@@ -103,7 +103,7 @@ class StaticGeometryLayer : RenderLayer
 
 		}
 		
-		allocateGraphicsMemory(numVertices,numIndices,cast(uint)geoList.meshes.length);
+		allocateGraphicsMemory(numVertices,numIndices,cast(uint)geoList.meshes.length + 1);
 		fillBuffers(geoList,vertices,indices);
 		
 	}
@@ -128,6 +128,7 @@ class StaticGeometryLayer : RenderLayer
 			geoList.transforms[i].updateTransformation();
 			mat4 objectToWorld = geoList.transforms[i].transformation;
 			BlinnPhongMaterial material = geoList.materials[i];
+			
 			material.writeUniformData();
 			textureAtlases ~= material.getTextureAtlas();
 			float[16]* objectToWorldPtr = &objectToWorldMats.ptr[material.instanceId];

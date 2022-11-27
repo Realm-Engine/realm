@@ -75,6 +75,7 @@ class DynamicObjectLayer : RenderLayer
 			vertex.materialId = material.instanceId;
 			vertices[i] = vertex;
 		}
+		objectToWorldMats.resize(material.instanceId + 1);
 		vertexBuffer[numVertices..numVertices + mesh.positions.length] = vertices;
 		elementBuffer[numIndices..(numIndices) + mesh.faces.length] = mesh.faces;
 		DrawElementsIndirectCommand cmd;
@@ -84,6 +85,7 @@ class DynamicObjectLayer : RenderLayer
 		cmd.baseVertex = numVertices;
 		cmd.baseInstance  = 0;
 		textureAtlases ~= material.getTextureAtlas();
+		
 		DynamicObjectDrawInfo drawInfo;
 		drawInfo.drawCommand = cmd;
 		drawInfo.material = material;
