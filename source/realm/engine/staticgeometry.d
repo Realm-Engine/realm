@@ -80,7 +80,7 @@ class StaticGeometryLayer : RenderLayer
 		{
 			numElements++;
 			Mesh mesh = geoList.meshes[i];
-
+			
 			for(int j = 0; j < mesh.positions.length;j++)
 			{
 				RealmVertex vertex;
@@ -135,7 +135,6 @@ class StaticGeometryLayer : RenderLayer
 			*objectToWorldPtr = objectToWorld.value_ptr[0..16].dup;
 			firstIndex += mesh.faces.length;
 			baseVertex += mesh.positions.length;
-
 		}
 
 	}
@@ -148,7 +147,7 @@ class StaticGeometryLayer : RenderLayer
 	void onDraw(string RenderpassName,Renderpass)(Renderpass pass) if(RenderpassName == "geometryPass" || RenderpassName == "lightPass")
 	{
 		
-
+		Logger.LogInfo("render %s layer",RenderpassName);
 		geoShader.use();
 		pass.bindAttachments(geoShader);
 		vao.bind();

@@ -260,6 +260,10 @@ private Mesh loadObj(string path)
     Logger.LogInfo("Loading model: %s", path);
     foreach (index, line; enumerate(file.byLine, 0))
     {
+        scope(failure)
+        {
+            Logger.LogError("Failed at line %s", line.strip().split(" ").map!(s => s.strip()).array);
+        }
         char[][] values = line.strip().split(" ").map!(s => s.strip()).array;
         if (values.length <= 0)
         {
@@ -296,6 +300,7 @@ private Mesh loadObj(string path)
                 }
                 string token = "/";
                 bool hasTexCoord = true;
+                bool hasNormal = true;
                 if (line.indexOf("//") >= 0)
                 {
                     hasTexCoord = false;
@@ -309,6 +314,11 @@ private Mesh loadObj(string path)
                 {
                     vnIdx = indices[1];
                 }
+                else if(indices.length == 2)
+                {
+                    vtIdx = indices[1];
+                    hasNormal = false;
+                }
                 else
                 {
                     vnIdx = indices[2];
@@ -316,7 +326,15 @@ private Mesh loadObj(string path)
                 }
 
                 result.positions ~= vertices[vIdx - 1];
-                result.normals ~= normals[vnIdx - 1];
+                if(hasNormal)
+                {
+                    result.normals ~= normals[vnIdx - 1];
+                }
+                else
+                {
+                    result.normals ~= vec3(0,0,1);
+                }
+                
                 if (!hasTexCoord)
                 {
                     result.textureCoordinates ~= vec2(1, 1);

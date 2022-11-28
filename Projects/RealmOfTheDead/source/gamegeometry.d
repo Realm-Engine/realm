@@ -17,7 +17,6 @@ class GameGeometry
 	private Mesh* mesh;
 	private Transform transform;
 	private Texture2D diffuseMap;
-	private RealmVertex[] vertexBuffer;
 	void start(Mesh geo)
 	{
 		mesh = &getComponent!(Mesh)();
@@ -30,7 +29,7 @@ class GameGeometry
 		material.shininess = 16;
 		material.textures.specular = Vector!(int,4)(255);
 		material.ambient = vec4(0.1);
-		vertexBuffer.length = geo.positions.length;
+		
 
 	}
 	

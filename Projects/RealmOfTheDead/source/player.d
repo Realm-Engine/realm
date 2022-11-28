@@ -54,9 +54,9 @@ class Player
         material = new BlinnPhongMaterial();
 		//BlinnPhongMaterial.allocate(mesh);
 		material.shininess = 1.0f;
-		material.textures.specular = Vector!(int,4)(255);
+		material.textures.specular = Vector!(int,4)(25);
 		material.textures.normal = Vector!(int, 4)(0,0,255,0);
-		material.ambient = vec4(1);
+		material.ambient = vec4(0.1f);
 
 		material.textures.diffuse = Vector!(int, 4)(65,123,67,256);
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);

@@ -169,6 +169,7 @@ mixin template BufferImmutableStorageModeImpl(GBufferType BufferType,T)
 	{
 		
 		glPtr[i..j] = value;
+        
 
 	}
 	private void mapBuffer()
@@ -288,10 +289,26 @@ mixin template BufferMutableStorageModeImpl(GBufferType BufferType,T)
 	}
     void opSliceAssign(T[] value, ulong i, ulong j)
 	{
+        
 		if(!bufferStoreCreated)
 		{
 		    store(j+ 1);
 		}
+        if(value.length > 2048)
+        {
+            Logger.LogInfo("Sending array of size %d as chunks", value.length);
+            import std.range;
+            int chunkSize = 2048;
+            auto chunks = chunks(value,chunkSize);
+            ulong k;
+            k = i;
+            
+            foreach(chunk; chunks)
+            {
+                glNamedBufferSubData(id, k * T.sizeof,chunk.length * T.sizeof,chunk.array.ptr);
+                k += chunk.length;
+            }
+        }
         glNamedBufferSubData(id,i * T.sizeof,(j - 1 + 1) * T.sizeof,value.ptr);
 	}
 

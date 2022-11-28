@@ -70,7 +70,7 @@ vec4 fragment()
 	float shadow = calculateShadow(RESurfaceDataIn.lightSpacePosition, bias);
 	
 	
-	return vec4(((lambert * diffuse.rgb) + (spec * specular)) * (ambient + 1- shadow), 1.0);
+	return vec4((((lambert * diffuse.rgb) + (spec * specular)) + ambient) * (ambient + 1- shadow), 1.0);
 
 
 }
