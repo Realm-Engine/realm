@@ -122,7 +122,7 @@ class RealmGame : RealmApp
 		Renderer.get.mainLight(mainLight);
 		Logger.LogInfo("Starting Realm of the Dead!");
 		player = _manager.instantiate!(Player)(&cam,dynamicObjectLayer);
-		//gun = _manager.instantiate!(Gun)(player.getComponent!(Transform),cam);
+		gun = _manager.instantiate!(Gun)(player.getComponent!(Transform),cam,dynamicObjectLayer);
 		geo = _manager.instantiate!(GameGeometry)(loadMesh("$Assets/Models/crates.obj"));
 		geo.entityName = "Crates";
 		floor = _manager.instantiate!(GameGeometry)(generateFace(vec3(0,1,0),8));

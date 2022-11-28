@@ -76,6 +76,8 @@ class DynamicObjectLayer : RenderLayer
 			vertices[i] = vertex;
 		}
 		objectToWorldMats.resize(material.instanceId + 1);
+		vertexBuffer.resize(numVertices + mesh.positions.length);
+		elementBuffer.resize(numIndices + mesh.faces.length);
 		vertexBuffer[numVertices..numVertices + mesh.positions.length] = vertices;
 		elementBuffer[numIndices..(numIndices) + mesh.faces.length] = mesh.faces;
 		DrawElementsIndirectCommand cmd;
@@ -90,8 +92,9 @@ class DynamicObjectLayer : RenderLayer
 		drawInfo.drawCommand = cmd;
 		drawInfo.material = material;
 		numObjects++;
-		numVertices += vertices.length;
+		numVertices += mesh.positions.length;
 		numIndices += mesh.faces.length;
+		objectToWorldMats.resize(numObjects);
 		return drawInfo;
 
 	
@@ -105,7 +108,7 @@ class DynamicObjectLayer : RenderLayer
 		material.writeUniformData();
 
 		mat4 objectToWorld = transform.transformation;
-		objectToWorldMats[material.instanceId] = objectToWorld.value_ptr[0..16];
+		objectToWorldMats[drawCommands.length - 1] = objectToWorld.value_ptr[0..16];
 
 	}
 
@@ -129,10 +132,11 @@ class DynamicObjectLayer : RenderLayer
 		}
 		objectToWorldMats.bindBase(2);
 		BlinnPhongMaterial.bindShaderStorage();
-		foreach(cmd; drawCommands)
-		{
-			GraphicsSubsystem.drawElement(cmd);
-		}
+		//foreach(cmd; drawCommands)
+		//{
+		//    GraphicsSubsystem.drawElement(cmd);
+		//}
+		GraphicsSubsystem.drawMultiElementsIndirect(drawCommands);
 		shader.unbind();
 		vao.unbind();
 		vertexBuffer.unbind();

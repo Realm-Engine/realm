@@ -103,7 +103,7 @@ class StaticGeometryLayer : RenderLayer
 
 		}
 		
-		allocateGraphicsMemory(numVertices,numIndices,cast(uint)geoList.meshes.length + 1);
+		allocateGraphicsMemory(numVertices,numIndices,cast(uint)geoList.meshes.length);
 		fillBuffers(geoList,vertices,indices);
 		
 	}
@@ -131,7 +131,7 @@ class StaticGeometryLayer : RenderLayer
 			
 			material.writeUniformData();
 			textureAtlases ~= material.getTextureAtlas();
-			float[16]* objectToWorldPtr = &objectToWorldMats.ptr[material.instanceId];
+			float[16]* objectToWorldPtr = &objectToWorldMats.ptr[i];
 			*objectToWorldPtr = objectToWorld.value_ptr[0..16].dup;
 			firstIndex += mesh.faces.length;
 			baseVertex += mesh.positions.length;

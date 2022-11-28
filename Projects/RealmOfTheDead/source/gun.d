@@ -10,6 +10,7 @@ private
 	import realm.engine.debugdraw;
 	import realm.engine.physics.core;
 	import realmofthedead.gamegeometry;
+	import realm.engine.dynamicobjectlayer;
 
 }
 class Gun
@@ -19,7 +20,9 @@ class Gun
 	private Mesh* mesh;
 	private Transform transform;
 	private RealmVertex[] vertexBuffer;
-	void start(Transform player, Camera camera)
+	private DynamicObjectLayer layer;
+	private DynamicObjectDrawInfo drawInfo;
+	void start(Transform player, Camera camera,DynamicObjectLayer layer)
 	{
 		
 		diffuseImage = readImageBytes("$Assets/Images/gun.png");
@@ -39,10 +42,10 @@ class Gun
 		material.setShaderProgram(getEntityShader());
 		transform.position = vec3(-1.5,1,3);
 		transform.scale = vec3(1,1,1);
-		//transform.rotation = vec3(0,0,0);
 		transform.setRotationEuler(vec3(0,-80,0));
 		vertexBuffer.length = mesh.positions.length;
-		
+		this.layer = layer;
+		drawInfo = layer.createDynamicObject(*mesh,material);
 		
 
 
@@ -81,7 +84,7 @@ class Gun
 		//processCollisions();
 		//transform.rotateEuler(vec3(0,0,0));
 		updateComponents();
-		Renderer.get.submitMesh!(BlinnPhongMaterial,false)(mesh,transform,material,vertexBuffer);
+		layer.drawObject(drawInfo,transform);
 	}
 
 }

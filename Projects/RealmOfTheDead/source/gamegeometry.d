@@ -38,7 +38,7 @@ class GameGeometry
 	{
 		material.textures.diffuse = color;
 		material.textures.settings = TextureDesc(ImageFormat.RGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
-		//material.packTextureAtlas();
+		material.packTextureAtlas();
 	}
 
 	void setBaseMap(IFImage image)

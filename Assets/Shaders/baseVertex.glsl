@@ -29,7 +29,7 @@ out RESurfaceData
 	vec2 texCoord;
 	flat int objectId;
 	Material material;
-	noperspective vec3 normal;
+	vec3 normal;
 	mat3 TBN;
 	vec4 lightSpacePosition;
 	vec4 eyeSpacePosition;
@@ -65,7 +65,7 @@ mat3 calculateTBN(vec3 tangent, vec3 normal)
 #define objectTexture atlasTextures[v_MaterialID]
 #define getObjectData(v) IN.material.v
 #define OBJECT_TO_WORLD_T transpose(OBJECT_TO_WORLD)
-#define OBJECT_TO_WORLD objectToWorld[v_MaterialID]
+#define OBJECT_TO_WORLD objectToWorld[gl_DrawID]
 
 
 void main()
