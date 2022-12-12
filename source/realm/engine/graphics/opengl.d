@@ -78,7 +78,7 @@ enum GBufferUsage : GLenum
 enum GBufferStorageMode : GLenum
 {
     Mutable = GL_NONE,
-    Immutable = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT
+    Immutable = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT 
 }
 
 enum GBufferType : GLenum
@@ -118,8 +118,42 @@ enum bool isValidBufferTarget(GLenum T) = (T == GL_ARRAY_BUFFER
 
 enum bool isMappedBuffer(T) = (T == GBufferUsage.MappedWrite || T == GBufferUsage.WriteOnlyTemp || T == GBufferUsage.MappedRead);
 
+mixin template BufferImmutableStorageModeBufferedImpl(GBufferType BufferType, T)
+{
+    @property length()
+	{
+		return _length;
+	}
 
-mixin template BufferImmutableStorageModeImpl(GBufferType BufferType,T)
+    void opIndexAssign(T value, ulong i)
+	{
+        glNamedBufferSubData(this,i * T.sizeof,T.sizeof,&value);
+	}
+
+    void opSliceAssign(T[] value, ulong i, ulong j)
+	{
+        glNamedBufferSubData(this,i * T.sizeof, (j- i) * T.sizeof,value.ptr);
+	}
+
+    void store(size_t size, T* data)
+	{
+		bind();
+        glBufferData(BufferType,size * T.sizeof,data,GL_STATIC_DRAW);
+        
+        _length = size;
+        _capacity = size;
+        unbind();
+	}
+
+    void store(size_t size)
+	{
+        store(size,null);
+	}
+
+
+}
+
+mixin template BufferImmutableStorageModePersistentImpl(GBufferType BufferType,T)
 {
 	private T* glPtr;
 	@property ptr()
@@ -192,7 +226,8 @@ mixin template BufferImmutableStorageModeImpl(GBufferType BufferType,T)
 		}
 
 		glPtr = cast(T*) glMapBufferRange(BufferType, 0, bufferCapacityBytes, GBufferStorageMode.Immutable);
-
+        
+        
 		Logger.Assert(glPtr !is null,"Could not map buffer: %s", BufferType.stringof);
 	}
 
@@ -254,7 +289,7 @@ mixin template BufferMutableStorageModeImpl(GBufferType BufferType,T)
 			_capacity = size;
 		    bufferStoreCreated = true;
 		}
-        glNamedBufferData(id,size*T.sizeof,null,GL_DYNAMIC_DRAW);
+        glNamedBufferData(id,size*T.sizeof,null,GL_STATIC_DRAW);
         
         
 	}
@@ -278,11 +313,11 @@ mixin template BufferMutableStorageModeImpl(GBufferType BufferType,T)
             T* bufferPtr = cast(T*)glMapBuffer(BufferType,GL_READ_ONLY);
 			auto tmp = bufferPtr[0..length].dup;
 			glUnmapBuffer(BufferType);
-			glBufferData(BufferType,size * T.sizeof,tmp.ptr,GL_DYNAMIC_DRAW);
+			glBufferData(BufferType,size * T.sizeof,tmp.ptr,GL_STATIC_DRAW);
 		}
         else
 		{
-		    glBufferData(BufferType,size * T.sizeof,null,GL_DYNAMIC_DRAW);
+		    glBufferData(BufferType,size * T.sizeof,null,GL_STATIC_DRAW);
 		}
 		
         unbind();
@@ -404,7 +439,7 @@ mixin template OpenGLBuffer(GBufferType BufferType, T, GBufferStorageMode Storag
     
     static if(StorageMode == GBufferStorageMode.Immutable)
 	{
-        mixin BufferImmutableStorageModeImpl!(BufferType,T);
+        mixin BufferImmutableStorageModeBufferedImpl!(BufferType,T);
 	}
     static if(StorageMode == GBufferStorageMode.Mutable)
 	{
@@ -1146,10 +1181,10 @@ struct GElementBuffer(GBufferStorageMode usage)
 
 }
 
-struct ShaderBlock
+struct GShaderBlock(T,GBufferStorageMode StorageMode)
 {
 
-    mixin OpenGLBuffer!(GBufferType.Uniform, RealmGlobalData, GBufferStorageMode.Immutable);
+    mixin OpenGLBuffer!(GBufferType.Uniform, T, StorageMode);
     void bindBase(uint bindPoint)
     {
         glBindBufferBase(GL_UNIFORM_BUFFER, bindPoint, id);

@@ -10,7 +10,7 @@ vec4 vertex(REVertexData IN)
 {
 	mat4 vp = u_vp;
 	
-	RESurfaceDataOut.material = IN.material;
+	//RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
 	RESurfaceDataOut.posCS = vec4(IN.position, 1.0);
 	RESurfaceDataOut.posWS = IN.position;

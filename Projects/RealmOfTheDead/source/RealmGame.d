@@ -56,10 +56,13 @@ class RealmGame : RealmApp
 		GeometryList geoList;
 		foreach(geo; _manager.getEntities!(GameGeometry))
 		{
-			geoList.meshes ~= (geo.getComponent!(Mesh)());
-			geoList.transforms ~= geo.getComponent!(Transform)();
-			BlinnPhongMaterial blinnPhongMat = geo.getMaterial();
-			geoList.materials ~= blinnPhongMat;
+			
+				geoList.meshes ~= (geo.getComponent!(Mesh)());
+				geoList.transforms ~= geo.getComponent!(Transform)();
+				BlinnPhongMaterial blinnPhongMat = geo.getMaterial();
+				geoList.materials ~= blinnPhongMat;
+			
+
 		}
 
 		geoLayer.submitGeometryList(geoList);
@@ -123,16 +126,20 @@ class RealmGame : RealmApp
 		Logger.LogInfo("Starting Realm of the Dead!");
 		player = _manager.instantiate!(Player)(&cam,dynamicObjectLayer);
 		gun = _manager.instantiate!(Gun)(player.getComponent!(Transform),cam,dynamicObjectLayer);
+		sphere = _manager.instantiate!(GameGeometry)(loadMesh("$EngineAssets/Models/sphere.obj"));
+		sphere.getComponent!(Transform).scale = vec3(0.5f);
 		geo = _manager.instantiate!(GameGeometry)(loadMesh("$Assets/Models/crates.obj"));
 		geo.entityName = "Crates";
-		floor = _manager.instantiate!(GameGeometry)(generateFace(vec3(0,1,0),8));
+		floor = _manager.instantiate!(GameGeometry)(generateFace(vec3(0,1,0),20));
+		//GameGeometry floor2 = _manager.instantiate!(GameGeometry)(generateFace(vec3(0,0,-1),20));
 		floor.entityName = "Floor";
 		floor.active = true;
-		sphere = _manager.instantiate!(GameGeometry)(loadMesh("$EngineAssets/Models/sphere.obj"));
+		//floor2.active = true;
+
 		BlinnPhongMaterial sphereMaterial = sphere.getMaterial();
 		sphereMaterial.ambient = vec4(0.01f);
 		IFImage sphereNormal = readImageBytes("$EngineAssets/Images/Sphere-NormalMap.png");
-		sphere.getComponent!(Transform)().scale = vec3(2,2,2);
+		sphere.getComponent!(Transform)().scale = vec3(1,1,1);
 		sphere.getComponent!(Transform)().position = vec3(0,5,0);
 		sphere.active = false;
 		sphereMaterial.textures.normal = new Texture2D(&sphereNormal);
@@ -150,8 +157,13 @@ class RealmGame : RealmApp
 		geo.getComponent!(Transform).position = vec3(0,0,5);
 		
 		floor.setBaseMap(Vector!(int,4)(255));
+		//floor2.setBaseMap(Vector!(int,4)(255,123,215,255));
 		floor.getComponent!(Transform)().scale = vec3(10,1,10);
 		floor.getComponent!(Transform)().position = vec3(0,-2,0);
+		//floor2.getComponent!(Transform)().scale = vec3(10,1,10);
+		//floor2.getComponent!(Transform)().position = vec3(5,-4,0);
+
+
 		constructStaticGeometry();
 		initSkybox();
 		Renderer.get.setSkybox(skybox);

@@ -32,7 +32,7 @@ class StaticGeometryLayer : RenderLayer
 	private VertexBuffer!(RealmVertex,BufferStorageMode.Immutable) vertexBuffer;
 	private ElementBuffer!(BufferStorageMode.Immutable) elementBuffer;
 	private DrawIndirectCommandBuffer!(BufferStorageMode.Immutable) cmdBuffer;
-	private ShaderStorage!(float[16],BufferStorageMode.Immutable) objectToWorldMats;
+	private ShaderBlock!(float[16], BufferStorageMode.Immutable) objectToWorldMats;
 	private SamplerObject!(TextureType.TEXTURE2D)*[] textureAtlases;
 	private uint numVertices;
 	private uint numIndices;
@@ -60,8 +60,8 @@ class StaticGeometryLayer : RenderLayer
 		elementBuffer.bind();
 		cmdBuffer.bind();
 		bindAttributes!(RealmVertex)();
-		vertexBuffer.store(numVertices);
-		elementBuffer.store(numIndices);
+		/*vertexBuffer.store(numVertices);
+		elementBuffer.store(numIndices);*/
 		cmdBuffer.store(numElements);
 		vertexBuffer.unbind();
 		elementBuffer.unbind();
@@ -69,6 +69,7 @@ class StaticGeometryLayer : RenderLayer
 
 		objectToWorldMats.store(numElements);
 		vao.unbind();
+		
 	}
 
 	public void submitGeometryList(GeometryList geoList)
@@ -111,8 +112,10 @@ class StaticGeometryLayer : RenderLayer
 	{
 		uint elementOffset = 0;
 		
-		vertexBuffer[0..(numVertices)] = vertices;
-		elementBuffer[0..(numIndices)] = indices;
+		vertexBuffer.store(numVertices,vertices.ptr);
+		elementBuffer.store(numIndices,indices.ptr);
+		//vertexBuffer[0..(numVertices)] = vertices;
+		//elementBuffer[0..(numIndices)] = indices;
 		uint firstIndex = 0;
 		uint baseVertex = 0;
 		for(int i = 0; i < geoList.meshes.length;i++)
@@ -124,15 +127,23 @@ class StaticGeometryLayer : RenderLayer
 			cmd.firstIndex = firstIndex;
 			cmd.baseVertex = baseVertex;
 			cmd.baseInstance = 0;
-			cmdBuffer[i] = cmd;
+			cmdBuffer[i..i+1] = [cmd];
+			if(cmd.count < 0)
+			{
+				Logger.LogError("Invalid draw command, count is %d",cmd.count);
+			}
+			if(cmd.instanceCount <0)
+			{
+				Logger.LogError("Invalid draw command, instance count is %d",cmd.count);
+			}
 			geoList.transforms[i].updateTransformation();
 			mat4 objectToWorld = geoList.transforms[i].transformation;
 			BlinnPhongMaterial material = geoList.materials[i];
 			
 			material.writeUniformData();
 			textureAtlases ~= material.getTextureAtlas();
-			float[16]* objectToWorldPtr = &objectToWorldMats.ptr[i];
-			*objectToWorldPtr = objectToWorld.value_ptr[0..16].dup;
+			//float[16]* objectToWorldPtr = &objectToWorldMats.ptr[i];
+			objectToWorldMats[i] = objectToWorld.value_ptr[0..16];
 			firstIndex += mesh.faces.length;
 			baseVertex += mesh.positions.length;
 		}
@@ -160,9 +171,13 @@ class StaticGeometryLayer : RenderLayer
 			geoShader.setUniformInt(texture.slot,texture.slot);
 
 		}
+		objectToWorldMats.bind();
 		objectToWorldMats.bindBase(2);
+		
 		BlinnPhongMaterial.bindShaderStorage();
+
 		GraphicsSubsystem.drawMultiElementsIndirect!(PrimitiveShape.TRIANGLE)(0,numElements);
+		objectToWorldMats.unbind();
 		geoShader.unbind();
 		vao.unbind();
 		vertexBuffer.unbind();

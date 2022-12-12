@@ -14,7 +14,7 @@ class GraphicsSubsystem
 {
 	
 	
-	private static ShaderBlock globalDataBuffer;
+	private static ShaderBlock!(RealmGlobalData, BufferStorageMode.Immutable) globalDataBuffer;
 	static State depthTest = State.None;
 	static void setClearColor(float r, float g, float b, bool normalize)
 	{

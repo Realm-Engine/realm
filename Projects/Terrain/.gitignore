@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/terrain
+terrain.so
+terrain.dylib
+terrain.dll
+terrain.a
+terrain.lib
+terrain-test-*
+*.exe
+*.o
+*.obj
+*.lst

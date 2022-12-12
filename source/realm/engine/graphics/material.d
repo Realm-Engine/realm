@@ -176,7 +176,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
     UniformLayout.UserData layout;
     alias layout this;
 
-    static ShaderStorage!(UniformLayout.UserData, BufferStorageMode.Mutable) shaderStorageBuffer;
+    static ShaderBlock!(UniformLayout.UserData, BufferStorageMode.Mutable) shaderStorageBuffer;
 
     private static uint numMaterials = 0;
     private uint materialIndex = 0;
@@ -308,8 +308,8 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
         int textureAtlasHeight = sumHeight;
         if(sortedTextures.length > 1)
 		{
-			textureAtlasWidth = nextMultiple(sumWidth,1024);
-			textureAtlasHeight = nextMultiple(sumHeight,1024);
+			textureAtlasWidth = nextMultiple(sumWidth,256);
+			textureAtlasHeight = nextMultiple(sumHeight,256);
 		}
 
 

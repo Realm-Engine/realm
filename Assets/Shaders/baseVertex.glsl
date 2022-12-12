@@ -11,14 +11,14 @@ out gl_PerVertex
 	vec4 gl_Position;
 };
 
-layout (std430,binding = 1) buffer _perObjectData
+layout (std140,binding = 1 ) uniform _perObjectData
 {
-	Material data[];
+	Material data[16];
 };
 
-layout(std430, binding = 2) buffer _objectToWorld
+layout(std140, binding = 2) uniform _objectToWorld
 {
-	mat4 objectToWorld[];
+	mat4 objectToWorld[16];
 };
 
 
@@ -28,7 +28,7 @@ out RESurfaceData
 	vec4 posCS;
 	vec2 texCoord;
 	flat int objectId;
-	Material material;
+	//Material material;
 	vec3 normal;
 	mat3 TBN;
 	vec4 lightSpacePosition;
@@ -43,7 +43,7 @@ struct REVertexData
 	vec3 position;
 	vec2 texCoord;
 	vec3 normal;
-	Material material;
+	//Material material;
 	int objectId;
 	vec3 tangent;
 
@@ -63,7 +63,7 @@ mat3 calculateTBN(vec3 tangent, vec3 normal)
 }
 
 #define objectTexture atlasTextures[v_MaterialID]
-#define getObjectData(v) IN.material.v
+#define getObjectData(v) data[RESurfaceDataIn.objectId].v
 #define OBJECT_TO_WORLD_T transpose(OBJECT_TO_WORLD)
 #define OBJECT_TO_WORLD objectToWorld[gl_DrawID]
 
@@ -75,7 +75,7 @@ void main()
 	vertexData.position = v_Position;
 	vertexData.texCoord = v_TexCoord;
 	vertexData.normal = v_Normal;
-	vertexData.material = data[v_MaterialID];
+	//vertexData.material = data[v_MaterialID];
 	vertexData.objectId = v_MaterialID;
 	
 	gl_Position = vertex(vertexData);

@@ -19,7 +19,7 @@ vec4 vertex(REVertexData IN)
 	vec4 worldNormal = transpose(inverse(OBJECT_TO_WORLD_T)) * vec4(IN.normal, 1.0);
 	vec4 worldTangent = OBJECT_TO_WORLD_T * vec4(IN.tangent, 1.0);
     RESurfaceDataOut.TBN = calculateTBN(worldTangent.xyz,worldNormal.xyz);
-	RESurfaceDataOut.material = IN.material;
+	//RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
 	RESurfaceDataOut.posCS = u_vp * worldSpace;
 	RESurfaceDataOut.posWS = vec3(worldSpace);

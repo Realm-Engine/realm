@@ -10,7 +10,7 @@ vec4 vertex(REVertexData IN)
 {
 	mat4 vp = u_projection * u_view;
 	vec4 worldSpace = OBJECT_TO_WORLD_T * vec4(IN.position, 1.0);
-	RESurfaceDataOut.material = IN.material;
+	//RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
 	RESurfaceDataOut.posCS = vp * worldSpace;
 	RESurfaceDataOut.posWS = IN.position;

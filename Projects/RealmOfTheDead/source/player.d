@@ -71,7 +71,7 @@ class Player
         rotation = vec2(0,0);
         physicsBody = getComponent!(PhysicsBody)();
         transform.position = vec3(0,5,-10);
-        camera.transform.position = transform.position - vec3(0,-3,-3);
+        camera.transform.position = transform.position - vec3(0,-3,-8.0f);
         vertexBuffer.length = mesh.positions.length;
         this.layer = layer;
         drawInfo = layer.createDynamicObject(*mesh,material);
@@ -203,7 +203,7 @@ class Player
         camera.update();
         updateComponents();
         processCollisions();
-        layer.drawObject(drawInfo,transform);
+        //layer.drawObject(drawInfo,transform);
         //Renderer.get.submitMesh!(BlinnPhongMaterial,false)(mesh,transform,material,vertexBuffer);
 
         

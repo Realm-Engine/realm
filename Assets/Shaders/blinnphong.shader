@@ -14,11 +14,13 @@ struct Material
 vec4 vertex(REVertexData IN)
 {
 
-	vec4 worldSpace = OBJECT_TO_WORLD_T * vec4(IN.position, 1.0);
-	vec4 worldNormal = transpose(inverse(OBJECT_TO_WORLD_T)) * vec4(IN.normal, 1.0);
-	vec4 worldTangent = OBJECT_TO_WORLD_T * vec4(IN.tangent, 1.0);
+	mat4 objectToWorld_T = transpose(OBJECT_TO_WORLD);
+
+	vec4 worldSpace = objectToWorld_T * vec4(IN.position, 1.0);
+	vec4 worldNormal = transpose(inverse(objectToWorld_T)) * vec4(IN.normal, 1.0);
+	vec4 worldTangent = objectToWorld_T * vec4(IN.tangent, 1.0);
 	RESurfaceDataOut.TBN = calculateTBN(worldTangent.xyz, worldNormal.xyz);
-	RESurfaceDataOut.material = IN.material;
+	//RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
 	RESurfaceDataOut.posCS = u_vp * worldSpace;
 	RESurfaceDataOut.posWS = vec3(worldSpace);
@@ -67,7 +69,7 @@ vec4 fragment()
 	}
 	
 	float bias = max(0.05 * (1.0 - dot(normal, mainLight.direction.xyz)), 0.005);
-	float shadow = calculateShadow(RESurfaceDataIn.lightSpacePosition, bias);
+	float shadow = 0.0;
 	
 	
 	return vec4((((lambert * diffuse.rgb) + (spec * specular)) + ambient) * (ambient + 1- shadow), 1.0);

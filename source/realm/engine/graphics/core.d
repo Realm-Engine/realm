@@ -23,6 +23,7 @@ alias FrameBuffer = GFrameBuffer;
 alias FrameBufferAttachment = GFrameBufferAttachment;
 alias PixelBuffer = GPixelBuffer;
 alias ShaderStorage = GShaderStorage;
+alias ShaderBlock = GShaderBlock;
 alias VertexArrayObject = GVertexArrayObject;
 alias VertexBuffer = GVertexBuffer;
 alias ElementBuffer = GElementBuffer;
