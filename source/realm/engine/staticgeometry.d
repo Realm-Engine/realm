@@ -82,16 +82,21 @@ class StaticGeometryLayer : RenderLayer
 			numElements++;
 			Mesh mesh = geoList.meshes[i];
 			
+			Transform transform = geoList.transforms[i];
+			transform.updateTransformation();
+			mat4 objectToWorld = transform.transformation;
+		
+			mat4 transInv = objectToWorld.inverse.transposed;
 			for(int j = 0; j < mesh.positions.length;j++)
 			{
 				RealmVertex vertex;
 
 				
 				
-				vertex.position = mesh.positions[j];
+				vertex.position = vec3(objectToWorld * vec4(mesh.positions[j],1.0f));
 				vertex.texCoord = mesh.textureCoordinates[j];
-				vertex.normal =  mesh.normals[j];
-				vertex.tangent = mesh.tangents[j];
+				vertex.normal =  vec3(transInv * vec4(mesh.normals[j],0.0f)) ;
+				vertex.tangent = vec3(transInv * vec4(mesh.tangents[j],0.0f));
 				vertex.materialId = geoList.materials[i].instanceId;
 				vertices ~= vertex;
 			}
@@ -158,7 +163,7 @@ class StaticGeometryLayer : RenderLayer
 	void onDraw(string RenderpassName,Renderpass)(Renderpass pass) if(RenderpassName == "geometryPass" || RenderpassName == "lightPass")
 	{
 		
-		Logger.LogInfo("render %s layer",RenderpassName);
+		//Logger.LogInfo("render %s layer",RenderpassName);
 		geoShader.use();
 		pass.bindAttachments(geoShader);
 		vao.bind();

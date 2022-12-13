@@ -19,8 +19,8 @@ vec4 vertex(REVertexData IN)
 	RESurfaceDataOut.posWS = vec3(worldSpace);
 	RESurfaceDataOut.texCoord = IN.texCoord;
 	RESurfaceDataOut.normal = worldNormal.xyz;
-	RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * worldSpace;
-	RESurfaceDataOut.eyeSpacePosition = u_view * worldSpace;
+	/*RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * worldSpace;
+	RESurfaceDataOut.eyeSpacePosition = u_view * worldSpace;*/
 	return RESurfaceDataOut.posCS;
 }
 #shader fragment

@@ -22,7 +22,7 @@ class Player
 {
     private Camera* camera;
 
-    mixin GameEntity!("Player",Transform,Mesh,MeshCollider,PhysicsBody);
+    mixin GameEntity!("Player",Transform,Mesh,MeshCollider);
     float lastX;
     float lastY;
     float lastScrollX;
@@ -69,7 +69,7 @@ class Player
 		camera.setRotationEuler(vec3(30,0,0));
         InputManager.registerInputEventCallback(&inputEvent);
         rotation = vec2(0,0);
-        physicsBody = getComponent!(PhysicsBody)();
+       // physicsBody = getComponent!(PhysicsBody)();
         transform.position = vec3(0,5,-10);
         camera.transform.position = transform.position - vec3(0,-3,-8.0f);
         vertexBuffer.length = mesh.positions.length;
@@ -202,8 +202,8 @@ class Player
         processInput(dt);
         camera.update();
         updateComponents();
-        processCollisions();
-        //layer.drawObject(drawInfo,transform);
+        //processCollisions();
+        layer.drawObject(drawInfo,transform);
         //Renderer.get.submitMesh!(BlinnPhongMaterial,false)(mesh,transform,material,vertexBuffer);
 
         

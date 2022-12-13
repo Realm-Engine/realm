@@ -119,7 +119,7 @@ class RealmGame : RealmApp
 		dynamicObjectLayer.initialize();
 		mainLight = _manager.instantiate!(DirectionalLight)();
 		mainLight.color = vec3(1,1,1);
-		mainLight.getComponent!(Transform).setRotationEuler(vec3(45,0,0));
+		mainLight.getComponent!(Transform).setRotationEuler(vec3(40,-45,0));
 
 		//mainLight.transform.componentUpdate();
 		Renderer.get.mainLight(mainLight);
@@ -130,7 +130,7 @@ class RealmGame : RealmApp
 		sphere.getComponent!(Transform).scale = vec3(0.5f);
 		geo = _manager.instantiate!(GameGeometry)(loadMesh("$Assets/Models/crates.obj"));
 		geo.entityName = "Crates";
-		floor = _manager.instantiate!(GameGeometry)(generateFace(vec3(0,1,0),20));
+		floor = _manager.instantiate!(GameGeometry)(generateFace(vec3(0,1,0),5));
 		//GameGeometry floor2 = _manager.instantiate!(GameGeometry)(generateFace(vec3(0,0,-1),20));
 		floor.entityName = "Floor";
 		floor.active = true;
@@ -139,8 +139,8 @@ class RealmGame : RealmApp
 		BlinnPhongMaterial sphereMaterial = sphere.getMaterial();
 		sphereMaterial.ambient = vec4(0.01f);
 		IFImage sphereNormal = readImageBytes("$EngineAssets/Images/Sphere-NormalMap.png");
-		sphere.getComponent!(Transform)().scale = vec3(1,1,1);
-		sphere.getComponent!(Transform)().position = vec3(0,5,0);
+		sphere.getComponent!(Transform)().scale = vec3(2);
+		sphere.getComponent!(Transform)().position = vec3(4,5,-2);
 		sphere.active = false;
 		sphereMaterial.textures.normal = new Texture2D(&sphereNormal);
 		sphereMaterial.textures.diffuse = Vector!(int,4)(200,162,213,255);
@@ -148,21 +148,39 @@ class RealmGame : RealmApp
 		sphereMaterial.packTextureAtlas();
 		
 		BlinnPhongMaterial geoMaterial = geo.getMaterial();
-		geo.setBaseMap(readImageBytes("$Assets/Images/crates.png"));
+		
 		geoMaterial.shininess = 16.0f;
 		geoMaterial.textures.specular = Vector!(int,4)(255);
 		geoMaterial.ambient = vec4(0.01);
 		geoMaterial.textures.normal = Vector!(int,4)(0,0,255,255);
-
+		geo.setBaseMap(readImageBytes("$Assets/Images/crates.png"));
 		geo.getComponent!(Transform).position = vec3(0,0,5);
+		IFImage floorNormal = readImageBytes("$Assets/Images/FloorTile/FloorTileNormal.png");
+		IFImage floorSpecular = readImageBytes("$Assets/Images/FloorTile.FloorTileSpecular.png");
+		BlinnPhongMaterial floorMat = floor.getMaterial();
+		floorMat.ambient = vec4(0.01f);
+		floorMat.shininess = 16.0f;
+		floorMat.textures.normal = new Texture2D(&floorNormal);
+		floor.setBaseMap(readImageBytes("$Assets/Images/FloorTile/FloorTileDiffuse.png"));
 		
-		floor.setBaseMap(Vector!(int,4)(255));
+		
 		//floor2.setBaseMap(Vector!(int,4)(255,123,215,255));
 		floor.getComponent!(Transform)().scale = vec3(10,1,10);
 		floor.getComponent!(Transform)().position = vec3(0,-2,0);
-		//floor2.getComponent!(Transform)().scale = vec3(10,1,10);
-		//floor2.getComponent!(Transform)().position = vec3(5,-4,0);
 
+		GameGeometry oilDrum = _manager.instantiate!(GameGeometry)(loadMesh("$Assets/Models/oildrum.obj"));
+		IFImage oilDrumDiffuse = readImageBytes("$Assets/Images/OilDrum/oildrum_col.png");
+		IFImage oilDrumNormal = readImageBytes("$Assets/Images/OilDrum/oildrum_nor.png");
+
+		BlinnPhongMaterial oilDrumMat = oilDrum.getMaterial();
+		oilDrumMat.textures.normal = new Texture2D(&oilDrumNormal);
+		oilDrumMat.shininess = 16.0f;
+		oilDrumMat.textures.specular = Vector!(int,4)(128,128,128,255);
+		oilDrumMat.ambient = vec4(0.01f);
+		oilDrum.setBaseMap(oilDrumDiffuse);
+		oilDrum.getComponent!(Transform).scale = vec3(2.0f);
+		oilDrum.getComponent!(Transform).position = vec3(-4,-1,1);
+		oilDrum.getComponent!(Transform).setRotationEuler(vec3(0,0,0));
 
 		constructStaticGeometry();
 		initSkybox();
@@ -201,12 +219,14 @@ class RealmGame : RealmApp
 	override void update()
 	{
 	
+		
 		//floor.getComponent!(Transform).rotateEuler(vec3(0,0,0));
 		float dt = getAppMetrics().deltaTime;
+		mainLight.getComponent!(Transform).rotateEuler(vec3(0.0f,0.05 * dt,0.0f));
 		_manager.updateEntities(dt / 100);
 		physicsWorld.tick(dt / 100);
 		drawUI();
-		Renderer.get.update(geoLayer,dynamicObjectLayer);
+		Renderer.get.update(geoLayer);
 
 	}
 
@@ -218,6 +238,7 @@ class RealmGame : RealmApp
 		vec3[] vertices = new vec3[](resolution * resolution);
 		uint[] faces = new uint[]((resolution - 1) * (resolution - 1)  * 6);
 		vec2[] uv = new vec2[](resolution * resolution);
+		vec2[] texCoords = new vec2[](resolution * resolution);
 		int triIndex = 0;
 		for(int y = 0; y < resolution;y++)
 		{
@@ -238,11 +259,12 @@ class RealmGame : RealmApp
 					faces[triIndex + 5] = vertexIndex + resolution + 1;
 					triIndex +=6;
 				}
+				texCoords[vertexIndex] = t;
 			}
 		}
 		Mesh mesh;
 		mesh.positions = vertices;
-		mesh.textureCoordinates = uv;
+		mesh.textureCoordinates = texCoords;
 		mesh.faces = faces;
 		mesh.normals = new vec3[](mesh.positions.length);
         mesh.normals[0..$] = normal;

@@ -43,7 +43,7 @@ class GameGeometry
 	void setBaseMap(IFImage image)
 	{
 		material.textures.diffuse = new Texture2D(&image);
-		material.textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
+		material.textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_EDGE);
 		material.packTextureAtlas();
 		
 	}

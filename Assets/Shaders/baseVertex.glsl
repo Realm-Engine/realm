@@ -31,8 +31,8 @@ out RESurfaceData
 	//Material material;
 	vec3 normal;
 	mat3 TBN;
-	vec4 lightSpacePosition;
-	vec4 eyeSpacePosition;
+	/*vec4 lightSpacePosition;
+	vec4 eyeSpacePosition;*/
 
 		
 } RESurfaceDataOut;
@@ -58,7 +58,7 @@ mat3 calculateTBN(vec3 tangent, vec3 normal)
 	vec3 N = normalize(normal);
 	T = normalize(T - dot(T,N) * N);
 
-	vec3 B = cross(N,T);
+	vec3 B = normalize(cross(N,T));
 	return mat3(T,B,N);
 }
 

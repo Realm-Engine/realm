@@ -16,18 +16,18 @@ vec4 vertex(REVertexData IN)
 
 	mat4 objectToWorld_T = transpose(OBJECT_TO_WORLD);
 
-	vec4 worldSpace = objectToWorld_T * vec4(IN.position, 1.0);
-	vec4 worldNormal = transpose(inverse(objectToWorld_T)) * vec4(IN.normal, 1.0);
-	vec4 worldTangent = objectToWorld_T * vec4(IN.tangent, 1.0);
+	vec4 worldSpace =  vec4(IN.position, 1.0);
+	vec4 worldNormal = vec4(IN.normal, 0.0);
+	vec4 worldTangent = vec4(IN.tangent, 0.0);
 	RESurfaceDataOut.TBN = calculateTBN(worldTangent.xyz, worldNormal.xyz);
-	//RESurfaceDataOut.material = IN.material;
+	//RESurfaceDataOut.material = IN.material;  
 	RESurfaceDataOut.objectId = IN.objectId;
 	RESurfaceDataOut.posCS = u_vp * worldSpace;
 	RESurfaceDataOut.posWS = vec3(worldSpace);
 	RESurfaceDataOut.texCoord = IN.texCoord;
 	RESurfaceDataOut.normal = worldNormal.xyz;
-	RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * worldSpace;
-	RESurfaceDataOut.eyeSpacePosition = u_view * worldSpace;
+	/*RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * worldSpace;
+	RESurfaceDataOut.eyeSpacePosition = u_view * worldSpace;*/
 	return RESurfaceDataOut.posCS;
 }
 #shader fragment blinn-phong-fragment
@@ -53,6 +53,7 @@ vec4 fragment()
 {
 	vec3 ambient = getObjectData(ambient).rgb;
 	vec3 normal = SAMPLE_TEXTURE(normal, RESurfaceDataIn.texCoord).rgb;
+	normal = normal * 2.0 - 1.0;
 	normal = normalize(RESurfaceDataIn.TBN * normal);
 	vec4 diffuse = SAMPLE_TEXTURE(diffuse, RESurfaceDataIn.texCoord);
 	vec3 specular = SAMPLE_TEXTURE(specular, RESurfaceDataIn.texCoord).rgb;
@@ -68,11 +69,12 @@ vec4 fragment()
 
 	}
 	
-	float bias = max(0.05 * (1.0 - dot(normal, mainLight.direction.xyz)), 0.005);
-	float shadow = 0.0;
+	float bias = max(0.005 * (1.0 - dot(normal, mainLight.direction.xyz)), 0.005);
+	vec4 lightSpace = lightSpaceMatrix * vec4(RESurfaceDataIn.posWS,1.0) ;
+	float shadow = calculateShadow(lightSpace,bias);
 	
-	
-	return vec4((((lambert * diffuse.rgb) + (spec * specular)) + ambient) * (ambient + 1- shadow), 1.0);
 
+	return vec4((((lambert * diffuse.rgb) + (spec * specular)) + ambient) * (ambient + 1- shadow), 1.0);
+	//return vec4(diffuse.rgb,1.0);
 
 }

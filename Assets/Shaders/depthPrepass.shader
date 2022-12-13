@@ -16,8 +16,8 @@ vec4 vertex(REVertexData IN)
 	RESurfaceDataOut.posWS = IN.position;
 	RESurfaceDataOut.texCoord = IN.texCoord;
 	RESurfaceDataOut.normal = IN.normal;
-	RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * vec4(IN.position, 1.0);
-	RESurfaceDataOut.eyeSpacePosition = u_view * vec4(IN.position, 1.0);
+	/*RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * vec4(IN.position, 1.0);
+	RESurfaceDataOut.eyeSpacePosition = u_view * vec4(IN.position, 1.0);*/
 	return RESurfaceDataOut.posCS;
 }
 #shader fragment depthPreepassFragment

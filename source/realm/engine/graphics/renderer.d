@@ -156,7 +156,7 @@ class Renderer
 		enable(State.Blend);
 		enable(State.CullFace);
 		blendFunc(BlendFuncType.SRC_ALPHA,BlendFuncType.ONE_MINUS_SRC_ALPHA);
-		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(20,20),-20,20,0);
+		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(40,40),-20,20,0);
 		screenCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(windowSize[0],windowSize[1]),-1,100,0);
 		screenCamera.projBounds = ProjectionWindowBounds.ZERO_TO_ONE;
 		

@@ -16,13 +16,13 @@ vec4 vertex(REVertexData IN)
 	RESurfaceDataOut.TBN = calculateTBN(worldNormal.xyz, worldTangent.xyz);
 	//RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
-	RESurfaceDataOut.posCS = u_vp * worldSpace;
+	RESurfaceDataOut.posCS = lightSpaceMatrix * worldSpace;
 	RESurfaceDataOut.posWS = IN.position;
 	RESurfaceDataOut.texCoord = IN.texCoord;
 	RESurfaceDataOut.normal = IN.normal.xyz;
-	RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * worldSpace;
-	RESurfaceDataOut.eyeSpacePosition = u_view * worldSpace;
-	return RESurfaceDataOut.lightSpacePosition;
+	/*RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * worldSpace;
+	RESurfaceDataOut.eyeSpacePosition = u_view * worldSpace;*/
+	return RESurfaceDataOut.posCS;
 }
 #shader fragment lightSpaceFragment
 

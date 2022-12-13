@@ -18,8 +18,8 @@ in RESurfaceData
 	//Material material;
 	vec3 normal;
 	mat3 TBN;
-	vec4 lightSpacePosition;
-	vec4 eyeSpacePosition;
+	/*vec4 lightSpacePosition;
+	vec4 eyeSpacePosition;*/
 
 } RESurfaceDataIn;
 #define objectTexture atlasTextures[RESurfaceDataIn.objectId]
