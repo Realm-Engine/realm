@@ -1,0 +1,15 @@
+{
+	"authors": [
+		"Nathan"
+	],
+	"description": "A minimal D application.",
+	"license": "proprietary",
+	"name": "terrain",
+	"dependencies": { "realm": "*" },
+	"workingDirectory": "../../",
+	"extraDependencyFiles": [
+		"../../Assets/Shaders/*.shader",
+		"./Assets/Models/*.obj",
+		"./Assets/Shaders/*.glsl"
+	]
+}

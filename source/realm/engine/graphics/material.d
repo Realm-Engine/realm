@@ -92,6 +92,23 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
             color.a = cast(ubyte)c.a;
             type = InternalType.COLOR;
     	}
+        void opAssign(MaterialTexture other)
+		{
+            type = other.type;
+		    if(other.type == InternalType.TEXTURE)
+			{
+			    texture = other.texture;
+                
+			}
+            else
+			{
+			    color.r = cast(ubyte)other.color.r;
+				color.g = cast(ubyte)other.color.g;
+				color.b = cast(ubyte)other.color.b;
+				color.a = cast(ubyte)other.color.a;
+				
+			}
+		}
     
         
         @property bool isTexture() 
@@ -159,11 +176,10 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
     UniformLayout.UserData layout;
     alias layout this;
 
-    static ShaderStorage!(UniformLayout.UserData, BufferUsage.MappedWrite) shaderStorageBuffer;
+    static ShaderBlock!(UniformLayout.UserData, BufferStorageMode.Mutable) shaderStorageBuffer;
 
     private static uint numMaterials = 0;
     private uint materialIndex = 0;
-    private UniformLayout.UserData* storageBufferPtr;
 
     private SamplerObject!(TextureType.TEXTURE2D) textureAtlas;
     private static StandardShaderModel program;
@@ -187,10 +203,15 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
 
     this()
     {
-     
-        storageBufferPtr = &shaderStorageBuffer.ptr[numMaterials];
+        
+        //storageBufferPtr = &shaderStorageBuffer.ptr[numMaterials];
+        
         materialIndex = numMaterials;
         numMaterials++;
+		if(shaderStorageBuffer.length < numMaterials)
+		{
+		    shaderStorageBuffer.resize(numMaterials);
+		}
         if(texturesMembers!(UniformLayout).length >1 )
 		{
             textureAtlas.create();
@@ -199,9 +220,11 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
 		{
             textureAtlas.create();
 		}
-
+        
+        
         
         textureAtlas.slot = materialIndex + 4;
+        //textureAtlas.label = "Material Texture Atlas %d".format(materialIndex);
         shadows = true;
 		
     }
@@ -218,13 +241,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
 
     void writeUniformData()
     {
-        
-        Logger.Assert(storageBufferPtr !is null, "Shader storage buffer ptr is null");
-       
-        *storageBufferPtr = layout;
-        
-        
-
+        shaderStorageBuffer[materialIndex] = layout;
     }
 
         
@@ -291,8 +308,8 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
         int textureAtlasHeight = sumHeight;
         if(sortedTextures.length > 1)
 		{
-			textureAtlasWidth = nextMultiple(sumWidth,1024);
-			textureAtlasHeight = nextMultiple(sumHeight,1024);
+			textureAtlasWidth = nextMultiple(sumWidth,256);
+			textureAtlasHeight = nextMultiple(sumHeight,256);
 		}
 
 
@@ -452,7 +469,7 @@ WriteImage:
 
     static void reserve(size_t numItems)
     {
-        shaderStorageBuffer.store(numItems);
+        //shaderStorageBuffer.store(numItems);
 
     }
     static void allocate(Mesh* mesh)
@@ -495,3 +512,10 @@ WriteImage:
 
 
 }
+
+alias BlinnPhongMaterial = Alias!(Material!(["ambient" : UserDataVarTypes.VECTOR,
+											 "diffuse" : UserDataVarTypes.TEXTURE2D,
+											 "normal" : UserDataVarTypes.TEXTURE2D,
+											 "specular" : UserDataVarTypes.TEXTURE2D,
+											 "shininess" : UserDataVarTypes.FLOAT,
+											 "padding" : UserDataVarTypes.FLOAT]));

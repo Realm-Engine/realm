@@ -10,6 +10,7 @@ private
 	import realm.engine.debugdraw;
 	import realm.engine.physics.core;
 	import realmofthedead.gamegeometry;
+	import realm.engine.dynamicobjectlayer;
 
 }
 class Gun
@@ -19,7 +20,9 @@ class Gun
 	private Mesh* mesh;
 	private Transform transform;
 	private RealmVertex[] vertexBuffer;
-	void start(Transform player, Camera camera)
+	private DynamicObjectLayer layer;
+	private DynamicObjectDrawInfo drawInfo;
+	void start(Transform player, Camera camera,DynamicObjectLayer layer)
 	{
 		
 		diffuseImage = readImageBytes("$Assets/Images/gun.png");
@@ -27,22 +30,22 @@ class Gun
 		transform = getComponent!(Transform)();
 		*mesh = loadMesh("$Assets/Models/gun.obj");
 		transform.setParent(player);
-		material = new SimpleMaterial;
-		SimpleMaterial.allocate(mesh);
-		material.shinyness = 1.0f;
-		material.specularPower = 1.0f;
+		material = new BlinnPhongMaterial;
+		BlinnPhongMaterial.allocate(mesh);
+		material.shininess = 1.0f;
+		material.textures.specular = Vector!(int,4)(255);
 		material.textures.normal = Vector!(int, 4)(0);
-		material.color = vec4(1);
+		material.ambient = vec4(1);
 		material.textures.diffuse = new Texture2D(&diffuseImage);
 		material.textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
 		material.packTextureAtlas();
 		material.setShaderProgram(getEntityShader());
 		transform.position = vec3(-1.5,1,3);
 		transform.scale = vec3(1,1,1);
-		//transform.rotation = vec3(0,0,0);
 		transform.setRotationEuler(vec3(0,-80,0));
 		vertexBuffer.length = mesh.positions.length;
-		
+		this.layer = layer;
+		drawInfo = layer.createDynamicObject(*mesh,material);
 		
 
 
@@ -81,7 +84,7 @@ class Gun
 		//processCollisions();
 		//transform.rotateEuler(vec3(0,0,0));
 		updateComponents();
-		Renderer.get.submitMesh!(SimpleMaterial,false)(mesh,transform,material,vertexBuffer);
+		layer.drawObject(drawInfo,transform);
 	}
 
 }

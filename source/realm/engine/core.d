@@ -280,14 +280,25 @@ struct Mesh
 			vec3 edge2 = triPositions[2] - triPositions[0];
 			vec2 deltaUV1 = triCoordinates[1] - triCoordinates[0];
 			vec2 deltaUV2 = triCoordinates[2] - triCoordinates[0];
-			float c = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-			vec3 tangent;
-			tangent.x = c *(deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-			tangent.y = c * (deltaUV1.y * edge1.y - deltaUV1.y * edge2.y);
-			tangent.z = c *(deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-			tangents[triangleFace[0]] = tangent;
-			tangents[triangleFace[1]] = tangent;
-			tangents[triangleFace[2]] = tangent;
+			float delta = (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+			if(delta == 0)
+			{
+				tangents[triangleFace[0]] = vec3(1.0f);
+				tangents[triangleFace[1]] = vec3(1.0f);
+				tangents[triangleFace[2]] = vec3(1.0f);
+			}
+			else
+			{
+				float c = 1.0f / delta;
+				vec3 tangent;
+				tangent.x = c *(deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+				tangent.y = c * (deltaUV1.y * edge1.y - deltaUV1.y * edge2.y);
+				tangent.z = c *(deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+				tangents[triangleFace[0]] = tangent;
+				tangents[triangleFace[1]] = tangent;
+				tangents[triangleFace[2]] = tangent;
+			}
+
 
 		}
 	}

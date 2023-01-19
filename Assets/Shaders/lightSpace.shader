@@ -8,17 +8,21 @@ struct Material
 #shader vertex lightSpaceVertex
 vec4 vertex(REVertexData IN)
 {
-	mat4 vp = u_projection * u_view;
-	RESurfaceDataOut.TBN = calculateTBN();
-	RESurfaceDataOut.material = IN.material;
+	vec4 worldSpace = OBJECT_TO_WORLD_T * vec4(IN.position, 1.0);
+	vec4 worldNormal = transpose(inverse(OBJECT_TO_WORLD_T)) * vec4(IN.normal, 1.0);
+	vec4 worldTangent = OBJECT_TO_WORLD_T * vec4(IN.tangent, 1.0);
+	
+	
+	RESurfaceDataOut.TBN = calculateTBN(worldNormal.xyz, worldTangent.xyz);
+	//RESurfaceDataOut.material = IN.material;
 	RESurfaceDataOut.objectId = IN.objectId;
-	RESurfaceDataOut.posCS = vp * vec4(IN.position, 1.0);
+	RESurfaceDataOut.posCS = lightSpaceMatrix * worldSpace;
 	RESurfaceDataOut.posWS = IN.position;
 	RESurfaceDataOut.texCoord = IN.texCoord;
-	RESurfaceDataOut.normal = IN.normal;
-	RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * vec4(IN.position, 1.0);
-	RESurfaceDataOut.eyeSpacePosition = u_view * vec4(IN.position, 1.0);
-	return RESurfaceDataOut.lightSpacePosition;
+	RESurfaceDataOut.normal = IN.normal.xyz;
+	/*RESurfaceDataOut.lightSpacePosition = lightSpaceMatrix * worldSpace;
+	RESurfaceDataOut.eyeSpacePosition = u_view * worldSpace;*/
+	return RESurfaceDataOut.posCS;
 }
 #shader fragment lightSpaceFragment
 

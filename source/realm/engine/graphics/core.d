@@ -23,6 +23,12 @@ alias FrameBuffer = GFrameBuffer;
 alias FrameBufferAttachment = GFrameBufferAttachment;
 alias PixelBuffer = GPixelBuffer;
 alias ShaderStorage = GShaderStorage;
+alias ShaderBlock = GShaderBlock;
+alias VertexArrayObject = GVertexArrayObject;
+alias VertexBuffer = GVertexBuffer;
+alias ElementBuffer = GElementBuffer;
+alias DrawIndirectCommandBuffer = GDrawIndirectCommandBuffer;
+alias DrawElementsIndirectCommand= GDrawElementsIndirectCommand;
 alias DepthFunc = GDepthFunc;
 alias ShaderPipeline = GShaderPipeline;
 alias FrameBufferTarget = GFrameBufferTarget;
@@ -37,6 +43,8 @@ alias ShaderProgramStages = GShaderProgramStages;
 alias ShaderParameter = GShaderParameter;
 alias SizedImageFormat = GSizedImageFormat;
 alias CubemapFace = GCubemapFace;
+alias BufferUsage = GBufferUsage;
+alias BufferStorageMode = GBufferStorageMode;
 alias blendFunc = gBlendFunc;
 alias blendFuncSeperate = gBlendFuncSeperate;
 alias enable =gEnable;
@@ -48,7 +56,7 @@ alias readBuffer = gReadBuffer;
 alias setDepthFunc = gSetDepthFunc;
 
 alias enableDebugging = gEnableDebugging;
-alias BufferUsage = GBufferUsage;
+
 alias drawBuffers = gDrawBuffers;
 
 alias StandardShaderModel = ShaderProgramModel!(ShaderType.VERTEX,ShaderType.FRAGMENT);
@@ -256,7 +264,7 @@ struct RealmGlobalData
 	float[16] viewMatrix;
 	float[16] projectionMatrix;
 
-	//float[16] vp;
+	float[16] vp;
 	float[4] mainLightDirection;
 	float[4] mainLightColor;
 	float[16] lightSpaceMatrix;

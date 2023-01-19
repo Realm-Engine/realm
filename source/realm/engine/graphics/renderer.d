@@ -21,6 +21,8 @@ import realm.engine.container.stack;
 import realm.engine.memory;
 import core.stdc.stdlib;
 import std.traits;
+import realm.engine.graphics.renderlayer;
+import realm.engine.container.stack;
 alias LightSpaceMaterialLayout = Alias!(["cameraFar" : UserDataVarTypes.FLOAT, "cameraNear" : UserDataVarTypes.FLOAT]);
 alias LightSpaceMaterial = Alias!(Material!(LightSpaceMaterialLayout));
 alias ScreenPassMaterialLayout = Alias!(["screenColor" : UserDataVarTypes.VECTOR,  "gamma":UserDataVarTypes.FLOAT]);
@@ -74,12 +76,16 @@ class Renderer
 	private SamplerObject!(TextureType.CUBEMAP) skyBox;
 	private RealmArenaAllocator arenaAllocator;
 	
+	
+	
+
 	//private static FrameBuffer mainFramebuffer;
 	
 	Renderpass!(null, null) depthPrepass;
 	Renderpass!(null,LightPassOutputs) lightPass;
 	Renderpass!(GeometryPassInputs,GeometryPassOutputs) geometryPass;
 	Renderpass!(ScreenPassInputs,null) screenPass;
+	enum RenderpassName(alias Pass) = __traits(identifier,Pass);
 	
 
 	static Renderer get()
@@ -150,16 +156,16 @@ class Renderer
 		enable(State.Blend);
 		enable(State.CullFace);
 		blendFunc(BlendFuncType.SRC_ALPHA,BlendFuncType.ONE_MINUS_SRC_ALPHA);
-		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(20,20),-20,20,0);
+		lightSpaceCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(40,40),-20,20,0);
 		screenCamera = new Camera(CameraProjection.ORTHOGRAPHIC,vec2(windowSize[0],windowSize[1]),-1,100,0);
 		screenCamera.projBounds = ProjectionWindowBounds.ZERO_TO_ONE;
 		
 		Debug.initialze();
 		RealmUI.initialize();
 		queryDevice.create();
-		lightSpaceShaderProgram = loadShaderProgram("$EngineAssets/Shaders/lightSpace.shader","lightSpace");
-		depthPrepassProgram = loadShaderProgram("$EngineAssets/Shaders/depthPrepass.shader","Depth prepass");
-		screenPassProgram = loadShaderProgram("$EngineAssets/Shaders/screenPass.shader","Screen pass");
+		lightSpaceShaderProgram = ShaderLibrary.getShader("$EngineAssets/Shaders/lightSpace.shader");
+		depthPrepassProgram = ShaderLibrary.getShader("$EngineAssets/Shaders/depthPrepass.shader");
+		screenPassProgram = ShaderLibrary.getShader("$EngineAssets/Shaders/screenPass.shader");
 		lightSpacePipeline = new ShaderPipeline;
 		lightSpacePipeline.create();
 		lightSpacePipeline.useProgramStages(lightSpaceShaderProgram);
@@ -182,8 +188,11 @@ class Renderer
 		screenBatch.reserve(ScreenPassMaterial.getNumMaterialInstances());
 		setDepthFunc(DepthFunc.LESS);
 		initSkybox();
+		
 	
 	}
+
+	
 
 
 
@@ -208,7 +217,7 @@ class Renderer
 		skyboxMesh.normals.length = 4;
 		skyboxMesh.textureCoordinates.length = 4;
 		skyboxMesh.tangents.length = 4;
-		skyboxProgram = loadShaderProgram("$EngineAssets/Shaders/skybox.shader","Skybox");
+		skyboxProgram = ShaderLibrary.getShader("$EngineAssets/Shaders/skybox.shader");
 		SkyboxMaterial.initialze();
 		SkyboxMaterial.reserve(1);
 		skyboxMaterial = new SkyboxMaterial;
@@ -222,7 +231,7 @@ class Renderer
 		skyboxBatch.reserve(SkyboxMaterial.getNumMaterialInstances());
 
 		skyBox.create();
-		TextureDesc desc = TextureDesc(ImageFormat.SRGB8,TextureFilterfunc.LINEAR,TextureWrapFunc.CLAMP_TO_BORDER );
+		TextureDesc desc = TextureDesc(ImageFormat.SRGB8,TextureFilterfunc.LINEAR,TextureWrapFunc.MIRROR );
 		skyBox.textureDesc = desc;
 		skyBox.store(2048,2048);
 		ubyte[3] y = [0,255,0];
@@ -287,11 +296,11 @@ class Renderer
 			{
 				RealmVertex vertex;
 
-				vertex.position = vec3( modelMatrix * vec4(mesh.positions[i],1.0));
+				vertex.position = mesh.positions[i];
 
 				vertex.texCoord = mesh.textureCoordinates[i];
-				vertex.normal =  vec3(transInv * vec4(mesh.normals[i],1.0));
-				vertex.tangent = vec3(modelMatrix * vec4(mesh.tangents[i],1.0));
+				vertex.normal =  mesh.normals[i];
+				vertex.tangent = mesh.tangents[i];
 				vertex.materialId = mat.instanceId;
 				vertexData[i] = vertex;
 
@@ -301,6 +310,7 @@ class Renderer
 
 
 		AABB boundingBox = aabbTransformWorldSpace(mesh.getLocalBounds(),transform.transformation);
+		
 		mat4 vp  = camera.projection * camera.view;
 		Frustum frustum = Frustum(vp );
 
@@ -383,7 +393,7 @@ class Renderer
 
 	
 
-	void renderLightSpace() 
+	void renderLightSpace(Layers...)(Layers renderLayers)
 	{
 	
 		
@@ -400,20 +410,23 @@ class Renderer
 			float[16] lightSpaceDup = lightSpaceMatrix.value_ptr[0..16].dup;
 			_globalData.viewMatrix[0..$] = lightSpaceCamera.view.transposed.value_ptr[0..16].dup;
 			_globalData.projectionMatrix[0..$] = lightSpaceCamera.projection.transposed.value_ptr[0..16].dup;
-			//_globalData.vp[0..$] = lightSpaceDup;
+			_globalData.vp[0..$] = lightSpaceDup;
 			_globalData.lightSpaceMatrix[0..$] =  lightSpaceDup;
 			GraphicsSubsystem.updateGlobalData(&_globalData);
 
 
 			auto orderedBatches = batches.values.sort!((b1, b2) => b1.renderOrder < b2.renderOrder);
-
+			
 			foreach(batch; orderedBatches)
 			{
 				batch.setPrepareDrawCallback(&prepareDrawLightpass);
 				batch.drawBatch!(false)(lightSpacePipeline);
 
 			}
-
+			foreach(layer; renderLayers)
+			{
+				layer.onDraw!(RenderpassName!(lightPass))(lightPass);
+			}
 			
 			
 			//cull(CullFace.BACK);
@@ -451,22 +464,27 @@ class Renderer
 		}
 	}
 
-	void update()
+	void update(Layers...)(Layers renderLayers)
 	{
-		
+		foreach(layer; renderLayers)
+		{
+			layer.renderBegin();
+		}
+		mat4 vp = camera.projection * camera.view;
 		if(mainDirLight !is null)
 		{
 			updateMainLight();
 		}
-		
-		renderLightSpace();
+
+		renderLightSpace(renderLayers);
 		cull(CullFace.BACK);
 		if(camera !is null)
 		{
 
 			_globalData.viewMatrix[0..$] = camera.view.transposed.value_ptr[0..16].dup;
 			_globalData.projectionMatrix[0..$] = camera.projection.transposed.value_ptr[0..16].dup;
-			//_globalData.vp[0..$] = vp.value_ptr[0..16].dup;
+			
+			_globalData.vp[0..$] = vp.transposed.value_ptr[0..16].dup;
 			_globalData.camPosition[0..$] = camera.transform.position.value_ptr[0..4].dup;
 			_globalData.camDirection[0..$] = camera.transform.front.value_ptr[0..4].dup;
 			_globalData.nearPlane = camera.nearPlane;
@@ -490,6 +508,10 @@ class Renderer
 			batch.setPrepareDrawCallback(&prepareDrawGeometry);
 			batch.drawBatch!(true)();
 		}
+		foreach(layer; renderLayers)
+		{
+			layer.onDraw!(RenderpassName!(geometryPass))(geometryPass);
+		}
 		drawSkybox();
 		Debug.flush();
 		RealmUI.flush();
@@ -501,10 +523,12 @@ class Renderer
 			batch.resetBatch();
 		}
 
+		foreach(layer; renderLayers)
+		{
+			layer.renderEnd();
+		}
+
 		long timeElapsed = 0;
-		
-		
-		
 	}
 
 	void drawSkybox()
@@ -515,7 +539,7 @@ class Renderer
 		for(int i = 0; i < skyboxMesh.positions.length;i++)
 		{
 			RealmVertex vertex;
-			vertex.position = vec3(transform.transformation * vec4(skyboxMesh.positions[i],1.0));
+			vertex.position = vec3( vec4(skyboxMesh.positions[i],1.0));
 			vertex.texCoord = screenMesh.textureCoordinates[i];
 			vertex.normal = vec3(0,0,1);
 			vertex.tangent = screenMesh.tangents[i];
@@ -575,6 +599,8 @@ class Renderer
 
 		}
 	}
+
+	
 
 	void prepareDrawGeometry(StandardShaderModel program)
 	{

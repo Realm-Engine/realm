@@ -17,20 +17,19 @@ class GameGeometry
 	private Mesh* mesh;
 	private Transform transform;
 	private Texture2D diffuseMap;
-	private RealmVertex[] vertexBuffer;
 	void start(Mesh geo)
 	{
 		mesh = &getComponent!(Mesh)();
 		transform = getComponent!(Transform)();
 		*mesh = geo;
-		material = new SimpleMaterial;
-		SimpleMaterial.allocate(mesh);
+		material = new BlinnPhongMaterial;
+		
 		material.textures.normal = Vector!(int,4)(0,0,255,0);
 		material.setShaderProgram(getEntityShader());
-		material.shinyness = 64.0;
-		material.specularPower = 0.1;
-		material.color = vec4(1.0);
-		vertexBuffer.length = geo.positions.length;
+		material.shininess = 16;
+		material.textures.specular = Vector!(int,4)(255);
+		material.ambient = vec4(0.1);
+		
 
 	}
 	
@@ -44,18 +43,23 @@ class GameGeometry
 	void setBaseMap(IFImage image)
 	{
 		material.textures.diffuse = new Texture2D(&image);
-		material.textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_BORDER);
+		material.textures.settings = TextureDesc(ImageFormat.SRGBA8,TextureFilterfunc.NEAREST,TextureWrapFunc.CLAMP_TO_EDGE);
 		material.packTextureAtlas();
-		scope(exit)
-		{
-			image.free();
-		}
+		
 	}
 
 	void update(float dt)
 	{
 		updateComponents();
-		Renderer.get.submitMesh!(SimpleMaterial,false)(mesh,transform,material,vertexBuffer);
+		//if(isStatic)
+		//{
+		//    Renderer.get.submitMesh!(SimpleMaterial,true)(mesh,transform,material,vertexBuffer);
+		//}
+		//else
+		//{
+		//    Renderer.get.submitMesh!(SimpleMaterial,false)(mesh,transform,material,vertexBuffer);
+		//}
+		
 	}
 
 

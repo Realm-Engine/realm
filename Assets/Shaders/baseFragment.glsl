@@ -1,12 +1,12 @@
 
 
-layout (std430,binding = 1) buffer _perObjectData
+layout(std140, binding = 1) uniform _perObjectData
 {
-	Material data[];
+	Material data[16];
 };
-layout(std430, binding = 2) buffer _objectToWorld
+layout(std140, binding = 2) uniform _objectToWorld
 {
-	mat4 objectToWorld[];
+	mat4 objectToWorld[16];
 };
 
 in RESurfaceData
@@ -15,15 +15,15 @@ in RESurfaceData
 	vec4 posCS;
 	vec2 texCoord;
 	flat int objectId;
-	Material material;
-	smooth vec3 normal;
+	//Material material;
+	vec3 normal;
 	mat3 TBN;
-	vec4 lightSpacePosition;
-	vec4 eyeSpacePosition;
+	/*vec4 lightSpacePosition;
+	vec4 eyeSpacePosition;*/
 
 } RESurfaceDataIn;
 #define objectTexture atlasTextures[RESurfaceDataIn.objectId]
-#define getObjectData(v) RESurfaceDataIn.material.v
+#define getObjectData(v) data[RESurfaceDataIn.objectId].v
 layout (location = 0) out vec4 FragColor;
 vec4 fragment();
 layout(location = 0) uniform sampler2D cameraDepthTexture;

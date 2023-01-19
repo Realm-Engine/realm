@@ -14,7 +14,7 @@ class GraphicsSubsystem
 {
 	
 	
-	private static ShaderBlock globalDataBuffer;
+	private static ShaderBlock!(RealmGlobalData, BufferStorageMode.Immutable) globalDataBuffer;
 	static State depthTest = State.None;
 	static void setClearColor(float r, float g, float b, bool normalize)
 	{
@@ -46,13 +46,19 @@ class GraphicsSubsystem
 
 		globalDataBuffer.bind();
 		globalDataBuffer.bindBase(0);
-		globalDataBuffer.bufferData(data,1);
+		globalDataBuffer[0] = *data;
 		globalDataBuffer.unbind();
 	}
-	
-	static void drawMultiElementsIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(DrawElementsIndirectCommand* commands,int count)
+
+	static void drawElement(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(DrawElementsIndirectCommand command)
 	{
-		glMultiDrawElementsIndirect(shape,GL_UNSIGNED_INT,commands,count,0);
+		glDrawElementsInstancedBaseVertexBaseInstance(shape,command.count,GL_UNSIGNED_INT,cast(void*)(command.firstIndex * uint.sizeof),command.instanceCount,command.baseVertex,command.baseInstance);
+	}
+	
+	static void drawMultiElementsIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(DrawElementsIndirectCommand[] commands)
+	{
+		//Logger.LogInfo("%d", cast(int)commands.length);
+		glMultiDrawElementsIndirect(shape,GL_UNSIGNED_INT,cast(void*) commands.ptr,cast(int)commands.length,0);
 	}
 
 	static void drawMultiElementsIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(int offset, int count)
