@@ -489,8 +489,7 @@ class DirectionalLight
 
 	void draw()
 	{
-		import realm.engine.debugdraw;
-		Debug.drawLine(vec3(0,8,0),getComponent!(Transform).front + vec3(0,8,0));
+		
 		
 
 	}

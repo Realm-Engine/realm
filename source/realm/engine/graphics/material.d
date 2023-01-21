@@ -443,70 +443,14 @@ WriteImage:
         this.shadows = shadows;
     }
 
-    static uint allocatedVertices()
-	{
-        return reservedVertices;
-	}
-    static uint allocatedElements()
-	{
-        return reservedElements;
-	}
+    
 
     SamplerObject!(TextureType.TEXTURE2D)* getTextureAtlas()
 	{
         return &this.textureAtlas;
 	}
 
-    static void setShaderProgram(StandardShaderModel sp)
-	{
-        program = sp;
-	}
-
-    static StandardShaderModel getShaderProgram()
-	{
-        return program;
-	}
-
-    static void reserve(size_t numItems)
-    {
-        //shaderStorageBuffer.store(numItems);
-
-    }
-    static void allocate(Mesh* mesh)
-	{
-
-        reservedVertices += cast(uint)mesh.positions.length;
-        reservedElements += cast(uint)mesh.faces.length;
-	}
-	static void allocate(uint numVertices, uint numElements)
-	{
-
-        reservedVertices += numVertices;
-        reservedElements += numElements;
-	}
-
-    static void initialze()
-    {
-        shaderStorageBuffer.create();
-        shaderStorageBuffer.bindBase(1);
-
-
-
-    }
-
-   
-
-    static void bindShaderStorage()
-	{
-        shaderStorageBuffer.bind();
-        shaderStorageBuffer.bindBase(1);
-	}
-
-
-    static void useShaderProgram()
-	{
-        program.use();
-	}
+    
 
    
 

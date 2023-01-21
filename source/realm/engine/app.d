@@ -4,10 +4,16 @@ import std.stdio;
 public import derelict.opengl3.gl3;
 import std.conv;
 import std.meta;
-import realm.engine.core;
+
 import std.typecons;
 import core.memory;
 import realm.engine.graphics.core : enableDebugging;
+public 
+{
+    import realm.engine;
+
+}
+
 
 class RealmApp
 {

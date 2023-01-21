@@ -5,7 +5,7 @@ import realm.engine.core;
 import gl3n.linalg;
 import realm.engine.graphics.core;
 import std.container.array;
-import realm.engine.graphics.batch;
+
 import derelict.opengl3.gl3;
 
 
