@@ -175,20 +175,15 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
     UniformLayout.Textures textures;
     UniformLayout.UserData layout;
     alias layout this;
-
-    static ShaderBlock!(UniformLayout.UserData, BufferStorageMode.Mutable) shaderStorageBuffer;
-
     private static uint numMaterials = 0;
     private uint materialIndex = 0;
 
     private SamplerObject!(TextureType.TEXTURE2D) textureAtlas;
-    private static StandardShaderModel program;
-    private static Mesh*[] meshes;
-    private static uint reservedVertices;
-    private static uint reservedElements;
+    public StandardShaderModel program;
+    private bool shadows;
+
     
 
-    private bool shadows;
     static int getOrder()
     {
         return order;
@@ -204,14 +199,11 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
     this()
     {
         
-        //storageBufferPtr = &shaderStorageBuffer.ptr[numMaterials];
+        
         
         materialIndex = numMaterials;
         numMaterials++;
-		if(shaderStorageBuffer.length < numMaterials)
-		{
-		    shaderStorageBuffer.resize(numMaterials);
-		}
+		
         if(texturesMembers!(UniformLayout).length >1 )
 		{
             textureAtlas.create();
@@ -224,8 +216,10 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
         
         
         textureAtlas.slot = materialIndex + 4;
-        //textureAtlas.label = "Material Texture Atlas %d".format(materialIndex);
+        
         shadows = true;
+
+
 		
     }
 
@@ -238,11 +232,6 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
 
     
     
-
-    void writeUniformData()
-    {
-        shaderStorageBuffer[materialIndex] = layout;
-    }
 
         
     void packTextureAtlas()
@@ -463,3 +452,4 @@ alias BlinnPhongMaterial = Alias!(Material!(["ambient" : UserDataVarTypes.VECTOR
 											 "specular" : UserDataVarTypes.TEXTURE2D,
 											 "shininess" : UserDataVarTypes.FLOAT,
 											 "padding" : UserDataVarTypes.FLOAT]));
+alias ToonMaterial = Alias!(Material!(["baseColor" : UserDataVarTypes.VECTOR]));

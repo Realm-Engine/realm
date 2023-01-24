@@ -27,6 +27,7 @@ alias ShaderBlock = GShaderBlock;
 alias VertexArrayObject = GVertexArrayObject;
 alias VertexBuffer = GVertexBuffer;
 alias ElementBuffer = GElementBuffer;
+alias UniformBuffer = GUniformBuffer;
 alias DrawIndirectCommandBuffer = GDrawIndirectCommandBuffer;
 alias DrawElementsIndirectCommand= GDrawElementsIndirectCommand;
 alias DepthFunc = GDepthFunc;

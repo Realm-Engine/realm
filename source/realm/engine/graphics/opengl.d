@@ -380,10 +380,15 @@ mixin template OpenGLBuffer(GBufferType BufferType, T, GBufferStorageMode Storag
     
     private size_t _capacity;
     private size_t _length;
-    
+    private bool created = false;
     @property capacity()
 	{
         return _capacity;
+	}
+
+    bool isCreated()
+	{
+        return created;
 	}
 
    
@@ -402,6 +407,7 @@ mixin template OpenGLBuffer(GBufferType BufferType, T, GBufferStorageMode Storag
     out(;this.id > 0,"Failed creating buffer")
     {
         glGenBuffers(1, &id);
+        created = true;
 
     }
 
@@ -1178,6 +1184,31 @@ struct GElementBuffer(GBufferStorageMode usage)
 {
     mixin OpenGLBuffer!(GBufferType.Element, uint, usage);
     private uint size;
+
+}
+
+struct GUniformBuffer
+{
+    mixin OpenGLObject;
+	void create()
+    out(;this.id > 0,"Failed creating buffer")
+    {
+        glGenBuffers(1, &id);
+        
+
+    }
+
+	void bindBuffer(uint programId,uint bindPoint)
+    {
+        glUniformBlockBinding(programId,bindPoint,id);
+        glBindBufferBase(GL_UNIFORM_BUFFER, bindPoint, id);
+    }
+
+    void setData(T)(T data)
+	{
+        glNamedBufferData(id,T.sizeof,&data,GL_DYNAMIC_COPY);
+	}
+
 
 }
 

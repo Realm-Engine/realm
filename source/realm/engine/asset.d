@@ -142,7 +142,7 @@ static class ShaderLibrary
     static void loadDir(string virtualPath)
     {
         string path = VirtualFS.getSystemPath(virtualPath);
-        auto dir = dirEntries(path, "*.shader", SpanMode.depth);
+        auto dir = dirEntries(path, "*.rshader", SpanMode.depth);
         foreach (entry; dir)
         {
             Logger.LogInfo("Loading shader %s into Shader Library", entry);
