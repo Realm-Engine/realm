@@ -18,6 +18,7 @@ struct RealmInitDesc
     int width;
     int height;
     string title;
+    
 }
 
 alias RealmInit = RealmInitDesc function(string[] args);
@@ -26,6 +27,7 @@ alias RealmStart = void function();
 mixin template RealmMain(RealmInit initFunc,RealmStart startFunc,RealmUpdate updateFunc)
 {
     import glfw3.api;
+    import realm.engine.graphicssubsystem;
     public static string root;
     public static __gshared GLFWwindow* window;
     void main(string[] args)
@@ -53,9 +55,12 @@ mixin template RealmMain(RealmInit initFunc,RealmStart startFunc,RealmUpdate upd
         glfwSwapInterval(1);
         
         //ShaderLibrary.loadDir("$EngineAssets/");
-        
+        GraphicsSubSystem.initialize();
+
         startFunc();
         
+        
+
         scope(exit)
 		{
             Logger.LogInfo("Cleaning up");

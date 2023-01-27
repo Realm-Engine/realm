@@ -116,17 +116,6 @@ mixin template RealmComponent()
 {
 	import std.uuid;
 	UUID eid;
-	
-
-
-	
-
-
-
-
-
-
-
 }
 
 //mixin template EntityRegistry(T...)

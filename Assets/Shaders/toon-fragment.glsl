@@ -7,6 +7,11 @@ layout(binding = 1) uniform MaterialBlock
     vec4 baseColor;
 };
 
+layout(std140, binding = 0) uniform _reGloblaData
+{
+	mat4 u_vp;
+};
+
 in RESurfaceData
 {
     vec3 posWS;

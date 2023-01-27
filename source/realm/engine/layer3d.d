@@ -4,6 +4,7 @@ import gl3n.linalg;
 import realm.engine.core;
 import realm.engine.graphics.opengl;
 import realm.engine.graphics.material;
+
 class Layer3D
 {
 	private VertexBuffer!(vec3, BufferStorageMode.Mutable) vbo;
@@ -27,6 +28,12 @@ class Layer3D
 	{
 		import realm.engine.graphics.opengl : bindAttribute;
 		bindAttribute!(vec3)(0,0,0);
+	}
+
+	void setupDraw()
+	{
+		
+
 	}
 
 	void drawTo(Mesh mesh,MaterialData mat)

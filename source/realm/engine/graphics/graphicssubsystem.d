@@ -5,15 +5,12 @@ import realm.engine.core;
 import gl3n.linalg;
 import realm.engine.graphics.core;
 import std.container.array;
-
 import derelict.opengl3.gl3;
 
-
-
-class GraphicsSubsystem
+static class GraphicsSubsystem
 {
 	
-	
+	private static RealmGlobalData globalData;
 	private static ShaderBlock!(RealmGlobalData, BufferStorageMode.Immutable) globalDataBuffer;
 	static State depthTest = State.None;
 	static void setClearColor(float r, float g, float b, bool normalize)
@@ -35,18 +32,29 @@ class GraphicsSubsystem
 	
 	static void initialze()
 	{
+
 		globalDataBuffer.create();
 		globalDataBuffer.bind();
 		globalDataBuffer.store(1);
 		globalDataBuffer.unbind();
 	}
 
-	static void updateGlobalData(RealmGlobalData* data)
+	static void useProjectionMatrix(in float[] matrix)
+	{
+		globalData.projectionMatrix = matrix.dup[0..16];
+	}
+
+	static void useViewMatrix(in float[] matrix)
+	{
+		globalData.projectionMatrix = matrix.dup[0..16];
+	}
+
+	static void updateGlobalDataBuffer()
 	{
 
 		globalDataBuffer.bind();
 		globalDataBuffer.bindBase(0);
-		globalDataBuffer[0] = *data;
+		globalDataBuffer[0] = globalData;
 		globalDataBuffer.unbind();
 	}
 
@@ -57,7 +65,7 @@ class GraphicsSubsystem
 	
 	static void drawMultiElementsIndirect(GPrimitiveShape shape = GPrimitiveShape.TRIANGLE)(DrawElementsIndirectCommand[] commands)
 	{
-		//Logger.LogInfo("%d", cast(int)commands.length);
+		
 		glMultiDrawElementsIndirect(shape,GL_UNSIGNED_INT,cast(void*) commands.ptr,cast(int)commands.length,0);
 	}
 

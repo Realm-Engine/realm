@@ -27,6 +27,9 @@ RealmInitDesc init(string[] args)
 	desc.width = 1280;
 	desc.height = 720;
 	desc.title = "Realm of the Dead!";
+	VirtualFS.registerPath!("Projects/RealmOfTheDead/Assets")("Assets");
+	ecs = new ECS();
+	scene = new Scene!(ECS)(ecs);
 	return desc;
 
 }
@@ -44,14 +47,13 @@ bool update(float dt)
 void start()
 {
 	
-	ecs = new ECS();
-	scene = new Scene!(ECS)(ecs);
-	VirtualFS.registerPath!("Projects/RealmOfTheDead/Assets")("Assets");
+	layer = new Layer3D();
+	
 	Logger.LogInfo("Hello realm!");
 	string vtxPath = "$EngineAssets/Shaders/toon-vertex.glsl";
 	string fragPath = "$EngineAssets/Shaders/toon-fragment.glsl";
 	toonShader = new StandardShaderModel("Toon");
-	layer = new Layer3D();
+	
 	Shader vertexShader = new Shader(ShaderType.VERTEX,readText(VirtualFS.getSystemPath(vtxPath)),VirtualFS.getFileName(vtxPath));
 	Shader fragmentShader = new Shader(ShaderType.FRAGMENT,readText(VirtualFS.getSystemPath(fragPath)),VirtualFS.getFileName(fragPath));
 	triangle.positions = [vec3(0,0.5,0),vec3(-0.5,-0.5,0),vec3(0.5,-0.5,0)];
