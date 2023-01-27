@@ -1208,6 +1208,10 @@ struct GUniformBuffer
 	{
         glNamedBufferData(id,T.sizeof,&data,GL_DYNAMIC_COPY);
 	}
+	void setData(T)(T[] data)
+	{
+        glNamedBufferData(id,T.sizeof * data.length,data.ptr,GL_DYNAMIC_COPY);
+	}
 
 
 }

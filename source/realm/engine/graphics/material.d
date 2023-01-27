@@ -12,6 +12,14 @@ import realm.engine.core;
 
 
 
+struct MaterialData
+{
+    ubyte[] dataBlock;
+    TypeInfo layoutTypeInfo;
+    StandardShaderModel shader;
+    
+}
+
 mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
 {
     import std.format;
@@ -431,6 +439,15 @@ WriteImage:
     {
         this.shadows = shadows;
     }
+
+    public MaterialData data()
+	{
+        MaterialData data;
+        data.dataBlock = (cast(ubyte*)&layout)[0..UniformLayout.UserData.sizeof].dup;
+        data.layoutTypeInfo = typeid( UniformLayout.UserData);
+        data.shader = program;
+        return data;
+	}
 
     
 

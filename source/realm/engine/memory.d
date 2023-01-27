@@ -103,10 +103,12 @@ class RealmArenaAllocator
 	
 	private ubyte[] buffer;
 	private size_t offset;
+	private size_t prevOffset;
 	this(size_t size) nothrow @nogc
 	{
 		buffer = (cast(ubyte*)malloc(size))[0..size];
 		offset = 0;
+		prevOffset = 0;
 	}
 
 	
@@ -116,19 +118,21 @@ class RealmArenaAllocator
 
 		alignForward(ptr);
 		ptr -= cast(size_t)buffer.ptr;
-		printf("%d",ptr);
 		size_t length = __traits(initSymbol,T).length * count;
-		printf("%d",length);
 		if(length + ptr <= buffer.length)
 		{
 			auto mem = buffer[offset .. offset + length];
 			memset(mem.ptr,0,length);
+			prevOffset = offset;
 			offset += ptr + length;
 			return mem;
 
 		}
 		return null;
 	}
+
+
+
 
 	ubyte[] allocate(T)(size_t count) nothrow @nogc
 	{

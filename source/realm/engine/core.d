@@ -35,6 +35,7 @@ class Transform
 	
 	mixin RealmComponent;
 
+
 	this(vec3 position, vec3 rotation, vec3 scale)
 	{
 		this.position = position;
@@ -163,9 +164,10 @@ class Transform
 
 	
 
-	void componentUpdate(E)(E parent)
+	void componentUpdate()
 	{
 		updateTransformation();
+		
 
 	}
 
@@ -182,9 +184,14 @@ class Transform
 		return parent;
 	}
 
-	private void addChild(Transform child)
+	void addChild(Transform child)
 	{
 		children ~= child;
+	}
+
+	Transform[] getChildren()
+	{
+		return children;
 	}
 
 	private mat4 worldTransform()
@@ -218,10 +225,11 @@ class Transform
 }
 
 
+
 struct Mesh
 {
 
-	mixin RealmComponent;
+	
 
 	vec3[] positions;
 	vec2[] textureCoordinates;
@@ -232,7 +240,7 @@ struct Mesh
 	private AABB worldBounds;
 	bool isStatic;
 
-	void componentStart(E)(E parent)
+	void componentStart()
 	{
 		calculateWorldBoundingBox();
 	}
@@ -478,7 +486,7 @@ AABB aabbTransformWorldSpace(AABB box, mat4 matrix)
 
 class DirectionalLight
 {
-	mixin RealmEntity!("Directional Light",Transform);
+	//mixin RealmEntity!("Directional Light",Transform);
 	//Transform transform;
 	vec3 color; 
 	
@@ -497,11 +505,28 @@ class DirectionalLight
 	void update(float dt)
 	{
 		
-		updateComponents();
+		//updateComponents();
 		draw();
 	}
 
 }
+
+class MeshRenderer
+{
+	import realm.engine.graphics.material : MaterialData;
+	Mesh mesh;
+	MaterialData material;
+	mixin RealmComponent;
+	
+	void componentStart(Mesh mesh, MaterialData material)
+	{
+		this.mesh = mesh;
+		this.material = material;
+	}
+
+}
+
+
 
 template IsInterface(T,Members...)
 {

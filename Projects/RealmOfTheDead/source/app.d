@@ -5,7 +5,11 @@ import realm.engine;
 import std.file;
 import realm.engine.layer3d;
 import realm.engine.graphics.graphicssubsystem;
+import realm.engine.ecs;
+import realm.engine.scene;
+mixin ECS!(Transform,MeshRenderer);
 mixin RealmMain!(&init,&start,&update);
+
 
 
 StandardShaderModel toonShader;
@@ -13,9 +17,12 @@ ToonMaterial material;
 Mesh triangle;
 
 Layer3D layer;
-
+ECS ecs;
+Entity entity;
+Scene!(ECS) scene;
 RealmInitDesc init(string[] args)
 {
+	
 	RealmInitDesc desc;
 	desc.width = 1280;
 	desc.height = 720;
@@ -24,11 +31,12 @@ RealmInitDesc init(string[] args)
 
 }
 
+
+
 bool update(float dt)
 {
-	toonShader.use();
-	layer.drawTo!(ToonMaterial)(triangle,material);
-	
+	ecs.update();	
+	scene.draw(layer);
 
 	return false;
 }
@@ -36,6 +44,8 @@ bool update(float dt)
 void start()
 {
 	
+	ecs = new ECS();
+	scene = new Scene!(ECS)(ecs);
 	VirtualFS.registerPath!("Projects/RealmOfTheDead/Assets")("Assets");
 	Logger.LogInfo("Hello realm!");
 	string vtxPath = "$EngineAssets/Shaders/toon-vertex.glsl";
@@ -55,6 +65,12 @@ void start()
 	material = new ToonMaterial();
 	material.program = toonShader;
 	material.baseColor = vec4(1.0f,0.0f,0.0f,1.0f);
+
+	entity = ecs.createEntity();
+	entity.addComponent!(Transform)();
+	entity.addComponent!(MeshRenderer)(triangle,material.data);
+	scene.add(entity);
+	
 
 	
 }
