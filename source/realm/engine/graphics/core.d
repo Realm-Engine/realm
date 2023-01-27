@@ -55,7 +55,7 @@ alias cull = gCull;
 alias setViewport = gSetViewport;
 alias readBuffer = gReadBuffer;
 alias setDepthFunc = gSetDepthFunc;
-
+alias setClearColor = gClearColor;
 alias enableDebugging = gEnableDebugging;
 
 alias drawBuffers = gDrawBuffers;

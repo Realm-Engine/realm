@@ -4,7 +4,6 @@ import std.stdio;
 import realm.engine;
 import std.file;
 import realm.engine.layer3d;
-import realm.engine.graphics.graphicssubsystem;
 import realm.engine.ecs;
 import realm.engine.scene;
 mixin ECS!(Transform,MeshRenderer);
@@ -63,7 +62,7 @@ void start()
 	toonShader.fragmentShader = fragmentShader;
 	toonShader.compile();
 
-	GraphicsSubsystem.setClearColor(0,0,0,false);
+	
 	material = new ToonMaterial();
 	material.program = toonShader;
 	material.baseColor = vec4(1.0f,0.0f,0.0f,1.0f);

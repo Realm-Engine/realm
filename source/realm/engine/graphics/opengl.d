@@ -768,7 +768,7 @@ class GShaderProgramModel(T...)
 		{
 			sourceHash ~= toHexString(md5.digest(shader.sourceHash));
 		}
-		ubyte[] binaryCache = checkCache(nameHash,sourceHash);
+		ubyte[] binaryCache; //checkCache(nameHash,sourceHash);
         if(binaryCache.length > 0)
         {
 
@@ -1190,18 +1190,33 @@ struct GElementBuffer(GBufferStorageMode usage)
 struct GUniformBuffer
 {
     mixin OpenGLObject;
-	void create()
+    private uint blockIndex;
+    string blockName;
+	void create(string name)
     out(;this.id > 0,"Failed creating buffer")
     {
         glGenBuffers(1, &id);
-        
+        this.blockName = name;    
 
     }
 
-	void bindBuffer(uint programId,uint bindPoint)
+
+
+	void bindBuffer(uint programId)
     {
-        glUniformBlockBinding(programId,bindPoint,id);
-        glBindBufferBase(GL_UNIFORM_BUFFER, bindPoint, id);
+
+        uint index = glGetUniformBlockIndex(programId, toStringz(blockName));
+        int blockBinding = - 1;
+        //glBindBuffer(GL_UNIFORM_BUFFER,id);
+        glGetActiveUniformBlockiv(programId,index,GL_UNIFORM_BLOCK_BINDING,&blockBinding);
+        //Logger.LogInfo("%d %d",index,blockBinding);
+        glUniformBlockBinding(programId,index,blockBinding);
+        glBindBufferBase(GL_UNIFORM_BUFFER, blockBinding, id);
+    }
+
+    void unbind()
+    {
+        glBindBufferBase(GL_UNIFORM_BUFFER,0,0);
     }
 
     void setData(T)(T data)
@@ -1234,6 +1249,11 @@ struct GShaderStorage(T, GBufferStorageMode usage)
     {
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindPoint, id);
 
+    }
+
+    void unbindBase(uint point)
+    {
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER,point,0);
     }
 }
 
@@ -2038,6 +2058,17 @@ static void gSetDepthFunc(GDepthFunc func)
 static void gClear(GFrameMask mask)
 {
     glClear(mask);
+}
+
+
+static void gClearColor(float[4] color)
+{
+    glClearColor(color[0],color[1],color[2],color[3]);
+}
+
+static void gClearColor(float r, float g, float b, float a)
+{
+    glClearColor(r,g,b,a);
 }
 
 static void gCull(GCullFace face)

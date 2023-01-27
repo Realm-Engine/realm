@@ -18,7 +18,7 @@ class Layer3D
 		vbo.create();
 		ibo.create();
 		vao.create();
-		ubo.create();
+		ubo.create("MaterialBlock");
 
 		
 
@@ -44,8 +44,10 @@ class Layer3D
 		ibo.bind();
 		mat.shader.use();
 		bindAttributes(mesh);
-		ubo.bindBuffer(mat.shader,1);
+		ubo.bindBuffer(mat.shader);
+		
 		ubo.setData!(ubyte)(mat.dataBlock);
+		
 		vbo[0..mesh.positions.length] = mesh.positions;
 		ibo[0..mesh.faces.length] = mesh.faces;
 
