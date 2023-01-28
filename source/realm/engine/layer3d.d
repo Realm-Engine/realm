@@ -18,7 +18,7 @@ class Layer3D
 		vbo.create();
 		ibo.create();
 		vao.create();
-		ubo.create("MaterialBlock");
+		ubo.create("PerObjectData");
 
 		
 
@@ -36,17 +36,26 @@ class Layer3D
 
 	}
 
-	void drawTo(Mesh mesh,MaterialData mat)
+	void drawTo(Mesh mesh,MaterialData mat,Transform transform)
 	{
 		import derelict.opengl3.gl3; 
 		vao.bind();
 		vbo.bind();
 		ibo.bind();
+		//ubo.bind();
 		mat.shader.use();
 		bindAttributes(mesh);
 		ubo.bindBuffer(mat.shader);
 		
-		ubo.setData!(ubyte)(mat.dataBlock);
+		ubyte[] builDataStruct()
+		{
+			ubyte[] result;
+			result ~= mat.dataBlock[0..mat.layoutTypeInfo.tsize];
+			result ~= cast(ubyte[])(transform.transformation.transposed.value_ptr[0..16]);
+			return result;
+		}
+		ubo.setData!(ubyte)(builDataStruct());
+		ubo.unbind();
 		
 		vbo[0..mesh.positions.length] = mesh.positions;
 		ibo[0..mesh.faces.length] = mesh.faces;

@@ -1,4 +1,4 @@
-module realm.engine.app;
+module realm.engine.realmapp;
 
 public import derelict.opengl3.gl3;
 public import realm.engine.graphics;
@@ -34,7 +34,8 @@ mixin template RealmMain(RealmInit initFunc,RealmStart startFunc,RealmUpdate upd
     
     public static string root;
     public static __gshared GLFWwindow* window;
-
+    public int windowWidth;
+    public int windowHeight;
     private pipeline.GraphicsContext defaultUpdateContext(pipeline.GraphicsContext currentCtx)
     {
         
@@ -60,6 +61,8 @@ mixin template RealmMain(RealmInit initFunc,RealmStart startFunc,RealmUpdate upd
         bool shutdown;
 
         RealmInitDesc initDesc = initFunc(args);
+        windowWidth = initDesc.width;
+        windowHeight = initDesc.height;
 
         Logger.Assert(initDesc.width >= 0 && initDesc.height >=0,"Width and height of app are negative");
         shutdown = false;

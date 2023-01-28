@@ -3,7 +3,6 @@ private
 {
 	import realm.engine.graphics.core;
 	import std.stdio;
-	import realm.engine.app;
 }
 
 public
@@ -23,6 +22,7 @@ public
 
 class Transform
 {
+	
 	import std.meta;
 	vec3 position;
 	quat rotation;
@@ -194,6 +194,21 @@ class Transform
 		return children;
 	}
 
+	int opApply(int delegate(Transform)dg)
+	{
+		int result = 0;
+		
+		foreach(child; children)
+		{
+			result = dg(child);
+			if(result)
+			{
+				break;
+			}
+		}
+		return result;
+	}
+
 	private mat4 worldTransform()
 	{
 		if(parent !is null)
@@ -358,7 +373,7 @@ class Camera
 	private CameraProjection projectionType;
 	mat4 vp;
 	mat4 cameraTransformation;
-	
+	mixin RealmComponent;
 	ProjectionWindowBounds projBounds = ProjectionWindowBounds.NEGATIVE_HALF_TO_HALF;
 	//Front
 	//Maybe goes in transform?
@@ -383,7 +398,7 @@ class Camera
 
 	alias transform this;
 
-	this(CameraProjection projectionType, vec2 size,float nearPlane,float farPlane,float fieldOfView)
+	void componentStart(CameraProjection projectionType, vec2 size,float nearPlane,float farPlane,float fieldOfView)
 	{
 		this.projectionType = projectionType;
 		this.size = size;
@@ -391,7 +406,7 @@ class Camera
 		this.nearPlane = nearPlane;
 		this.fieldOfView = fieldOfView;
 		transform = new Transform;
-		update();
+		componentUpdate();
 	}
 
 	private mat4 calculateProjection()
@@ -440,7 +455,7 @@ class Camera
 		vp = proj * view;
 	}
 
-	void update()
+	void componentUpdate()
 	{
 		transform.updateTransformation();
 		vec3 position = transform.getWorldPosition();

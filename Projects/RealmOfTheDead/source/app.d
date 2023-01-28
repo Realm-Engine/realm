@@ -6,14 +6,14 @@ import std.file;
 import realm.engine.layer3d;
 import realm.engine.ecs;
 import realm.engine.scene;
-mixin ECS!(Transform,MeshRenderer);
+mixin ECS!(Transform,MeshRenderer,Camera);
 mixin RealmMain!(&init,&start,&update);
 
 
 
 StandardShaderModel toonShader;
 ToonMaterial material;
-Mesh triangle;
+
 
 Layer3D layer;
 ECS ecs;
@@ -26,6 +26,7 @@ RealmInitDesc init(string[] args)
 	desc.width = 1280;
 	desc.height = 720;
 	desc.title = "Realm of the Dead!";
+	desc.initPipelineFunc = &renderPipelineInit;
 	VirtualFS.registerPath!("Projects/RealmOfTheDead/Assets")("Assets");
 	ecs = new ECS();
 	scene = new Scene!(ECS)(ecs);
@@ -35,11 +36,14 @@ RealmInitDesc init(string[] args)
 
 
 
+
+
 bool update(float dt)
 {
 	ecs.update();	
 	scene.draw(layer);
-
+	
+	
 	return false;
 }
 
@@ -55,8 +59,7 @@ void start()
 	
 	Shader vertexShader = new Shader(ShaderType.VERTEX,readText(VirtualFS.getSystemPath(vtxPath)),VirtualFS.getFileName(vtxPath));
 	Shader fragmentShader = new Shader(ShaderType.FRAGMENT,readText(VirtualFS.getSystemPath(fragPath)),VirtualFS.getFileName(fragPath));
-	triangle.positions = [vec3(0,0.5,0),vec3(-0.5,-0.5,0),vec3(0.5,-0.5,0)];
-	triangle.faces = [0,1,2];
+	
 	
 	toonShader.vertexShader = vertexShader;
 	toonShader.fragmentShader = fragmentShader;
@@ -67,13 +70,47 @@ void start()
 	material.program = toonShader;
 	material.baseColor = vec4(1.0f,0.0f,0.0f,1.0f);
 
-	entity = ecs.createEntity();
+	Entity entity = ecs.createEntity();
 	entity.addComponent!(Transform)();
-	entity.addComponent!(MeshRenderer)(triangle,material.data);
+	entity.addComponent!(MeshRenderer)(loadMesh("$EngineAssets/Models/sphere.obj"),material.data);
 	scene.add(entity);
+	entity.getComponent!(Transform).scale = vec3(1);
+	entity.getComponent!(Transform).position = vec3(0,0,10);
+	
+
+
+	Entity mainCamera = ecs.createEntity();
+	mainCamera.addComponent!(Transform);
+	mainCamera.addComponent!(Camera)(CameraProjection.PERSPECTIVE,vec2(cast(float)windowWidth,cast(float)windowHeight),0.1,750,60);
+	scene.add(mainCamera);
 	
 
 	
+}
+
+private pipeline.PipelineInitDesc renderPipelineInit()
+{
+	import gl3n.linalg;
+	pipeline.GraphicsContext ctx;
+	ctx.viewMatrix = mat4.identity.value_ptr[0..16];
+	ctx.projectionMatrix = mat4.identity.value_ptr[0..16];
+	pipeline.PipelineInitDesc desc;
+	desc.initialContext = ctx;
+	desc.clearColor = [1,1,1,1];
+	desc.updateContext = &updateGraphicsContext;
+	return desc;
+
+}
+
+private pipeline.GraphicsContext updateGraphicsContext(pipeline.GraphicsContext currentCtx)
+{
+	Camera* camera = scene.findComponent!(Camera);
+	if(camera !is null)
+	{
+		currentCtx.viewMatrix = camera.view.transposed.value_ptr[0..16];
+		currentCtx.projectionMatrix = camera.projection.transposed.value_ptr[0..16];
+	}
+	return currentCtx;
 }
 
 

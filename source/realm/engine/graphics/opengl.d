@@ -329,21 +329,21 @@ mixin template BufferMutableStorageModeImpl(GBufferType BufferType,T)
 		{
 		    store(j+ 1);
 		}
-        if(value.length > 2048)
-        {
-            Logger.LogInfo("Sending array of size %d as chunks", value.length);
-            import std.range;
-            int chunkSize = 2048;
-            auto chunks = chunks(value,chunkSize);
-            ulong k;
-            k = i;
-            
-            foreach(chunk; chunks)
-            {
-                glNamedBufferSubData(id, k * T.sizeof,chunk.length * T.sizeof,chunk.array.ptr);
-                k += chunk.length;
-            }
-        }
+		//if(value.length > 2048)
+		//{
+		//    
+		//    import std.range;
+		//    int chunkSize = 2048;
+		//    auto chunks = chunks(value,chunkSize);
+		//    ulong k;
+		//    k = i;
+		//    
+		//    foreach(chunk; chunks)
+		//    {
+		//        glNamedBufferSubData(id, k * T.sizeof,chunk.length * T.sizeof,chunk.array.ptr);
+		//        k += chunk.length;
+		//    }
+		//}
         glNamedBufferSubData(id,i * T.sizeof,(j - 1 + 1) * T.sizeof,value.ptr);
 	}
 
@@ -1200,6 +1200,10 @@ struct GUniformBuffer
 
     }
 
+    void bind()
+	{
+        glBindBuffer(GL_UNIFORM_BUFFER,id);
+	}
 
 
 	void bindBuffer(uint programId)
@@ -1216,7 +1220,7 @@ struct GUniformBuffer
 
     void unbind()
     {
-        glBindBufferBase(GL_UNIFORM_BUFFER,0,0);
+        glBindBuffer(GL_UNIFORM_BUFFER,0);
     }
 
     void setData(T)(T data)

@@ -1,6 +1,10 @@
 #version 460 core
 
 layout (location = 0) out vec4 FragColor;
+struct Material
+{
+    vec4 baseColor;
+};
 
 layout(std430, binding = 0) buffer DrawContext
 {
@@ -8,9 +12,10 @@ layout(std430, binding = 0) buffer DrawContext
     mat4 u_projection;
 };
 
-layout(std140,binding = 1) uniform MaterialBlock
+layout(std140,binding = 1) uniform PerObjectData
 {
-    vec4 baseColor;
+    Material material;
+    mat4 modelMatrix;
 };
 
 
@@ -22,6 +27,6 @@ in RESurfaceData
 
 void main()
 {
-    FragColor = baseColor;
+    FragColor = material.baseColor;
 
 }

@@ -22,6 +22,29 @@ class Scene(ECS)
 		sceneSize = 1;
 	}
 
+	Transform getSceneRoot()
+	{
+		return root;
+	}
+
+
+
+	T* findComponent(T)()
+	{
+		//T* result = null;
+		foreach(child; root)
+		{
+			
+			if(ecs.getEntityComponent!(T)(child.eid) !is null)
+			{
+				return ecs.getEntityComponent!(T)(child.eid);
+			}
+			
+		}
+		return null;
+		//return result;
+	}
+
 	void add(ECS.Entity entity)
 	{
 		
@@ -30,6 +53,8 @@ class Scene(ECS)
 		
 
 	}
+
+
 
 	void draw(Layer3D layer)
 	{
@@ -46,7 +71,7 @@ class Scene(ECS)
 			MeshRenderer* meshRenderer = ecs.getEntityComponent!(MeshRenderer)(entity.eid);
 			if(meshRenderer !is null)
 			{
-				layer.drawTo((*meshRenderer).mesh,(*meshRenderer).material);
+				layer.drawTo((*meshRenderer).mesh,(*meshRenderer).material,entity);
 			}
 
 			if(entity.getParent() !is null)

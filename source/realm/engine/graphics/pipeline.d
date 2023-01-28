@@ -31,7 +31,6 @@ void init(PipelineInitDesc desc)
     updateContext = desc.updateContext;
     currentCtx = desc.initialContext;
     initContextBlock();
-    enableDebugging();
     endFrame();
 }
 

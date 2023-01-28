@@ -8,7 +8,7 @@ public
 	import realm.engine.logging;
 	import realm.engine.graphics.core;
 	import realm.engine.asset;
-	import realm.engine.app;
+	import realm.engine.realmapp;
 	
 }
 

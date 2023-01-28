@@ -12,9 +12,15 @@ layout(std430,binding = 0) buffer DrawContext
     mat4 u_view;
     mat4 u_projection;
 };
-layout(std140,binding = 1) uniform MaterialBlock
+
+struct Material
 {
     vec4 baseColor;
+};
+layout(std140,binding = 1) uniform PerObjectData
+{
+    Material material;
+    mat4 modelMatrix;
 };
 
 
@@ -25,6 +31,6 @@ out RESurfaceData
 
 void main()
 {
-
-    gl_Position = (u_view * u_projection) * vec4(v_Position,1.0);
+    
+    gl_Position = u_projection * u_view * modelMatrix * vec4(v_Position,1.0);
 }
