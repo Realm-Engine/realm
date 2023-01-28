@@ -11,6 +11,7 @@ class Layer3D
 	private ElementBuffer!(BufferStorageMode.Mutable) ibo;
 	private VertexArrayObject vao;
 	private UniformBuffer ubo;
+	private VertexAtrrib[2] vertexLayout;
 	
 
 	this()
@@ -19,6 +20,10 @@ class Layer3D
 		ibo.create();
 		vao.create();
 		ubo.create("PerObjectData");
+		vertexLayout[0] = {VertexType.FLOAT3,VertexSlot.POSITION;};
+		vertexLayout[1] = {VertexType.FLOAT3,VertexSlot.NORMAL;};
+
+
 
 		
 
@@ -27,7 +32,12 @@ class Layer3D
 	private void bindAttributes(Mesh mesh)
 	{
 		import realm.engine.graphics.opengl : bindAttribute;
-		bindAttribute!(vec3)(0,0,0);
+		int index = 0;
+		foreach(attrib; vertexLayout)
+		{
+
+		}
+		//bindAttribute!(vec3)(0,0,0);
 	}
 
 	void setupDraw()

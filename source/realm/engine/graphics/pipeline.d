@@ -1,10 +1,18 @@
 module realm.engine.graphics.pipeline;
 import realm.engine.logging;
 import realm.engine.graphics.core;
+
+
+struct LightInfo
+{
+    float[4] direction;
+}
+
 struct GraphicsContext
 {
     float[16] viewMatrix;
     float[16] projectionMatrix;
+    LightInfo lightInfo;
 
 
 }

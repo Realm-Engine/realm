@@ -65,7 +65,7 @@ alias ComputeShader = ShaderProgramModel!(ShaderType.COMPUTE);
 alias CubemapFaces = AliasSeq!(EnumMembers!GCubemapFace);
 enum CubemapFaceIndex(GCubemapFace face ) = 5-(GCubemapFace.NEGATIVE_Z - face);
 
-/// Used to encode information about data types for vertice layout
+/// Used to encode information about data types for vertex layout
 enum VertexType : int
 {
 	FLOAT = 0x4011,
@@ -84,6 +84,14 @@ enum UserDataVarTypes : int
 	TEXTURE2D = 0x101D,
 	
 }
+
+enum VertexSlot
+{
+	POSITION,
+	NORMAL,
+	TANGENT
+}
+
 
 
 enum MeshTopology : int
@@ -113,6 +121,14 @@ struct RealmVertex
 	vec3 normal;
 	vec2 uv;
 */
+}
+
+
+
+struct VertexAtrrib
+{
+	VertexType type;
+	VertexSlot slot;
 }
 
 
