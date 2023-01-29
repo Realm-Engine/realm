@@ -1,5 +1,5 @@
 module realm.engine.container.queue;
-
+import realm.engine.logging;
 private
 {
 	import realm.engine.memory;
@@ -25,7 +25,11 @@ class Queue(T,size_t Size = 0,alias A = RealmArenaAllocator)
 	///Put item on end of queue
 	void enqueue(T t) nothrow @nogc
 	{
-		_stack1.push(t);
+		if(!_stack1.full)
+		{
+			_stack1.push(t);
+		}
+		
 	}
 	
 	@property bool empty()

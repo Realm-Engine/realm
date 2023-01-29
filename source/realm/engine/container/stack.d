@@ -102,6 +102,11 @@ class Stack(T, size_t Size = 0,alias A = RealmArenaAllocator)
 		return arr.length;
 	}
 
+	@property full() nothrow @nogc
+	{
+		return arr.length -1 == index;
+	}
+
 	~this()
 	{
 		static if(!isFixedSize)

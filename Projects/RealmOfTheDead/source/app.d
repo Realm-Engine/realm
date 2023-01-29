@@ -83,12 +83,12 @@ void start()
 	Entity mainCamera = ecs.createEntity();
 	
 	mainCamera.addComponent!(Camera)(CameraProjection.PERSPECTIVE,vec2(cast(float)windowWidth,cast(float)windowHeight),0.1,750,60);
+	//scene.add(mainCamera);
+	//player = ecs.createEntity();
+	mainCamera.addComponent!(PlayerController)();
 	
-	player = ecs.createEntity();
-	player.addComponent!(PlayerController)();
-	
-	player.transform.addChild(mainCamera.transform);
-	scene.add(player);
+	//mainCamera.transform.setParent(player.transform);
+	scene.add(mainCamera);
 	
 	
 
@@ -117,7 +117,7 @@ private pipeline.GraphicsContext updateGraphicsContext(pipeline.GraphicsContext 
 	Camera* camera = scene.findComponent!(Camera);
 	if(camera !is null)
 	{
-		Logger.LogInfo("%s",camera.eid.toString());
+		//Logger.LogInfo("%s",camera.eid.toString());
 		currentCtx.viewMatrix = camera.view.transposed.value_ptr[0..16];
 		currentCtx.projectionMatrix = camera.projection.transposed.value_ptr[0..16];
 	}

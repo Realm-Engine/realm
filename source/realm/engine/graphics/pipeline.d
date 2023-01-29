@@ -38,6 +38,7 @@ void init(PipelineInitDesc desc)
     setClearColor(clearColor);
     updateContext = desc.updateContext;
     currentCtx = desc.initialContext;
+    enable(State.DepthTest);
     initContextBlock();
     endFrame();
 }
@@ -71,7 +72,7 @@ void startFrame()
 
 void endFrame()
 {
-    clear(FrameMask.COLOR);
+    clear(FrameMask.COLOR | FrameMask.DEPTH);
 }   
 
 

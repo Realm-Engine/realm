@@ -37,9 +37,13 @@ void main()
     {
         diffuse = 1.0;
     }
-    else if(d > 0.5)
+    else if(d > 0.7)
     {
         diffuse = 0.7;
+    }
+    else if(d > 0.5)
+    {
+        diffuse = 0.5;
     }
     else
     {

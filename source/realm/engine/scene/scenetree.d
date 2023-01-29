@@ -31,17 +31,19 @@ class Scene(ECS)
 
 	T* findComponent(T)()
 	{
-		//T* result = null;
+		T* result = null;
 		foreach(child; root)
 		{
 			
 			if(ecs.getEntityComponent!(T)(child.eid) !is null)
 			{
-				return ecs.getEntityComponent!(T)(child.eid);
+				//Logger.LogInfo("%s",child.eid.toString());
+				result = ecs.getEntityComponent!(T)(child.eid);
+				break;
 			}
 
 		}
-		return null;
+		return result;
 		//return result;
 	}
 

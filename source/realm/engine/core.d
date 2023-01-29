@@ -187,6 +187,7 @@ class Transform
 	void addChild(Transform child)
 	{
 		children ~= child;
+		//child.parent = this;
 	}
 
 	Transform[] getChildren()
@@ -196,18 +197,19 @@ class Transform
 
 	int opApply(int delegate(Transform)dg)
 	{
-		int result = 0;
+		int result = dg(this);
 		
 		foreach(child; children)
 		{
-			result = dg(child);
+			
 
-			if(child.opApply(dg) && result)
+			if(child.opApply(dg))
 			{
+				result = 1;
 				break;
 			}
 		}
-		return 1;
+		return result;
 	}
 
 	private mat4 worldTransform()
@@ -464,7 +466,7 @@ class Camera
 
 	void componentUpdate()
 	{
-		transform.updateTransformation();
+		//transform.updateTransformation();
 		vec3 position = transform.getWorldPosition();
 		mat4 lookMat = mat4(mat4.look_at(position,position + transform.front, vec3(0,1,0)));
 		lookMat.matrix[3] = vec4(0,0,0,1).vector;

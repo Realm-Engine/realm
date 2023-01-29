@@ -31,7 +31,7 @@ alias RealmStart = void function();
 mixin template RealmMain(RealmInit initFunc,RealmStart startFunc,RealmUpdate updateFunc)
 {
     import glfw3.api;
-    
+    import realm.engine.input;
     public static string root;
     public static __gshared GLFWwindow* window;
     public int windowWidth;
@@ -76,7 +76,7 @@ mixin template RealmMain(RealmInit initFunc,RealmStart startFunc,RealmUpdate upd
 
         glfwMakeContextCurrent(window);
 
-        
+        InputManager.initialze(window);
         GLVersion glVer = DerelictGL3.reload(GLVersion.GL43,GLVersion.GL45);
         Logger.LogInfo("Loaded OpenGL Version %d",glVer);
         
