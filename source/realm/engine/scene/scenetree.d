@@ -34,7 +34,7 @@ class Scene(ECS)
 		//T* result = null;
 		foreach(child; root)
 		{
-			Logger.LogInfo("%s child: %s", root.eid.toString(),child.eid.toString());
+			
 			if(ecs.getEntityComponent!(T)(child.eid) !is null)
 			{
 				return ecs.getEntityComponent!(T)(child.eid);

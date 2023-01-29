@@ -72,7 +72,7 @@ void start()
 	material.baseColor = vec4(1.0f,0.0f,0.0f,1.0f);
 
 	Entity entity = ecs.createEntity();
-	entity.addComponent!(Transform)();
+	
 	entity.addComponent!(MeshRenderer)(loadMesh("$EngineAssets/Models/sphere.obj"),material.data);
 	scene.add(entity);
 	entity.getComponent!(Transform).scale = vec3(1);
@@ -81,9 +81,9 @@ void start()
 
 
 	Entity mainCamera = ecs.createEntity();
-	mainCamera.addComponent!(Transform);
+	
 	mainCamera.addComponent!(Camera)(CameraProjection.PERSPECTIVE,vec2(cast(float)windowWidth,cast(float)windowHeight),0.1,750,60);
-	//scene.add(mainCamera);
+	
 	player = ecs.createEntity();
 	player.addComponent!(PlayerController)();
 	
@@ -117,6 +117,7 @@ private pipeline.GraphicsContext updateGraphicsContext(pipeline.GraphicsContext 
 	Camera* camera = scene.findComponent!(Camera);
 	if(camera !is null)
 	{
+		Logger.LogInfo("%s",camera.eid.toString());
 		currentCtx.viewMatrix = camera.view.transposed.value_ptr[0..16];
 		currentCtx.projectionMatrix = camera.projection.transposed.value_ptr[0..16];
 	}
