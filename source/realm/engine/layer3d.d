@@ -5,13 +5,21 @@ import realm.engine.core;
 import realm.engine.graphics.opengl;
 import realm.engine.graphics.material;
 
+struct Vertex3D
+{
+	
+	@VertexAtrribute(false) vec3 position;
+
+	
+	@VertexAtrribute(true) vec3 normal;
+}
+
 class Layer3D
 {
-	private VertexBuffer!(vec3, BufferStorageMode.Mutable) vbo;
+	private VertexBuffer!(Vertex3D, BufferStorageMode.Mutable) vbo;
 	private ElementBuffer!(BufferStorageMode.Mutable) ibo;
 	private VertexArrayObject vao;
 	private UniformBuffer ubo;
-	private VertexAtrrib[2] vertexLayout;
 	
 
 	this()
@@ -20,8 +28,8 @@ class Layer3D
 		ibo.create();
 		vao.create();
 		ubo.create("PerObjectData");
-		vertexLayout[0] = {VertexType.FLOAT3,VertexSlot.POSITION;};
-		vertexLayout[1] = {VertexType.FLOAT3,VertexSlot.NORMAL;};
+		vbo.attribFormat(vao);
+
 
 
 
@@ -29,16 +37,7 @@ class Layer3D
 
 	}
 	
-	private void bindAttributes(Mesh mesh)
-	{
-		import realm.engine.graphics.opengl : bindAttribute;
-		int index = 0;
-		foreach(attrib; vertexLayout)
-		{
-
-		}
-		//bindAttribute!(vec3)(0,0,0);
-	}
+	
 
 	void setupDraw()
 	{
@@ -54,7 +53,7 @@ class Layer3D
 		ibo.bind();
 		//ubo.bind();
 		mat.shader.use();
-		bindAttributes(mesh);
+		//bindAttributes(mesh);
 		ubo.bindBuffer(mat.shader);
 		
 		ubyte[] builDataStruct()
@@ -67,10 +66,22 @@ class Layer3D
 		ubo.setData!(ubyte)(builDataStruct());
 		ubo.unbind();
 		
-		vbo[0..mesh.positions.length] = mesh.positions;
+		Vertex3D[] vertices;
+		vertices.length = mesh.positions.length;
+		for(int i = 0; i< mesh.positions.length; i++)
+		{
+			vertices[i].position = mesh.positions[i];
+			vertices[i].normal = mesh.normals[i];
+		}
+		
+
+		vbo[0..mesh.positions.length] = vertices;
 		ibo[0..mesh.faces.length] = mesh.faces;
 
 		glDrawElements(GL_TRIANGLES,cast(int)mesh.faces.length,GL_UNSIGNED_INT,cast(const void*)0);
+		vbo.unbind();
+		ibo.unbind();
+		vao.unbind();
 
 
 	}

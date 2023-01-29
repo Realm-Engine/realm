@@ -253,12 +253,18 @@ struct Mesh
 	uint[] faces;
 	private AABB localBounds;
 	private AABB worldBounds;
+
+
 	bool isStatic;
+
+	
 
 	void componentStart()
 	{
 		calculateWorldBoundingBox();
+		
 	}
+
 
 
 	void calculateNormals()

@@ -125,11 +125,13 @@ struct RealmVertex
 
 
 
-struct VertexAtrrib
+struct VertexAtrribute
 {
-	VertexType type;
-	VertexSlot slot;
+	bool normalize;
+	
 }
+
+
 
 
 

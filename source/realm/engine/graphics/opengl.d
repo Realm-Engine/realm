@@ -371,7 +371,7 @@ mixin template BufferMutableStorageModeImpl(GBufferType BufferType,T)
    
 }
 
-mixin template OpenGLBuffer(GBufferType BufferType, T, GBufferStorageMode StorageMode)
+mixin template OpenGLBuffer(GBufferType BufferType, T, GBufferStorageMode StorageMode,bool overrideBind = false)
 {
     static assert(isValidBufferTarget!(BufferType),BufferType.stringof ~ " does not have a valid buffer type");
     mixin OpenGLObject;
@@ -391,17 +391,21 @@ mixin template OpenGLBuffer(GBufferType BufferType, T, GBufferStorageMode Storag
         return created;
 	}
 
-   
-    void bind()
+    static if(!overrideBind)
     {
-        glBindBuffer(BufferType, id);
+        void bind()
+        {
+            glBindBuffer(BufferType, id);
 
+        }
+
+        void unbind()
+        {
+            glBindBuffer(BufferType, 0);
+        }
     }
 
-    void unbind()
-    {
-        glBindBuffer(BufferType, 0);
-    }
+
 
     void create()
     out(;this.id > 0,"Failed creating buffer")
@@ -1176,8 +1180,84 @@ struct GPixelBuffer(GBufferStorageMode usage)
 
 struct GVertexBuffer(T, GBufferStorageMode usage)
 {
-    mixin OpenGLBuffer!(GBufferType.Vertex, T, usage);
+    mixin OpenGLBuffer!(GBufferType.Vertex, T, usage,true);
     private uint size;
+    static int numAttribFormats = 0;
+    private int attribFormatIndex;
+    GVertexArrayObject boundVao;
+    public void bind()
+    {
+        glVertexArrayVertexBuffer(boundVao,attribFormatIndex,this,0,T.sizeof);
+       
+    }
+    public void unbind()
+    {
+        glBindVertexBuffer(attribFormatIndex,0,0,T.sizeof);
+    }
+
+    public void attribFormat(GVertexArrayObject vao)
+    {
+        this.boundVao = vao;
+        vao.bind();
+        import std.traits : isFloatingPoint, isIntegral;
+        import gl3n.util : is_vector;
+        glBindVertexBuffer(numAttribFormats,this,0,T.sizeof);
+        TypeInfo ti = typeid(T);
+        uint index = 0;
+        int stride = 0;        
+        glEnableVertexAttribArray(numAttribFormats);
+        GLenum type;
+        int elements;
+        uint relativeOffset;
+        T reference;
+        VertexAtrribute attribSettings;
+        static foreach(member; __traits(allMembers,T))
+        {
+            
+            elements = member.sizeof / 4;
+            relativeOffset = __traits(getMember,reference,member).offsetof;
+            glEnableVertexAttribArray(index);
+            {
+                alias memberAttributes = __traits(getAttributes,__traits(getMember,reference,member));
+                static foreach(attrib; memberAttributes)
+                {
+                    pragma(msg,typeof(attrib));
+                    static if(__traits(isSame,VertexAtrribute,typeof(attrib)))
+                    {
+                        attribSettings = attrib;
+                        VertexAtrribute settings = attrib;
+                        Logger.LogInfo("Normalize: %s",settings.normalize);
+                    }
+                }
+            }
+
+            static if(is_vector!(typeof(member)))
+	        {
+                
+                type = GL_FLOAT;
+                glVertexAttribFormat(index,elements, type,attribSettings.normalize,relativeOffset);
+	        }
+            else if(isFloatingPoint!(typeof(member)))
+	        {
+                type = GL_FLOAT;
+                glVertexAttribFormat(index,elements, type,attribSettings.normalize,relativeOffset);
+	        }
+            else if(isIntegral!(typeof(member)))
+	        {
+                type = GL_INT;
+                glVertexAttribFormat(index,elements, type,attribSettings.normalize,relativeOffset);
+            
+                
+            }
+            glVertexAttribBinding(index,numAttribFormats);
+            index++;
+        }
+        attribFormatIndex = numAttribFormats;
+        numAttribFormats++;
+        vao.unbind();
+    }
+    
+
 }
 
 struct GElementBuffer(GBufferStorageMode usage)

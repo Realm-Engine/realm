@@ -76,7 +76,7 @@ void start()
 	scene.add(entity);
 	entity.getComponent!(Transform).scale = vec3(1);
 	entity.getComponent!(Transform).position = vec3(0,0,10);
-	
+	entity.getComponent!(Transform).setRotationEuler(vec3(0f,90.0f,0f));
 
 
 	Entity mainCamera = ecs.createEntity();
@@ -94,10 +94,13 @@ private pipeline.PipelineInitDesc renderPipelineInit()
 	pipeline.GraphicsContext ctx;
 	ctx.viewMatrix = mat4.identity.value_ptr[0..16];
 	ctx.projectionMatrix = mat4.identity.value_ptr[0..16];
+	ctx.lightInfo.direction = vec4(0f,-0.5f,1.0f,1.0f).value_ptr[0..4];
 	pipeline.PipelineInitDesc desc;
 	desc.initialContext = ctx;
 	desc.clearColor = [1,1,1,1];
 	desc.updateContext = &updateGraphicsContext;
+
+
 	return desc;
 
 }
