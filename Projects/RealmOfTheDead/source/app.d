@@ -6,7 +6,8 @@ import std.file;
 import realm.engine.layer3d;
 import realm.engine.ecs;
 import realm.engine.scene;
-mixin ECS!(Transform,MeshRenderer,Camera);
+import realmofthedead.playercontroller;
+mixin ECS!(Transform,MeshRenderer,Camera,PlayerController);
 mixin RealmMain!(&init,&start,&update);
 
 
@@ -17,8 +18,8 @@ ToonMaterial material;
 
 Layer3D layer;
 ECS ecs;
-Entity entity;
 Scene!(ECS) scene;
+Entity player;
 RealmInitDesc init(string[] args)
 {
 	
@@ -83,6 +84,8 @@ void start()
 	mainCamera.addComponent!(Transform);
 	mainCamera.addComponent!(Camera)(CameraProjection.PERSPECTIVE,vec2(cast(float)windowWidth,cast(float)windowHeight),0.1,750,60);
 	scene.add(mainCamera);
+	player = ecs.createEntity();
+	player.addComponent!(PlayerController);
 	
 
 	
