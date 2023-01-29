@@ -83,9 +83,13 @@ void start()
 	Entity mainCamera = ecs.createEntity();
 	mainCamera.addComponent!(Transform);
 	mainCamera.addComponent!(Camera)(CameraProjection.PERSPECTIVE,vec2(cast(float)windowWidth,cast(float)windowHeight),0.1,750,60);
-	scene.add(mainCamera);
+	//scene.add(mainCamera);
 	player = ecs.createEntity();
-	player.addComponent!(PlayerController);
+	player.addComponent!(PlayerController)();
+	
+	player.transform.addChild(mainCamera.transform);
+	scene.add(player);
+	
 	
 
 	

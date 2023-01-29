@@ -1,4 +1,4 @@
-module realm.engine.scenetree;
+module realm.engine.scene.scenetree;
 import realm.engine.core;
 import realm.engine.layer3d;
 import realm.engine.memory;
@@ -34,7 +34,7 @@ class Scene(ECS)
 		//T* result = null;
 		foreach(child; root)
 		{
-
+			Logger.LogInfo("%s child: %s", root.eid.toString(),child.eid.toString());
 			if(ecs.getEntityComponent!(T)(child.eid) !is null)
 			{
 				return ecs.getEntityComponent!(T)(child.eid);
@@ -45,11 +45,15 @@ class Scene(ECS)
 		//return result;
 	}
 
+
 	void add(ECS.Entity entity)
 	{
 
 		root.addChild(entity.getComponent!(Transform)());
 		sceneSize ++;
+		sceneSize += entity.transform.getChildren.length;
+		
+
 
 
 	}

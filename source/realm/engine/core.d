@@ -201,12 +201,13 @@ class Transform
 		foreach(child; children)
 		{
 			result = dg(child);
-			if(result)
+
+			if(child.opApply(dg) && result)
 			{
 				break;
 			}
 		}
-		return result;
+		return 1;
 	}
 
 	private mat4 worldTransform()
@@ -371,7 +372,7 @@ enum ProjectionWindowBounds
 
 class Camera
 {
-	Transform transform;
+	//Transform transform;
 	float fieldOfView;
 	vec2 size;
 	float farPlane;
@@ -411,7 +412,7 @@ class Camera
 		this.farPlane = farPlane;
 		this.nearPlane = nearPlane;
 		this.fieldOfView = fieldOfView;
-		transform = new Transform;
+		//transform = new Transform;
 		componentUpdate();
 	}
 
