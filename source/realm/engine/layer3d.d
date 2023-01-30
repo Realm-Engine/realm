@@ -8,7 +8,7 @@ import realm.engine.graphics.material;
 struct Vertex3D
 {
 	
-	@VertexAtrribute(false) vec3 position;
+	@VertexAtrribute(false,true) PackedVector!(3) position;
 
 	
 	@VertexAtrribute(true,true) PackedVector!(3) normal;
@@ -56,14 +56,14 @@ class Layer3D
 		//bindAttributes(mesh);
 		ubo.bindBuffer(mat.shader);
 		
-		ubyte[] builDataStruct()
+		ubyte[] buildDataStruct()
 		{
 			ubyte[] result;
 			result ~= mat.dataBlock[0..mat.layoutTypeInfo.tsize];
 			result ~= cast(ubyte[])(transform.transformation.transposed.value_ptr[0..16]);
 			return result;
 		}
-		ubo.setData!(ubyte)(builDataStruct());
+		ubo.setData!(ubyte)(buildDataStruct());
 		ubo.unbind();
 		
 		Vertex3D[] vertices;
