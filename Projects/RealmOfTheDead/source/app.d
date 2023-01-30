@@ -73,6 +73,8 @@ void start()
 
 	Entity entity = ecs.createEntity();
 	
+
+
 	entity.addComponent!(MeshRenderer)(loadMesh("$EngineAssets/Models/sphere.obj"),material.data);
 	scene.add(entity);
 	entity.getComponent!(Transform).scale = vec3(1);
@@ -81,13 +83,8 @@ void start()
 
 
 	Entity mainCamera = ecs.createEntity();
-	
 	mainCamera.addComponent!(Camera)(CameraProjection.PERSPECTIVE,vec2(cast(float)windowWidth,cast(float)windowHeight),0.1,750,60);
-	//scene.add(mainCamera);
-	//player = ecs.createEntity();
 	mainCamera.addComponent!(PlayerController)();
-	
-	//mainCamera.transform.setParent(player.transform);
 	scene.add(mainCamera);
 	
 	
@@ -104,7 +101,7 @@ private pipeline.PipelineInitDesc renderPipelineInit()
 	ctx.lightInfo.direction = vec4(0f,-0.5f,1.0f,1.0f).value_ptr[0..4];
 	pipeline.PipelineInitDesc desc;
 	desc.initialContext = ctx;
-	desc.clearColor = [1,1,1,1];
+	desc.clearColor = [0xB9/255.0f,0xF3/255.0f,0xFC/255.0f,1];
 	desc.updateContext = &updateGraphicsContext;
 
 
@@ -117,7 +114,7 @@ private pipeline.GraphicsContext updateGraphicsContext(pipeline.GraphicsContext 
 	Camera* camera = scene.findComponent!(Camera);
 	if(camera !is null)
 	{
-		//Logger.LogInfo("%s",camera.eid.toString());
+		
 		currentCtx.viewMatrix = camera.view.transposed.value_ptr[0..16];
 		currentCtx.projectionMatrix = camera.projection.transposed.value_ptr[0..16];
 	}

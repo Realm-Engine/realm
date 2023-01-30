@@ -11,6 +11,7 @@ class PlayerController
     float lastScrollX;
     float lastScrollY;
     vec2 rotation;
+	float playerSpeed = 0.5f;
     
     
 	void componentStart()
@@ -68,7 +69,7 @@ class PlayerController
 
 
 
-        transform.position += movementVector;
+        transform.position += movementVector * playerSpeed;
         float xOffset = x - lastX;
         float yOffset = lastY - y;
         xOffset *= 0.001;
