@@ -89,13 +89,19 @@ void start()
 	mainCamera.addComponent!(PlayerController)();
 	
 	Clip!(vec3,"position") clip = new Clip!(vec3,"position");
-	KeyFrame!(vec3) frame1,frame2;
+	KeyFrame!(vec3) frame1,frame2,frame3,frame4;
 	frame1.value = vec3(0.0f,0.0f,10.0f);
 	frame1.time = 0.0f;
 	frame2.value = vec3(5.0f,0.0f,10.0f);
-	frame2.time = 5.0f;
+	frame2.time = 2.0f;
+	frame3.value = vec3(5.0f,0.0f,5.0f);
+	frame3.time = 4.0f;
+	frame4.value = vec3(0.0f,0.0f,5.0f);
+	frame4.time = 6.0f;
 	clip.addKeyFrame(frame1);
 	clip.addKeyFrame(frame2);
+	clip.addKeyFrame(frame3);
+	clip.addKeyFrame(frame4);
 	entity.transform.animate!(vec3,"position")(clip);
 	
 	//mainCamera.transform.setParent(player.transform);

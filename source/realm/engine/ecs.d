@@ -167,7 +167,11 @@ mixin template RealmComponent()
 			
 			if(clipIndex < clip.keyFrames.length-1)
 			{
-				__traits(getMember,this,S) = (1-x) * clip.keyFrames[clipIndex].value + x * clip.keyFrames[clipIndex + 1].value;
+				auto start =clip.keyFrames[clipIndex];
+				auto end = clip.keyFrames[clipIndex + 1];
+				float t =  (((currentTime-startTime)) / (end.time-start.time)) - clipIndex;
+				
+				__traits(getMember,this,S) = (1-t) * start.value + t * end.value;
 			}
 			else
 			{
