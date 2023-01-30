@@ -155,7 +155,7 @@ mixin template RealmComponent()
 		{
 			float currentTime =cast(float)glfwGetTime();
 			float x = (currentTime-startTime) / clipDuration;
-			int clipIndex = cast(int)((x) * cast(float)clip.keyFrames.length - 1);
+			int clipIndex = cast(int)floor(((x) * cast(float)clip.keyFrames.length - 1));
 			if(clipIndex < 0)
 			{
 				clipIndex = 0;
@@ -169,8 +169,12 @@ mixin template RealmComponent()
 			{
 				auto start =clip.keyFrames[clipIndex];
 				auto end = clip.keyFrames[clipIndex + 1];
-				float t =  (((currentTime-startTime)) / (end.time-start.time)) - clipIndex;
-				
+				float t =   ((currentTime - startTime) - start.time)/(end.time - start.time);
+				if(t > 1.0f)
+				{
+					t =1.0f;
+				}
+				Logger.LogInfo("%f",t);
 				__traits(getMember,this,S) = (1-t) * start.value + t * end.value;
 			}
 			else
