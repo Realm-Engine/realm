@@ -125,21 +125,25 @@ struct RealmVertex
 */
 }
 
-struct PackedVector(int N)
+struct PackedVector
 {
-	private uint packedValue;
-	alias VT = Vector!(float,N);
-	void opAssign(VT vector)
+	import std.bitmanip;
+
+	mixin(bitfields!(
+		uint,"x",11,
+		uint, "y",11,
+		uint,"z",10
+	));
+
+	void opAssign(vec3 vector)
 	{
-		uint r = cast(uint)((vector.x / float.max) * (pow(2,10)));
-		uint g = cast(uint)((vector.y/float.max) * (pow(2,11)));
-		uint b = cast(uint)((vector.z/float.max) * (pow(2,11)));
-		packedValue = (r) | (g << 11)  | (b | 22);
+		vector.normalize();
+		this.x = cast(uint)floor((vector.x * 0.5f + 0.5f) * (pow(2,11) - 1));
+		this.y = cast(uint)floor((vector.y * 0.5f + 0.5f) * (pow(2,11) - 1));
 		
-		//Logger.LogInfo("Packed value: %d", packedValue);
-
-
-
+		this.z = cast(uint)floor((vector.z * 0.5f + 0.5f) * (pow(2,10) - 1));
+		
+		
 	}
 
 }

@@ -8,10 +8,10 @@ import realm.engine.graphics.material;
 struct Vertex3D
 {
 	
-	@VertexAtrribute(false,true) PackedVector!(3) position;
+	@VertexAtrribute(false,false) vec3 position;
 
 	
-	@VertexAtrribute(true,true) PackedVector!(3) normal;
+	@VertexAtrribute(false,true) PackedVector normal;
 }
 
 class Layer3D
