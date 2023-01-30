@@ -11,7 +11,7 @@ struct Vertex3D
 	@VertexAtrribute(false) vec3 position;
 
 	
-	@VertexAtrribute(true) vec3 normal;
+	@VertexAtrribute(true,true) PackedVector!(3) normal;
 }
 
 class Layer3D

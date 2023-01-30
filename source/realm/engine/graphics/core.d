@@ -1,8 +1,10 @@
 module realm.engine.graphics.core;
 import gl3n.linalg;
+import gl3n.math;
 import std.format;
 import std.meta;
 import std.traits;
+import realm.engine.logging;
 import realm.engine.graphics.opengl;
 private
 {
@@ -123,11 +125,29 @@ struct RealmVertex
 */
 }
 
+struct PackedVector(int N)
+{
+	private uint packedValue;
+	alias VT = Vector!(float,N);
+	void opAssign(VT vector)
+	{
+		uint r = cast(uint)((vector.x / float.max) * (pow(2,10)));
+		uint g = cast(uint)((vector.y/float.max) * (pow(2,11)));
+		uint b = cast(uint)((vector.z/float.max) * (pow(2,11)));
+		packedValue = (r << 22) | (g << 11)  | b;
+		
+		//Logger.LogInfo("Packed value: %d", packedValue);
 
+
+
+	}
+
+}
 
 struct VertexAtrribute
 {
 	bool normalize;
+	bool packed;
 	
 }
 

@@ -1231,10 +1231,13 @@ struct GVertexBuffer(T, GBufferStorageMode usage)
                 }
             }
 
+
+
             static if(is_vector!(typeof(member)))
 	        {
                 
                 type = GL_FLOAT;
+                
                 glVertexAttribFormat(index,elements, type,attribSettings.normalize,relativeOffset);
 	        }
             else if(isFloatingPoint!(typeof(member)))
@@ -1248,6 +1251,12 @@ struct GVertexBuffer(T, GBufferStorageMode usage)
                 glVertexAttribFormat(index,elements, type,attribSettings.normalize,relativeOffset);
             
                 
+            }
+            if(attribSettings.packed)
+            {
+                type = GL_UNSIGNED_INT_10F_11F_11F_REV;
+                
+                glVertexAttribFormat(index,elements, type,attribSettings.normalize,relativeOffset);
             }
             glVertexAttribBinding(index,numAttribFormats);
             index++;

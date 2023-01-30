@@ -174,7 +174,7 @@ mixin template RealmComponent()
 				{
 					t =1.0f;
 				}
-				Logger.LogInfo("%f",t);
+				
 				__traits(getMember,this,S) = (1-t) * start.value + t * end.value;
 			}
 			else
