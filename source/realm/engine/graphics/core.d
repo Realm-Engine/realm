@@ -131,9 +131,10 @@ struct PackedVector(int N)
 	alias VT = Vector!(float,N);
 	void opAssign(VT vector)
 	{
-		uint r = cast(uint)((vector.x / float.max) * (pow(2,10)));
-		uint g = cast(uint)((vector.y/float.max) * (pow(2,11)));
-		uint b = cast(uint)((vector.z/float.max) * (pow(2,11)));
+		vector.normalize();
+		uint r = cast(uint)((vector.x) * (pow(2,10)));
+		uint g = cast(uint)((vector.y) * (pow(2,11)));
+		uint b = cast(uint)((vector.z) * (pow(2,11)));
 		packedValue = (r << 22) | (g << 11)  | b;
 		
 		//Logger.LogInfo("Packed value: %d", packedValue);
