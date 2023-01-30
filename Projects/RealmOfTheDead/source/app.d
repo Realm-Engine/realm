@@ -7,7 +7,8 @@ import realm.engine.layer3d;
 import realm.engine.ecs;
 import realm.engine.scene;
 import realmofthedead.playercontroller;
-mixin ECS!(Transform,MeshRenderer,Camera,PlayerController);
+import realm.engine.animation.clip;
+mixin ECS!(Transform,MeshRenderer,Camera,PlayerController,DirectionalLight);
 mixin RealmMain!(&init,&start,&update);
 
 
@@ -71,23 +72,36 @@ void start()
 	material.program = toonShader;
 	material.baseColor = vec4(1.0f,0.0f,0.0f,1.0f);
 
-	Entity entity = ecs.createEntity();
+	Entity sphere = ecs.createEntity();
 	
-
-
-	entity.addComponent!(MeshRenderer)(loadMesh("$EngineAssets/Models/sphere.obj"),material.data);
-	scene.add(entity);
-	entity.getComponent!(Transform).scale = vec3(1);
-	entity.getComponent!(Transform).position = vec3(0,0,10);
-	entity.getComponent!(Transform).setRotationEuler(vec3(0f,90.0f,0f));
+	sphere.addComponent!(MeshRenderer)(loadMesh("$EngineAssets/Models/sphere.obj"),material.data);
+	scene.add(sphere);
+	sphere.getComponent!(Transform).scale = vec3(1);
+	sphere.getComponent!(Transform).position = vec3(0,0,10);
+	sphere.getComponent!(Transform).setRotationEuler(vec3(0f,90.0f,0f));
+	
+	Entity oildrum = ecs.createEntity();
+	oildrum.addComponent!(MeshRenderer)(loadMesh("$Assets/Models/oildrum.obj"),material.data);
+	scene.add(oildrum);
 
 
 	Entity mainCamera = ecs.createEntity();
 	mainCamera.addComponent!(Camera)(CameraProjection.PERSPECTIVE,vec2(cast(float)windowWidth,cast(float)windowHeight),0.1,750,60);
 	mainCamera.addComponent!(PlayerController)();
+	
+	//mainCamera.transform.setParent(player.transform);
 	scene.add(mainCamera);
 	
-	
+	Entity sun = ecs.createEntity();
+	DirectionalLight mainLight = sun.addComponent!(DirectionalLight)();
+	scene.add(sun);
+
+	Clip!(quat,"rotation") sunRotation = new Clip!(quat,"rotation");
+	KeyFrame!(quat) f1 = {quat.euler_rotation(45,0,0),0.0f};
+	KeyFrame!(quat) f2 = {quat.euler_rotation(45,90,0),5.0f};
+	KeyFrame!(quat) f3 = {quat.euler_rotation(45,180,0),10.0f};
+	sunRotation.keyFrames = [f1,f2,f3];
+	mainLight.transform.animate!(quat,"rotation")(sunRotation);
 
 	
 }
@@ -117,6 +131,11 @@ private pipeline.GraphicsContext updateGraphicsContext(pipeline.GraphicsContext 
 		
 		currentCtx.viewMatrix = camera.view.transposed.value_ptr[0..16];
 		currentCtx.projectionMatrix = camera.projection.transposed.value_ptr[0..16];
+	}
+	DirectionalLight* mainLight = scene.findComponent!(DirectionalLight);
+	if(mainLight !is null)
+	{
+		currentCtx.lightInfo.direction = mainLight.transform.front.value_ptr[0..4];
 	}
 	return currentCtx;
 }

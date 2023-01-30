@@ -167,6 +167,7 @@ class Transform
 	void componentUpdate()
 	{
 		updateTransformation();
+		tickAnimation();
 		
 
 	}
@@ -512,9 +513,10 @@ class DirectionalLight
 {
 	//mixin RealmEntity!("Directional Light",Transform);
 	//Transform transform;
+	mixin RealmComponent;
 	vec3 color; 
 	
-	void start()
+	void componentStart()
 	{
 
 	}
@@ -526,11 +528,11 @@ class DirectionalLight
 
 	}
 
-	void update(float dt)
+	void componentUpdate()
 	{
-		
+		tickAnimation();
 		//updateComponents();
-		draw();
+		//draw();
 	}
 
 }

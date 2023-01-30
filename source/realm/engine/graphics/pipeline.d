@@ -33,7 +33,7 @@ private GraphicsContext currentCtx;
 
 void init(PipelineInitDesc desc)
 {
-    Logger.LogInfo("Init pipeline!");
+    
     float[4] clearColor = desc.clearColor;
     setClearColor(clearColor);
     updateContext = desc.updateContext;
