@@ -103,6 +103,12 @@ void start()
 	sunRotation.keyFrames = [f1,f2,f3];
 	mainLight.transform.animate!(quat,"rotation")(sunRotation);
 
+	Clip!(vec3,"position") animateMovement = new Clip!(vec3,"position");
+	KeyFrame!(vec3) p1 = {vec3(0,0,10),0.0f};
+	KeyFrame!(vec3) p2 = {vec3(0,0,0),10.0f};
+	animateMovement.keyFrames=  [p1,p2];
+	sphere.transform.animate!(vec3,"position")(animateMovement);
+
 	
 }
 

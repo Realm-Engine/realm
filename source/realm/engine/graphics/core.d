@@ -134,7 +134,7 @@ struct PackedVector(int N)
 		uint r = cast(uint)((vector.x / float.max) * (pow(2,10)));
 		uint g = cast(uint)((vector.y/float.max) * (pow(2,11)));
 		uint b = cast(uint)((vector.z/float.max) * (pow(2,11)));
-		packedValue = (r << 22) | (g << 11)  | b;
+		packedValue = (r) | (g << 11)  | (b | 22);
 		
 		//Logger.LogInfo("Packed value: %d", packedValue);
 
