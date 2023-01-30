@@ -129,11 +129,73 @@ mixin template ECS(C...)
 
 
 }
+
+
 mixin template RealmComponent()
 {
 	import std.uuid;
+	import realm.engine.animation.clip;
+	import core.thread.fiber;
+	import glfw3.api;
+	import realm.engine.logging;
+
 	Transform transform;
 	UUID eid;
+	Fiber currentAnimation;
+
+	
+
+	private void updateAnimation(T,string S)(Clip!(T,S) clip)
+	{
+		import std.math;
+		Fiber.yield();
+		float startTime = cast(float)glfwGetTime();
+		float clipDuration = clip.keyFrames[clip.keyFrames.length - 1].time;
+		while(!clip.finished)
+		{
+			float currentTime =cast(float)glfwGetTime();
+			float x = (currentTime-startTime) / clipDuration;
+			int clipIndex = cast(int)((x) * cast(float)clip.keyFrames.length - 1);
+			if(clipIndex < 0)
+			{
+				clipIndex = 0;
+			}
+			else if(clipIndex > clip.keyFrames.length - 1)
+			{
+				clipIndex = cast(int)clip.keyFrames.length-1;
+			}
+			
+			if(clipIndex < clip.keyFrames.length-1)
+			{
+				__traits(getMember,this,S) = (1-x) * clip.keyFrames[clipIndex].value + x * clip.keyFrames[clipIndex + 1].value;
+			}
+			else
+			{
+				__traits(getMember,this,S) = clip.keyFrames[clipIndex].value;
+			}
+			
+			Fiber.yield();
+			
+		}
+		
+	}
+
+	
+	void animate(T,string S)(Clip!(T,S) clip)
+	{
+		clip.finished = false;
+		currentAnimation = new Fiber(() => updateAnimation!(T,S)(clip));
+	}
+
+	void tickAnimation()
+	{
+		if(currentAnimation !is null)
+		{
+			currentAnimation.call();
+		}
+	}
+
+
 	
 	
 }

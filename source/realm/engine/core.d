@@ -167,6 +167,7 @@ class Transform
 	void componentUpdate()
 	{
 		updateTransformation();
+		tickAnimation();
 		
 
 	}

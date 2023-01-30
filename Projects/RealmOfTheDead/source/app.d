@@ -7,6 +7,7 @@ import realm.engine.layer3d;
 import realm.engine.ecs;
 import realm.engine.scene;
 import realmofthedead.playercontroller;
+import realm.engine.animation.clip;
 mixin ECS!(Transform,MeshRenderer,Camera,PlayerController);
 mixin RealmMain!(&init,&start,&update);
 
@@ -86,6 +87,16 @@ void start()
 	//scene.add(mainCamera);
 	//player = ecs.createEntity();
 	mainCamera.addComponent!(PlayerController)();
+	
+	Clip!(vec3,"position") clip = new Clip!(vec3,"position");
+	KeyFrame!(vec3) frame1,frame2;
+	frame1.value = vec3(0.0f,0.0f,10.0f);
+	frame1.time = 0.0f;
+	frame2.value = vec3(5.0f,0.0f,10.0f);
+	frame2.time = 5.0f;
+	clip.addKeyFrame(frame1);
+	clip.addKeyFrame(frame2);
+	entity.transform.animate!(vec3,"position")(clip);
 	
 	//mainCamera.transform.setParent(player.transform);
 	scene.add(mainCamera);
