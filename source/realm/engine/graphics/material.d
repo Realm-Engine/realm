@@ -184,9 +184,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
     UniformLayout.UserData layout;
     alias layout this;
     private static uint numMaterials = 0;
-    private uint materialIndex = 0;
-
-    private SamplerObject!(TextureType.TEXTURE2D) textureAtlas;
+    private uint materialIndex = 0;    
     public StandardShaderModel program;
     private bool shadows;
 
@@ -210,21 +208,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
         
         
         materialIndex = numMaterials;
-        numMaterials++;
-		
-        if(texturesMembers!(UniformLayout).length >1 )
-		{
-            textureAtlas.create();
-		}
-        if(overrideTexturePacking)
-		{
-            textureAtlas.create();
-		}
-        
-        
-        
-        textureAtlas.slot = materialIndex + 4;
-        
+        numMaterials++; 
         shadows = true;
 
 
@@ -233,15 +217,58 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
 
     ~this()
 	{
-		textureAtlas.free();
+		
        
 		numMaterials--;
 	}
 
-    
-    
+    @property uint instanceId()
+	{
+        return materialIndex;
+	}
 
+    static ulong materialId()
+    {
+        return (typeid(UniformLayout).toHash());
+    }
+
+	static void resetInstanceCount()
+	{
+        numMaterials = 0;
         
+        
+	}
+    @property recieveShadows()
+    {
+        return shadows;
+    }
+    @property recieveShadows(bool shadows)
+    {
+        this.shadows = shadows;
+    }
+
+    public MaterialData data()
+	{
+        MaterialData data;
+        data.dataBlock = (cast(ubyte*)&layout)[0..UniformLayout.UserData.sizeof].dup;
+        data.layoutTypeInfo = typeid( UniformLayout.UserData);
+        data.shader = program;
+        return data;
+	}
+}
+
+alias BlinnPhongMaterial = Alias!(Material!(["ambient" : UserDataVarTypes.VECTOR,
+											 "diffuse" : UserDataVarTypes.TEXTURE2D,
+											 "normal" : UserDataVarTypes.TEXTURE2D,
+											 "specular" : UserDataVarTypes.TEXTURE2D,
+											 "shininess" : UserDataVarTypes.FLOAT,
+											 "padding" : UserDataVarTypes.FLOAT]));
+alias ToonMaterial = Alias!(Material!(["baseColor" : UserDataVarTypes.VECTOR,
+                                        "diffuse" : UserDataVarTypes.TEXTURE2D
+                                        ]));
+//alias ToonMaterialInstance = Instantiate(Material,["baseColor":UserDa])
+
+   /*    
     void packTextureAtlas()
     in
 	{
@@ -413,60 +440,4 @@ WriteImage:
     void updateAtlas(FrameBuffer* fb, vec4 tilingOffset)
     {
         
-    }
-   
-    @property uint instanceId()
-	{
-        return materialIndex;
-	}
-
-    static ulong materialId()
-    {
-        return (typeid(UniformLayout).toHash());
-    }
-
-	static void resetInstanceCount()
-	{
-        numMaterials = 0;
-        
-        
-	}
-    @property recieveShadows()
-    {
-        return shadows;
-    }
-    @property recieveShadows(bool shadows)
-    {
-        this.shadows = shadows;
-    }
-
-    public MaterialData data()
-	{
-        MaterialData data;
-        data.dataBlock = (cast(ubyte*)&layout)[0..UniformLayout.UserData.sizeof].dup;
-        data.layoutTypeInfo = typeid( UniformLayout.UserData);
-        data.shader = program;
-        return data;
-	}
-
-    
-
-    SamplerObject!(TextureType.TEXTURE2D)* getTextureAtlas()
-	{
-        return &this.textureAtlas;
-	}
-
-    
-
-   
-
-
-}
-
-alias BlinnPhongMaterial = Alias!(Material!(["ambient" : UserDataVarTypes.VECTOR,
-											 "diffuse" : UserDataVarTypes.TEXTURE2D,
-											 "normal" : UserDataVarTypes.TEXTURE2D,
-											 "specular" : UserDataVarTypes.TEXTURE2D,
-											 "shininess" : UserDataVarTypes.FLOAT,
-											 "padding" : UserDataVarTypes.FLOAT]));
-alias ToonMaterial = Alias!(Material!(["baseColor" : UserDataVarTypes.VECTOR]));
+    }*/

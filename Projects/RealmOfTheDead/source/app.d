@@ -21,6 +21,7 @@ Layer3D layer;
 ECS ecs;
 Scene!(ECS) scene;
 Entity player;
+Sampler sampler;
 RealmInitDesc init(string[] args)
 {
 	
@@ -80,6 +81,13 @@ void start()
 	sphere.getComponent!(Transform).position = vec3(0,0,10);
 	sphere.getComponent!(Transform).setRotationEuler(vec3(0f,90.0f,0f));
 	
+	ToonMaterial oilDrumMaterial = new ToonMaterial();
+	oilDrumMaterial.baseColor = vec4(1.0f);
+	sampler[SamplerParameter.MinFilter] = TextureFilterfunc.NEAREST;
+	IFImage oilDrumImage = readImageBytes("$Assets/Images/oildrum_col.png");
+	Texture2D oilDrumDiffuse = new Texture2D(&oilDrumImage);
+	oilDrumMaterial.textures.diffuse = oilDrumDiffuse;
+
 	Entity oildrum = ecs.createEntity();
 	oildrum.addComponent!(MeshRenderer)(loadMesh("$Assets/Models/oildrum.obj"),material.data);
 	scene.add(oildrum);

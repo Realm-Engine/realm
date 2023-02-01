@@ -4,6 +4,7 @@ layout (location = 0) out vec4 FragColor;
 struct Material
 {
     vec4 baseColor;
+    vec4 diffuse;
 };
 
 layout(std430, binding = 0) buffer DrawContext

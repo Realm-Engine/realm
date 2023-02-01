@@ -98,7 +98,7 @@ class Renderpass(ImageFormat[string] passInputs,ImageFormat[string] passOutputs)
 	{
 		int numFramebuffers = 0;
 
-		void bindTexture(alias member)(SamplerObject!(TextureType.TEXTURE2D)* texture)
+		void bindTexture(alias member)(TextureObject!(TextureType.TEXTURE2D)* texture)
 		{
 			int loc = program.uniformLocation(member);
 			if(loc >= 0)
@@ -115,7 +115,7 @@ class Renderpass(ImageFormat[string] passInputs,ImageFormat[string] passOutputs)
 		static foreach(member; __traits(allMembers,Inputs))
 		{
 			{
-				SamplerObject!(TextureType.TEXTURE2D)* texture = &(__traits(getMember,inputs,member).texture);
+				TextureObject!(TextureType.TEXTURE2D)* texture = &(__traits(getMember,inputs,member).texture);
 				bindTexture!(member)(texture);
 				
 			}
@@ -123,7 +123,7 @@ class Renderpass(ImageFormat[string] passInputs,ImageFormat[string] passOutputs)
 		static foreach(member; __traits(allMembers,Outputs))
 		{
 			{
-				SamplerObject!(TextureType.TEXTURE2D)* texture = &(__traits(getMember,outputs,member).texture);
+				TextureObject!(TextureType.TEXTURE2D)* texture = &(__traits(getMember,outputs,member).texture);
 				bindTexture!(member)(texture);
 			}
 		}

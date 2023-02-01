@@ -18,7 +18,9 @@ alias TextureWrapFunc = GTextureWrapFunc;
 alias TextureType = GTextureType;
 alias BaseImageFormat = GBaseImageFormat;
 alias Shader = GShader;
-alias SamplerObject = GSamplerObject;
+alias TextureObject = GTextureObject;
+alias Sampler = GSampler;
+alias SamplerParameter = GSamplerParameter;
 alias QueryObject = GQueryObject;
 alias State = GState;
 alias FrameBuffer = GFrameBuffer;
@@ -228,12 +230,20 @@ class Texture2D
 	IFImage* image;
 	alias image this;
 	int channels;
-	TextureFilterfunc filter;
-	TextureWrapFunc wrap;
+
+	private TextureObject!(TextureType.TEXTURE2D) textureObject;
+
 	this(IFImage* image)
 	{
+		textureObject.create();
 		this.image = image;
+		
                 
+	}
+	this()
+	{
+		textureObject.create();
+		image = new IFImage();
 	}
 
 	
@@ -241,6 +251,7 @@ class Texture2D
 	this(ubyte r, ubyte g, ubyte b, ubyte a, int width, int height)
 	{
 		import std.range;
+		textureObject.create();
 		image = new IFImage;
 		image.w = width;
 		image.h = height;

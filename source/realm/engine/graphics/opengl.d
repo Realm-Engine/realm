@@ -958,7 +958,7 @@ class GShaderProgramModel(T...)
         return result;
     }
 
-    void bindImageWrite(GSamplerObject!(TextureType.TEXTURE2D)* sampler,int level,int location,bool layered = false, int layer = 0)
+    void bindImageWrite(GTextureObject!(TextureType.TEXTURE2D)* sampler,int level,int location,bool layered = false, int layer = 0)
 	{
         if(sampler is null)
 		{
@@ -984,7 +984,7 @@ struct GFrameBufferAttachment
 {
    
    
-   GSamplerObject!(GTextureType.TEXTURE2D) texture;
+   GTextureObject!(GTextureType.TEXTURE2D) texture;
         
 	
     
@@ -1154,7 +1154,7 @@ struct GFrameBuffer
         }
     }
 
-    void copyToTexture2D(GSamplerObject!(TextureType.TEXTURE2D) texture, int level,int xoffset, int yoffset, int width, int height)
+    void copyToTexture2D(GTextureObject!(TextureType.TEXTURE2D) texture, int level,int xoffset, int yoffset, int width, int height)
     {
         bind(GFrameBufferTarget.READ);
         glReadBuffer(GL_COLOR_ATTACHMENT0);
@@ -1356,7 +1356,44 @@ struct GDrawIndirectCommandBuffer(GBufferStorageMode usage)
 }
 
 
-struct GSamplerObject(GTextureType target)
+
+
+struct GSampler
+{
+    mixin OpenGLObject;
+    public uint unit;
+    void create()
+    {
+        glGenSamplers(1,&id);
+    }
+
+    void bind(uint u)
+    {
+        this.unit = u;
+        glBindSampler(unit,id);
+    }
+
+    void unbind()
+    {
+        this.unit = 0;
+        glBindSampler(unit,0);
+    }
+
+
+
+
+    void free()
+    {
+        glDeleteSamplers(1,&id);
+    }
+
+    void opIndexAssign(GLenum value, GSamplerParameter param)
+    {
+        glSamplerParameteri(this,param,value);
+    }
+}
+
+struct GTextureObject(GTextureType target)
 {
     import std.meta;
     enum is3dTexture = (target == GTextureType.TEXTURE2DARRAY || target == GTextureType.TEXTURE3D);
@@ -1364,8 +1401,7 @@ struct GSamplerObject(GTextureType target)
 
     mixin OpenGLObject;
     mixin GLObjectLabelImpl!(GL_TEXTURE);
-    private GLenum wrapFunc;
-    private GLenum filterFunc;
+    TextureDesc textureDesc;
     private GLenum internalFormat;
     private GLenum format;
     private GLenum dataType;
@@ -1393,71 +1429,7 @@ struct GSamplerObject(GTextureType target)
         assert(mipLevels >= 0, "Mipmap count must be positive");
 	}
 
-    @property filter(GTextureFilterFunc func)
-	{
-        bind();
-        filterFunc = func;
-		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, func);
-        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, func);
-        unbind();
-	}
-    @property wrap(GTextureWrapFunc func)
-	{
-		bind();
-        wrapFunc = func;
-		glTexParameteri(target, GL_TEXTURE_WRAP_S, func);
-        glTexParameteri(target, GL_TEXTURE_WRAP_T, func);
-        unbind();
-	}
-
-    @property border(float[4] borderColor)
-	{
-		bind();
-		glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, borderColor.ptr);
-        unbind();
-	}
-
-
-
-    @property textureDesc(TextureDesc desc)
-    {
-        multisampled = desc.isMultisampled;
-        GLenum texType;
-        if(!desc.isMultisampled)
-		{
-            texType = target;
-            glBindTexture(target, id);
-		}
-        else
-		{   
-            texType = GL_TEXTURE_2D_MULTISAMPLE;
-            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,id);
-		}
-       
-        
-        wrapFunc = desc.wrap;
-        filterFunc = desc.filter;
-        internalFormat = desc.fmt.sizedFormat;
-        dataType = sizeFormatToGLDataType(desc.fmt.sizedFormat);
-        format = desc.fmt.baseFormat;
-        mipLevels = 3;
-        channels = desc.fmt.channels;
-        bpc = desc.fmt.bpc;
-        if(!desc.isMultisampled)
-		{
-			glTexParameteri(texType, GL_TEXTURE_WRAP_S, wrapFunc);
-			glTexParameteri(texType, GL_TEXTURE_WRAP_T, wrapFunc);
-			glTexParameteri(texType, GL_TEXTURE_MIN_FILTER, filterFunc);
-			glTexParameteri(texType, GL_TEXTURE_MAG_FILTER, filterFunc);
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glPixelStorei(GL_PACK_ALIGNMENT,1);
-		}
-
-        
-        
-        unbind();
-
-    }
+   
 
     @property slot(int s)
     {
@@ -1474,18 +1446,17 @@ struct GSamplerObject(GTextureType target)
 
     }
 
-    void setActive()
+    void bindTo(GSampler sampler)
     {
-        glActiveTexture(GL_TEXTURE0 + texSlot);
-        bind();
 
+        this.texSlot = sampler.unit;
+        glActiveTexture(GL_TEXTURE0 + sampler.unit);
+        glBindTexture(target,id);
     }
 
-    void setActive(int slot)
-    {
-        glActiveTexture(GL_TEXTURE0 + slot);
-        bind();
-    }
+    
+
+    
 
     
 
@@ -1670,7 +1641,7 @@ struct GSamplerObject(GTextureType target)
 
  
 
-    void freeTextures(GSamplerObject!(target)*[]textures)
+    void freeTextures(GTextureObject!(target)*[]textures)
 	{
         uint[] ids;
         foreach(texture;textures)
@@ -1862,10 +1833,31 @@ enum GFrameBufferAttachmentType : GLenum
     DEPTH_STENCIL_ATTACHMENT = GL_DEPTH_STENCIL_ATTACHMENT
 }
 
+
+enum GSamplerParameter : GLenum
+{
+    MinFilter = GL_TEXTURE_MIN_FILTER,
+    MagFilter = GL_TEXTURE_MAG_FILTER,
+    WrapS = GL_TEXTURE_WRAP_S,
+    WrapT = GL_TEXTURE_WRAP_T,
+    WrapR = GL_TEXTURE_WRAP_R,
+
+
+}
+
 enum GTextureFilterFunc : GLenum
 {
     NEAREST = GL_NEAREST,
     LINEAR = GL_LINEAR
+
+}
+
+enum GTextureWrapFunc : GLenum
+{
+    CLAMP_TO_EDGE = GL_CLAMP_TO_EDGE,
+    CLAMP_TO_BORDER = GL_CLAMP_TO_BORDER,
+    REPEAT = GL_REPEAT,
+    MIRROR = GL_MIRRORED_REPEAT
 
 }
 
@@ -1877,14 +1869,7 @@ enum GFrameBufferTarget : GLenum
     NONE = GL_NONE
 }
 
-enum GTextureWrapFunc : GLenum
-{
-    CLAMP_TO_EDGE = GL_CLAMP_TO_EDGE,
-    CLAMP_TO_BORDER = GL_CLAMP_TO_BORDER,
-    REPEAT = GL_REPEAT,
-    MIRROR = GL_MIRRORED_REPEAT
 
-}
 
 enum GTextureType : GLenum
 {
