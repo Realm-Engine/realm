@@ -6,7 +6,6 @@
 
 ## Features
 
-* Batch rendering
 * Materials
 * Model loading (.obj)
 * Texture loading
@@ -15,7 +14,6 @@
 * Streamlined shader creation
   * With shader program caching
 * Virtual file system
-* Little to no overhead ECS
 * UI/Screen space rendering
   * Text
   * Coloured panels
