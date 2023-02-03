@@ -4,13 +4,13 @@ import realm.engine.layer3d;
 import realm.engine.memory;
 import realm.engine.container.queue;
 import std.uuid;
-//import realm.engine.ecs;
+import realm.engine.ecs;
 class Scene(ECS)
 {
 
-	private ECS ecs;
+	
 
-
+	ECS ecs;
 	private Transform root;
 	private RealmArenaAllocator allocator;
 	uint sceneSize;

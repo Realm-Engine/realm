@@ -17,6 +17,8 @@ struct MaterialData
     ubyte[] dataBlock;
     TypeInfo layoutTypeInfo;
     StandardShaderModel shader;
+    uint[string] textures;
+    Sampler[uint] samplers;
     
 }
 
@@ -40,7 +42,7 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
                     mixin("%s %s;".format("float",(uniform~"packing")));
                 }
 
-                static if (uniforms[uniform] == UserDataVarTypes.VECTOR || uniforms[uniform] == UserDataVarTypes.TEXTURE2D)
+                static if (uniforms[uniform] == UserDataVarTypes.VECTOR)
                 {
                     mixin("%s %s;".format("vec4", uniform));
                 }
@@ -57,7 +59,8 @@ mixin template MaterialLayout(UserDataVarTypes[string] uniforms)
                 static if (uniforms[uniform] == UserDataVarTypes.TEXTURE2D && !overrideTexturePacking)
                 {
 
-                    mixin("@(\"Texture\") %s %s;".format("MaterialTexture", uniform));
+                    mixin("@(\"Texture\") %s %s;".format("Texture2D", uniform));
+                    mixin("@(\"Sampler\") %s %s_Sampler;".format("Sampler", uniform));
                 }
 
             }
@@ -253,6 +256,28 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
         data.dataBlock = (cast(ubyte*)&layout)[0..UniformLayout.UserData.sizeof].dup;
         data.layoutTypeInfo = typeid( UniformLayout.UserData);
         data.shader = program;
+		static foreach (member; texturesMembers!(UniformLayout))
+        {
+            static foreach (attribute; texturesAttributes!(UniformLayout, member))
+            {
+                static if (isTexture!(attribute))
+                {
+                    {
+                        Texture2D texture= __traits(getMember,textures,member);
+                        if(texture!is null)
+						{
+                            uint id = texture.textureObject;
+							data.textures[member] = id;
+							data.samplers[id] = __traits(getMember,textures,member~"_Sampler");
+						}
+                        
+					}
+                    
+				}
+			}
+		}
+        
+
         return data;
 	}
 }

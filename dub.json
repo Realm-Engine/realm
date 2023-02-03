@@ -3,7 +3,7 @@
 		"Nathan"
 	],
 	"copyright": "Copyright © 2021, Nathan",
-	"targetType": "library",
+	"targetType": "sourceLibrary",
 	"dependencies": {
 		"derelict-gl3": "~>1.0.24",
 		"gl3n": "~>1.4.1",
@@ -25,6 +25,6 @@
 	"sorucePaths": [ "source/" ],
 	"targetPath": "./bin",
 	"preBuildCommands": [ "dub run --single $REALM_PACKAGE_DIR\\bootstrap\\initScript.d -- --realm-root=\"$REALM_PACKAGE_DIR\"" ],
-	"postBuildCommands": [ "copy \"$REALM_PACKAGE_DIR\\external\\freetype\\release dll\\win64\\freetype.dll\" $ROOT_PACKAGE_DIR\\bin" ],
-	
+	"postBuildCommands": [ "copy \"$REALM_PACKAGE_DIR\\external\\freetype\\release dll\\win64\\freetype.dll\" $ROOT_PACKAGE_DIR\\bin" ]
+
 }

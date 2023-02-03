@@ -915,9 +915,8 @@ class GShaderProgramModel(T...)
 		}
         return result;
 	}
-
+    
 	int uniformLocation(string uniform)
-    //out(r; r != -1, "uniform " ~  uniform  ~" does not exsist")
     {
         int* loc = (uniform in samplerUniformCache);
         if (loc !is null)
@@ -1197,10 +1196,11 @@ struct GVertexBuffer(T, GBufferStorageMode usage)
 
     public void attribFormat(GVertexArrayObject vao)
     {
+		import std.traits : isFloatingPoint, isIntegral;
+        import gl3n.util : is_vector;
         this.boundVao = vao;
         vao.bind();
-        import std.traits : isFloatingPoint, isIntegral;
-        import gl3n.util : is_vector;
+
         glBindVertexBuffer(numAttribFormats,this,0,T.sizeof);
         TypeInfo ti = typeid(T);
         uint index = 0;
@@ -1214,7 +1214,7 @@ struct GVertexBuffer(T, GBufferStorageMode usage)
         static foreach(member; __traits(allMembers,T))
         {
             
-            elements = member.sizeof / 4;
+            elements = __traits(getMember,reference,member).sizeof / 4;
             relativeOffset = __traits(getMember,reference,member).offsetof;
             glEnableVertexAttribArray(index);
             {
@@ -1233,19 +1233,19 @@ struct GVertexBuffer(T, GBufferStorageMode usage)
 
 
 
-            static if(is_vector!(typeof(member)))
+            static if(is_vector!(typeof(__traits(getMember,reference,member))))
 	        {
                 
                 type = GL_FLOAT;
                 
                 glVertexAttribFormat(index,elements, type,attribSettings.normalize,relativeOffset);
 	        }
-            else if(isFloatingPoint!(typeof(member)))
+            else if(isFloatingPoint!(typeof(__traits(getMember,reference,member))))
 	        {
                 type = GL_FLOAT;
                 glVertexAttribFormat(index,elements, type,attribSettings.normalize,relativeOffset);
 	        }
-            else if(isIntegral!(typeof(member)))
+            else if(isIntegral!(typeof(__traits(getMember,reference,member))))
 	        {
                 type = GL_INT;
                 glVertexAttribFormat(index,elements, type,attribSettings.normalize,relativeOffset);
@@ -1256,7 +1256,7 @@ struct GVertexBuffer(T, GBufferStorageMode usage)
             {
                 type = GL_UNSIGNED_INT_10F_11F_11F_REV;
                 
-                glVertexAttribFormat(index,elements, type,attribSettings.normalize,relativeOffset);
+                glVertexAttribFormat(index,3, type,attribSettings.normalize,relativeOffset);
             }
             glVertexAttribBinding(index,numAttribFormats);
             index++;
@@ -1281,11 +1281,15 @@ struct GUniformBuffer
     mixin OpenGLObject;
     private uint blockIndex;
     string blockName;
+    private uint index;
+    private int blockBinding;
 	void create(string name)
     out(;this.id > 0,"Failed creating buffer")
     {
         glGenBuffers(1, &id);
         this.blockName = name;    
+        index = uint.max;
+        blockBinding = -1;
 
     }
 
@@ -1297,12 +1301,16 @@ struct GUniformBuffer
 
 	void bindBuffer(uint programId)
     {
-
-        uint index = glGetUniformBlockIndex(programId, toStringz(blockName));
-        int blockBinding = - 1;
-        //glBindBuffer(GL_UNIFORM_BUFFER,id);
-        glGetActiveUniformBlockiv(programId,index,GL_UNIFORM_BLOCK_BINDING,&blockBinding);
-        //Logger.LogInfo("%d %d",index,blockBinding);
+        if(this.index == uint.max)
+		{
+            index = glGetUniformBlockIndex(programId, toStringz(blockName));
+		}
+        if(blockBinding  == -1)
+		{
+            glGetActiveUniformBlockiv(programId,index,GL_UNIFORM_BLOCK_BINDING,&blockBinding);
+		}
+        
+        
         glUniformBlockBinding(programId,index,blockBinding);
         glBindBufferBase(GL_UNIFORM_BUFFER, blockBinding, id);
     }
@@ -1367,17 +1375,26 @@ struct GSampler
         glGenSamplers(1,&id);
     }
 
-    void bind(uint u)
+    void bind(GLenum target,int unit,uint textureId)
     {
-        this.unit = u;
+        this.unit = unit;
         glBindSampler(unit,id);
+        glActiveTexture(GL_TEXTURE0 + unit);
+        glBindTexture(target,textureId);
+        
     }
 
-    void unbind()
+    void unbind(GLenum target)
     {
         this.unit = 0;
         glBindSampler(unit,0);
+        glBindTexture(target,0);
+        
     }
+
+    
+
+    
 
 
 
@@ -1401,7 +1418,7 @@ struct GTextureObject(GTextureType target)
 
     mixin OpenGLObject;
     mixin GLObjectLabelImpl!(GL_TEXTURE);
-    TextureDesc textureDesc;
+    //TextureDesc textureDesc;
     private GLenum internalFormat;
     private GLenum format;
     private GLenum dataType;
@@ -1418,13 +1435,11 @@ struct GTextureObject(GTextureType target)
         int depth;
     }
     bool destroyed;
+    bool created = false;
     
     invariant()
 	{
-        if(!destroyed)
-		{
-            assert(texSlot >= 0,"Texture slot must be positive");
-		}
+       
 
         assert(mipLevels >= 0, "Mipmap count must be positive");
 	}
@@ -1439,10 +1454,42 @@ struct GTextureObject(GTextureType target)
 	{
         return texSlot;
 	}
+
+	@property textureDesc(TextureDesc desc)
+    {
+        multisampled = desc.isMultisampled;
+        GLenum texType;
+        if(!desc.isMultisampled)
+		{
+            texType = target;
+            glBindTexture(target, id);
+		}
+        else
+		{   
+            texType = GL_TEXTURE_2D_MULTISAMPLE;
+            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,id);
+		}
+
+
+       
+        internalFormat = desc.fmt.sizedFormat;
+        dataType = sizeFormatToGLDataType(desc.fmt.sizedFormat);
+        format = desc.fmt.baseFormat;
+        mipLevels = 3;
+        channels = desc.fmt.channels;
+        bpc = desc.fmt.bpc;
+        
+
+
+
+        unbind();
+
+    }
     void create()
     {
         glGenTextures(1, &id);
         destroyed = false;
+        created = true;
 
     }
 
@@ -1571,6 +1618,7 @@ struct GTextureObject(GTextureType target)
 			{
                 glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,8,internalFormat,width,height,GL_TRUE);
 			}
+            glGenerateMipmap(target);
 
           
             unbind();

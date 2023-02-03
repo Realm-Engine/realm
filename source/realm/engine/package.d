@@ -9,6 +9,7 @@ public
 	import realm.engine.graphics.core;
 	import realm.engine.asset;
 	import realm.engine.realmapp;
+	import util = realm.engine.util;
 	
 }
 

@@ -140,10 +140,10 @@ struct PackedVector
 	void opAssign(vec3 vector)
 	{
 		vector.normalize();
-		this.x = cast(uint)floor((vector.x * 0.5f + 0.5f) * (pow(2,11) - 1));
-		this.y = cast(uint)floor((vector.y * 0.5f + 0.5f) * (pow(2,11) - 1));
+		this.x = cast(uint)floor((vector.x * 0.5f + 0.5f) * 2047);
+		this.y = cast(uint)floor((vector.y * 0.5f + 0.5f) * 2047);
 		
-		this.z = cast(uint)floor((vector.z * 0.5f + 0.5f) * (pow(2,10) - 1));
+		this.z = cast(uint)floor((vector.z * 0.5f + 0.5f) * 1023);
 		
 		
 	}
@@ -161,15 +161,7 @@ struct VertexAtrribute
 
 
 
-struct TextureDesc
-{
-	ImageFormat fmt;
 
-	TextureFilterfunc filter = TextureFilterfunc.LINEAR;
-	TextureWrapFunc wrap = TextureWrapFunc.CLAMP_TO_BORDER;
-	int mipLevels = 0;
-	bool isMultisampled = false;
-}
 
 class Skybox
 {	
@@ -224,6 +216,16 @@ class Skybox
 
 }
 
+struct TextureDesc
+{
+	ImageFormat fmt;
+
+	TextureFilterfunc filter = TextureFilterfunc.LINEAR;
+	TextureWrapFunc wrap = TextureWrapFunc.CLAMP_TO_BORDER;
+	int mipLevels = 0;
+	bool isMultisampled = false;
+}
+
 class Texture2D
 {
 	
@@ -231,19 +233,26 @@ class Texture2D
 	alias image this;
 	int channels;
 
-	private TextureObject!(TextureType.TEXTURE2D) textureObject;
+	TextureObject!(TextureType.TEXTURE2D) textureObject;
 
 	this(IFImage* image)
 	{
 		textureObject.create();
 		this.image = image;
-		
+		textureObject.store(image.w,image.h);
+		textureObject.textureDesc = TextureDesc(ImageFormat.SRGBA8);
+		apply();
                 
 	}
 	this()
 	{
 		textureObject.create();
 		image = new IFImage();
+	}
+
+	void apply()
+	{
+		textureObject.uploadImage(0,0,image.buf8.ptr);
 	}
 
 	
@@ -261,10 +270,12 @@ class Texture2D
 		image.e = 0;
 		
 		image.buf8.length = (image.w * image.h) * image.c;
-		for(int i = 0; i < image.w * image.h; i += image.c)
+		for(int i = 0; i < image.buf8.length; i += image.c)
 		{
 			image.buf8[i..i+4] = [r,g,b,a];
 		}
+		textureObject.store(width,height);
+		textureObject.textureDesc = TextureDesc(ImageFormat.SRGBA8);
 		
 	}
 

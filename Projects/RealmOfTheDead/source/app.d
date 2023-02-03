@@ -67,31 +67,36 @@ void start()
 	toonShader.vertexShader = vertexShader;
 	toonShader.fragmentShader = fragmentShader;
 	toonShader.compile();
-
-	
-	material = new ToonMaterial();
-	material.program = toonShader;
-	material.baseColor = vec4(1.0f,0.0f,0.0f,1.0f);
-
-	Entity sphere = ecs.createEntity();
-	
-	sphere.addComponent!(MeshRenderer)(loadMesh("$EngineAssets/Models/sphere.obj"),material.data);
-	scene.add(sphere);
-	sphere.getComponent!(Transform).scale = vec3(1);
-	sphere.getComponent!(Transform).position = vec3(0,0,10);
-	sphere.getComponent!(Transform).setRotationEuler(vec3(0f,90.0f,0f));
+	sampler.create();
+	sampler[SamplerParameter.MinFilter] = TextureFilterfunc.NEAREST;
+	sampler[SamplerParameter.MagFilter] = TextureFilterfunc.NEAREST;
+	sampler[SamplerParameter.WrapS] = TextureWrapFunc.CLAMP_TO_EDGE;
+	sampler[SamplerParameter.WrapT] = TextureWrapFunc.CLAMP_TO_EDGE;
 	
 	ToonMaterial oilDrumMaterial = new ToonMaterial();
 	oilDrumMaterial.baseColor = vec4(1.0f);
-	sampler[SamplerParameter.MinFilter] = TextureFilterfunc.NEAREST;
-	IFImage oilDrumImage = readImageBytes("$Assets/Images/oildrum_col.png");
+	IFImage oilDrumImage = readImageBytes("$Assets/Images/OilDrum/oildrum_col.png");
+
 	Texture2D oilDrumDiffuse = new Texture2D(&oilDrumImage);
 	oilDrumMaterial.textures.diffuse = oilDrumDiffuse;
-
+	oilDrumMaterial.textures.diffuse_Sampler = sampler;
+	oilDrumMaterial.program = toonShader;
 	Entity oildrum = ecs.createEntity();
-	oildrum.addComponent!(MeshRenderer)(loadMesh("$Assets/Models/oildrum.obj"),material.data);
+	oildrum.addComponent!(MeshRenderer)(loadMesh("$Assets/Models/oildrum.obj"),oilDrumMaterial.data);
 	scene.add(oildrum);
-
+	
+	IFImage floorDiffuseImage = readImageBytes("$Assets/Images/FloorTile/FloorTileDiffuse.png");
+	Texture2D floorDiffuseTexture = new Texture2D(&floorDiffuseImage);
+	Entity floor = ecs.createEntity();
+	ToonMaterial floorMaterial = new ToonMaterial();
+	floorMaterial.program = toonShader;
+	floorMaterial.baseColor = vec4(1.0f);
+	floorMaterial.textures.diffuse = floorDiffuseTexture;
+	floorMaterial.textures.diffuse_Sampler = sampler;
+	floor.addComponent!(MeshRenderer)(util.generateFace(vec3(0,1,0),5),floorMaterial.data);
+	floor.transform.scale = vec3(5.0f);
+	floor.transform.position = vec3(0,-1.0f,0);
+	scene.add(floor);
 
 	Entity mainCamera = ecs.createEntity();
 	mainCamera.addComponent!(Camera)(CameraProjection.PERSPECTIVE,vec2(cast(float)windowWidth,cast(float)windowHeight),0.1,750,60);
@@ -111,14 +116,12 @@ void start()
 	sunRotation.keyFrames = [f1,f2,f3];
 	mainLight.transform.animate!(quat,"rotation")(sunRotation);
 
-	Clip!(vec3,"position") animateMovement = new Clip!(vec3,"position");
-	KeyFrame!(vec3) p1 = {vec3(0,0,10),0.0f};
-	KeyFrame!(vec3) p2 = {vec3(0,0,0),10.0f};
-	animateMovement.keyFrames=  [p1,p2];
-	sphere.transform.animate!(vec3,"position")(animateMovement);
+
 
 	
 }
+
+
 
 private pipeline.PipelineInitDesc renderPipelineInit()
 {

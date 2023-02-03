@@ -11,7 +11,8 @@ struct Vertex3D
 	@VertexAtrribute(false,false) vec3 position;
 
 	
-	@VertexAtrribute(false,true) PackedVector normal;
+	@VertexAtrribute(true,false) vec3 normal;
+	@VertexAtrribute(false,false) vec2 texCoord;
 }
 
 class Layer3D
@@ -72,6 +73,24 @@ class Layer3D
 		{
 			vertices[i].position = mesh.positions[i];
 			vertices[i].normal = mesh.normals[i];
+			vertices[i].texCoord = mesh.textureCoordinates[i];
+		}
+		int unit = 0;
+		foreach(key; mat.textures.byKey())
+		{
+			uint textureId = mat.textures[key];
+			int uniform = mat.shader.uniformLocation(key);
+			Sampler sampler = mat.samplers[textureId];
+			if(uniform < 0)
+			{
+				Logger.LogError("sampler %s does not exsist", key);
+				break;
+			}
+			mat.shader.setUniformInt(uniform,unit);
+			
+			sampler.bind(TextureType.TEXTURE2D,unit,textureId);
+			unit++;
+
 		}
 		
 
@@ -82,6 +101,15 @@ class Layer3D
 		vbo.unbind();
 		ibo.unbind();
 		vao.unbind();
+		foreach(key; mat.textures.byKey())
+		{
+			uint textureId = mat.textures[key];
+			int uniform = mat.shader.uniformLocation(key);
+			Sampler sampler = mat.samplers[textureId];
+			sampler.unbind(TextureType.TEXTURE2D);
+			
+
+		}
 
 
 	}
