@@ -108,7 +108,7 @@ static class VirtualFS
 
         if (exists("Cache"))
         {
-            Logger.LogInfo("Clearing cache");
+            info("Clearing cache");
             auto dir = dirEntries("Cache", "*.bin", SpanMode.depth);
             foreach (entry; dir)
             {

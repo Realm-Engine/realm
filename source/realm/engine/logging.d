@@ -9,6 +9,25 @@ private
 	import std.string;
 }
 
+enum LogLevel {INFO,WARN,ERROR}
+
+template log(LogLevel level)
+{
+	import core.vararg;
+	void log(string fn = __FUNCTION__,string file=__FILE__,size_t line = __LINE__)(string fmt,...) nothrow @nogc
+	{
+		TypeInfo[] arguments = _arguments;
+		char[256] formatted;
+		//alias prefix = "[" ~ level.stringof  ~"] " ~ file ~ ":" ~ line ~ ":" ~fn ~" ";
+		sprintf(formatted.ptr,cast (const (char*))fmt,_argptr);
+		printf(cast(const (char*))("[" ~ level.stringof  ~"] " ~ file ~ ":" ~ line ~ ":" ~fn ~" %s\n"),formatted.ptr);
+		
+		
+	}
+}
+alias info = log!(LogLevel.INFO);
+alias warning = log!(LogLevel.WARN);
+alias error = log!(LogLevel.ERROR);
 class Logger
 {
 	
@@ -54,15 +73,10 @@ class Logger
 	}
 
 	
+	
 
-	static void LogWarningUnsafe(string fmt, ...) nothrow
-	{
-		import core.vararg;
-		const char* cStr = toStringz(fmt);
-		char[256] formated;
-		sprintf(formated.ptr,cStr,_arguments.ptr,_argptr);
-		
-	}
+
+	
 
 
 }

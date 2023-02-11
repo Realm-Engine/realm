@@ -64,7 +64,7 @@ void start()
 	
 	layer = new Layer3D();
 	
-	Logger.LogInfo("Hello realm!");
+	info("Hello Realm");
 	string vtxPath = "$EngineAssets/Shaders/toon-vertex.glsl";
 	string fragPath = "$EngineAssets/Shaders/toon-fragment.glsl";
 	toonShader = new StandardShaderModel("Toon");
@@ -119,7 +119,7 @@ void start()
 	DirectionalLight mainLight = sun.addComponent!(DirectionalLight)();
 	mainLight.transform.setRotationEuler(90,0,0);
 	scene.add(sun);
-
+	
 	
 
 
