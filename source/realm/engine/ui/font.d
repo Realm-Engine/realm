@@ -5,6 +5,7 @@ private
     import realm.engine.logging;
     import std.string;
     import imagefmt;
+    import std.conv;
 }
 
 private static FT_Library ft;
@@ -15,11 +16,10 @@ private static int[FT_Pixel_Mode] pixelModeBPCMap;
 static this()
 {
     FTSupport ret = loadFreeType();
-    Logger.LogError(ret != FTSupport.noLibrary, "Could not find freetype library");
-    Logger.LogError(ret != FTSupport.badLibrary, "Failed to load freetype");
-    Logger.LogInfo(ret != FTSupport.badLibrary && ret != FTSupport.noLibrary,
-            "Loaded freetype version %s", ret);
-    Logger.LogError(!FT_Init_FreeType(&ft), "Could not init freetype library");
+    error(ret != FTSupport.noLibrary, "Could not find freetype library");
+    error(ret != FTSupport.badLibrary, "Failed to load freetype");
+    info("Loaded freetype version %s", to!(string)(ret).toStringz());
+    error(!FT_Init_FreeType(&ft), "Could not init freetype library");
     pixelModeChannelMap = [
         FT_PIXEL_MODE_NONE: 0u,
         FT_PIXEL_MODE_GRAY: 1u,

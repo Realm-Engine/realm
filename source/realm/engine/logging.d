@@ -14,15 +14,28 @@ enum LogLevel {INFO,WARN,ERROR}
 template log(LogLevel level)
 {
 	import core.vararg;
-	void log(string fn = __FUNCTION__,string file=__FILE__,size_t line = __LINE__)(string fmt,...) nothrow @nogc
+	void log(string fn = __FUNCTION__,string file=__FILE__,int line = __LINE__)(string fmt,...) nothrow @nogc
 	{
-		TypeInfo[] arguments = _arguments;
+		vlog!(fn,file,line)(fmt,_argptr);
+		
+		
+	}
+
+	void vlog(string fn = __FUNCTION__,string file=__FILE__,int line = __LINE__)(string fmt,va_list vaarg) nothrow @nogc
+	{
+		
 		char[256] formatted;
 		//alias prefix = "[" ~ level.stringof  ~"] " ~ file ~ ":" ~ line ~ ":" ~fn ~" ";
-		sprintf(formatted.ptr,cast (const (char*))fmt,_argptr);
-		printf(cast(const (char*))("[" ~ level.stringof  ~"] " ~ file ~ ":" ~ line ~ ":" ~fn ~" %s\n"),formatted.ptr);
-		
-		
+		vsprintf(formatted.ptr,cast (const (char*))fmt,vaarg);
+		printf(cast(const (char*))("[" ~ level.stringof  ~"] " ~ file ~ ":%d:" ~fn ~" %s\n"),line,formatted.ptr);
+	}
+
+	void log(string fn = __FUNCTION__,string file=__FILE__,int line = __LINE__)(bool cond, string fmt,...) nothrow @nogc
+	{
+		if(!cond)
+		{
+			vlog!(fn,file,line)(fmt,_argptr);
+		}
 	}
 }
 alias info = log!(LogLevel.INFO);

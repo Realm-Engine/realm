@@ -10,7 +10,7 @@ import realmofthedead.playercontroller;
 import realm.engine.animation.clip;
 import realmofthedead.velocity;
 mixin RealmMain!(&init,&start,&update);
-
+import std.string;
 
 
 StandardShaderModel toonShader;
@@ -64,7 +64,7 @@ void start()
 	
 	layer = new Layer3D();
 	
-	info("Hello Realm");
+	info("Hello %s","realm".toStringz());
 	string vtxPath = "$EngineAssets/Shaders/toon-vertex.glsl";
 	string fragPath = "$EngineAssets/Shaders/toon-fragment.glsl";
 	toonShader = new StandardShaderModel("Toon");
