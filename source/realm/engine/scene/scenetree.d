@@ -5,53 +5,54 @@ import realm.engine.memory;
 import realm.engine.container.queue;
 import std.uuid;
 import realm.engine.ecs;
-class Scene(ECS)
+class Scene
 {
 
 	
 
-	ECS ecs;
-	private Transform root;
+	ECSManager ecs;
+	private Entity root;
 	private RealmArenaAllocator allocator;
 	uint sceneSize;
-	this(ECS ecs)
+	this(ECSManager ecs)
 	{
 		allocator = new RealmArenaAllocator(__traits(initSymbol,Transform).length * 100);
-		root = new Transform();
+		root = ecs.createEntity("root");
 		this.ecs = ecs;
 		sceneSize = 1;
 	}
 
 	Transform getSceneRoot()
 	{
-		return root;
+		return root.transform;
 	}
 
 
 
-	T* findComponent(T)()
+	T findComponent(T)() if(is(T==class)) 
 	{
-		T* result = null;
-		foreach(child; root)
+		T result = null;
+		foreach(child; root.transform)
 		{
-			
-			if(ecs.getEntityComponent!(T)(child.eid) !is null)
-			{
+		    
+		    if(child.entity.getComponent!(T)() !is null)
+		    {
 				//Logger.LogInfo("%s",child.eid.toString());
-				result = ecs.getEntityComponent!(T)(child.eid);
-				break;
-			}
-
+		        result = child.entity.getComponent!(T)();
+		        break;
+		    }
+		
 		}
 		return result;
-		//return result;
+		
 	}
+	
 
 
-	void add(ECS.Entity entity)
+	void add(Entity entity)
 	{
 
-		root.addChild(entity.getComponent!(Transform)());
+		root.transform.addChild(entity.getComponent!(Transform)());
 		sceneSize ++;
 		sceneSize += entity.transform.getChildren.length;
 		
@@ -67,27 +68,27 @@ class Scene(ECS)
 
 		bool[UUID] visited;
 		Queue!(Transform) queue = new Queue!(Transform)(sceneSize,allocator);
-		visited[root.eid] = true;
-		queue.enqueue(root);
+		visited[root.eId] = true;
+		queue.enqueue(root.transform);
 		while(!queue.empty)
 		{
 			Transform entity = queue.dequeue();
 
 
-			MeshRenderer* meshRenderer = ecs.getEntityComponent!(MeshRenderer)(entity.eid);
+			MeshRenderer meshRenderer = entity.entity.getComponent!(MeshRenderer)();
 			if(meshRenderer !is null)
 			{
-				layer.drawTo((*meshRenderer).mesh,(*meshRenderer).material,entity);
+				layer.drawTo(meshRenderer.mesh,meshRenderer.material,entity);
 			}
 
 			if(entity.getParent() !is null)
 			{
 				foreach(Transform sibling;entity.getParent().getChildren())
 				{
-					if(sibling.eid != entity.eid)
+					if(sibling.entity.eId != entity.entity.eId)
 					{
 						queue.enqueue(sibling);
-						visited[sibling.eid] =  true;
+						visited[sibling.entity.eId] =  true;
 					}
 				}
 
@@ -95,7 +96,7 @@ class Scene(ECS)
 			foreach(Transform child; entity.getChildren())
 			{
 				queue.enqueue(child);
-				visited[child.eid] =  true;
+				visited[child.entity.eId] =  true;
 			}
 
 		}

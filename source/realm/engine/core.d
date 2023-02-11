@@ -88,6 +88,11 @@ class Transform
 		rotation = quat.euler_rotation(radians( euler.x),radians(euler.y),radians(euler.z));
 	}
 
+	void setRotationEuler(float x, float y, float z)
+	{
+		setRotationEuler(vec3(x,y,z));
+	}
+
 	void rotateEuler(vec3 euler)
 	{
 		rotation = rotation.rotate_euler(radians(euler.x),radians(euler.y),radians(euler.z));
@@ -167,7 +172,7 @@ class Transform
 	void componentUpdate()
 	{
 		updateTransformation();
-		tickAnimation();
+		
 		
 
 	}
@@ -385,9 +390,7 @@ class Camera
 	mat4 cameraTransformation;
 	mixin RealmComponent;
 	ProjectionWindowBounds projBounds = ProjectionWindowBounds.NEGATIVE_HALF_TO_HALF;
-	//Front
-	//Maybe goes in transform?
-	
+
 	@property projection()
 	{
 		return calculateProjection();
@@ -530,7 +533,7 @@ class DirectionalLight
 
 	void componentUpdate()
 	{
-		tickAnimation();
+		
 		//updateComponents();
 		//draw();
 	}

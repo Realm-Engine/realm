@@ -5,14 +5,14 @@ import realm.engine.graphics.core;
 
 struct LightInfo
 {
-    float[4] direction;
+    
 }
 
 struct GraphicsContext
 {
     float[16] viewMatrix;
     float[16] projectionMatrix;
-    LightInfo lightInfo;
+    float[4] lightDirection;
 
 
 }
