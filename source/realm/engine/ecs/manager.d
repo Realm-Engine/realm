@@ -26,7 +26,6 @@ alias UpdateComponent = void delegate();
 class ECSManager
 {
 	package ComponentInfo[size_t] componentMap;
-	package void[] componentInitSymbolBuffer;
 	package ComponentList[] componentLists;
 	private UpdateComponent[] componentUpdateFns;
 	private Entity[] entities;
@@ -45,9 +44,7 @@ class ECSManager
 		ComponentInfo cInfo;
 		cInfo.alignment = T.alignof;		
 		cInfo.initSymbolLength = __traits(initSymbol,T).length;
-
-		size_t initSymbolPtr = storeInitSymbol(__traits(initSymbol,T),cInfo.alignment);
-		cInfo.initSymbolPtr = initSymbolPtr;
+		
 		
 		alias fullName = fullyQualifiedName!(T);
 		size_t hash = fullName.hashOf;
@@ -56,27 +53,7 @@ class ECSManager
 		info("Registering component %s", fullName.toStringz());
 	}
 
-	private size_t storeInitSymbol(const void[] symbol,size_t alignment)
-	{
-		size_t length = symbol.length;
-		
-
-		size_t symbolPtr = componentInitSymbolBuffer.length;
-		ptrdiff_t alignDiff = alignTo(symbolPtr,alignment);
-		if(componentInitSymbolBuffer.length == 0)
-		{
-			componentInitSymbolBuffer = (malloc(length))[0..length];
-		}
-		else
-		{
-			componentInitSymbolBuffer = (realloc(componentInitSymbolBuffer.ptr,length +symbolPtr))[0..length +componentInitSymbolBuffer.length];
-		}
-
-		memcpy(&componentInitSymbolBuffer[symbolPtr],&symbol,length);
-		return symbolPtr;
-		
-
-	}
+	
 
 	Entity createEntity()
 	{
@@ -123,7 +100,7 @@ class ECSManager
 
 	~this()
 	{
-		free(componentInitSymbolBuffer.ptr);
+		
 	}
 
 

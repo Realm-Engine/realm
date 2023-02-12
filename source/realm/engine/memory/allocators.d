@@ -4,24 +4,25 @@ private
 {
 
 	import realm.engine.memory.core;
+
 }
 
 
 class RealmArenaAllocator 
 {
 
-	private ubyte[] buffer;
+	private void[] buffer;
 	private size_t offset;
 	private size_t prevOffset;
 	this(size_t size) nothrow @nogc
 	{
-		buffer = (cast(ubyte*)malloc(size))[0..size];
+		buffer = MemoryUtil.allocateChunk(size)[0..size];
 		offset = 0;
 		prevOffset = 0;
 	}
 
 
-	private ubyte[] allocateAligned(T)(size_t count) nothrow @nogc
+	private void[] allocateAligned(T)(size_t count) nothrow @nogc
 	{
 		size_t ptr = cast(size_t)buffer.ptr + offset;
 
@@ -43,7 +44,7 @@ class RealmArenaAllocator
 
 
 
-	ubyte[] allocate(T)(size_t count) nothrow @nogc
+	void[] allocate(T)(size_t count) nothrow @nogc
 	{
 		return allocateAligned!(T)(count);
 	}

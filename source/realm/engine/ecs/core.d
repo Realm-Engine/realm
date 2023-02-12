@@ -10,6 +10,7 @@ import core.stdc.string;
 import std.conv;
 import realm.engine.core;
 import std.typecons;
+import realm.engine.memory.core;
 package ptrdiff_t alignTo(ref size_t ptr, size_t alignment)
 {
 	size_t initial = ptr;
@@ -24,7 +25,6 @@ package ptrdiff_t alignTo(ref size_t ptr, size_t alignment)
 struct ComponentInfo
 {
 	size_t alignment;
-	size_t initSymbolPtr;
 	size_t initSymbolLength;
 	size_t hash;
 
@@ -93,8 +93,7 @@ class Entity
 		alias fullName = fullyQualifiedName!(T);
 		size_t hash = fullName.hashOf;
 		ComponentInfo cInfo = ecsManager.componentMap[hash];
-		//size_t componentPtr = allocateComponent!(T)(cInfo,args);
-		void[] componentMem = malloc(cInfo.initSymbolLength)[0..cInfo.initSymbolLength];
+		void[] componentMem = MemoryUtil.allocateChunk(cInfo.initSymbolLength)[0..cInfo.initSymbolLength];
 		componentList.add(cInfo,componentMem.ptr);
 		static if(is(T==class))
 		{

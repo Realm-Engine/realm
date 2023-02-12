@@ -35,9 +35,10 @@ package size_t alignForward(size_t Alignment = (2 * (void*).sizeof))(ref size_t 
 	size_t mod = temp & (Alignment - 1);
 	if(mod != 0)
 	{
-		ptr += Alignment - mod;
+		size_t diff = Alignment - mod;
+		ptr += diff;
 	}
-	return initial-ptr;
+	return ptr - initial;
 }
 
 
@@ -80,7 +81,7 @@ static class MemoryUtil
 		memcpy(chunk,&hdr,MemoryHeader.sizeof);
 		
 		memcpy(userDataPtr - size_t.sizeof,&forwardAmount,size_t.sizeof);
-		
+		info("Allocated %lu bytes of memory at %p",size,userDataPtr);
 		return userDataPtr;
 		
 		
@@ -152,7 +153,7 @@ static class MemoryUtil
 			return;
 		}
 		void* ptr = chunk - header.offset;
-		//size_t chunkAligned = cast(size_t);  
+		info("Freed allocated chunk at %p",chunk);
 		free(ptr);
 		
 	}
