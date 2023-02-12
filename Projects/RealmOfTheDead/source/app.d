@@ -43,8 +43,10 @@ RealmInitDesc init(string[] args)
 	ecsManager.registerComponent!(DirectionalLight)();
 	ecsManager.registerComponent!(PlayerController)();
 	scene = new Scene(ecsManager);
-	void* tmp = MemoryUtil.allocate(13);
-	MemoryHeader header = MemoryUtil.getHeader(tmp);
+	void* tmp = MemoryUtil.allocateChunk(13);
+	//MemoryHeader header = MemoryUtil.getHeader(tmp);
+	
+	MemoryUtil.freeChunk(tmp);
 	return desc;
 
 }
