@@ -12,6 +12,7 @@ package
 	import std.range;
 	import std.array;
 	import std.traits;
+	import realm.engine.logging;
 	
 }
 
@@ -42,22 +43,66 @@ package size_t alignForward(size_t Alignment = (2 * (void*).sizeof))(ref size_t 
 
 package const char[6] MAGIC_BYTES = "RIPLEY";
 
-
-package static class MemoryUtil
+alias Alignment = Alias!(2 * (void*).sizeof);
+struct MemoryHeader
 {
-	struct MemoryHeader
+	char[6] magicBytes;
+	size_t offset;
+	size_t size;
+	size_t forwardAlignment;
+
+
+}
+static class MemoryUtil
+{
+	
+
+	static void* allocate(size_t size) nothrow @nogc
 	{
-		const char[6] magicBytes;
-		size_t offset;
-		size_t size;
+		size_t headerSize = MemoryHeader.sizeof + (Alignment - 1);
+		size_t totalSize = headerSize + size;
+		void* chunk = malloc(totalSize);
+		if(chunk is null)
+		{
+			error("Could not allocate memory of size %d", size);
+		}
+		MemoryHeader hdr;
+		hdr.magicBytes = MAGIC_BYTES;
+		size_t ptrAligned = cast(size_t)chunk;
+		size_t forwardAmount = alignForward!(Alignment)(ptrAligned);
+		
+		hdr.offset = headerSize + forwardAmount;
+		hdr.size = size;
+		hdr.forwardAlignment = forwardAmount;
+		memcpy(chunk,&hdr,MemoryHeader.sizeof);
+		void* userDataPtr = (chunk+hdr.offset);
+		memcpy(userDataPtr - size_t.sizeof,&forwardAmount,size_t.sizeof);
+		
+		return userDataPtr;
+		
+		
 	}
 
-	void* allocate(size_t size) nothrow
+
+	
+
+	static MemoryHeader getHeader(void* chunk) nothrow @nogc
 	{
-		size_t totalSize = MemoryHeader.sizeof + size;
-		void* ptr = malloc(totalSize);
-		return ptr;
+		scope(failure)
+		{
+			error("Chunk at %p is not a valid memory chunk",chunk);
+		}
+		size_t hdrSize =  MemoryHeader.sizeof + (Alignment - 1);
+		size_t forwardAmount = * (cast(size_t*)(chunk-size_t.sizeof));
+		void* hdrPtr = chunk - (hdrSize + forwardAmount);
 		
+		MemoryHeader header = *(cast(MemoryHeader*)hdrPtr[0..MemoryHeader.sizeof]);
+
+		if(header.magicBytes != MAGIC_BYTES)
+		{
+			error("Chunk at %p is not a valid memory chunk",chunk);
+		}		
+		return header;
 		
 	}
 

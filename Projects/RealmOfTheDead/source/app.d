@@ -9,6 +9,7 @@ import realm.engine.scene;
 import realmofthedead.playercontroller;
 import realm.engine.animation.clip;
 import realmofthedead.velocity;
+import realm.engine.memory.core;
 mixin RealmMain!(&init,&start,&update);
 import std.string;
 
@@ -42,6 +43,8 @@ RealmInitDesc init(string[] args)
 	ecsManager.registerComponent!(DirectionalLight)();
 	ecsManager.registerComponent!(PlayerController)();
 	scene = new Scene(ecsManager);
+	void* tmp = MemoryUtil.allocate(13);
+	MemoryHeader header = MemoryUtil.getHeader(tmp);
 	return desc;
 
 }
@@ -67,15 +70,7 @@ void start()
 	info("Hello %s","realm".toStringz());
 	string vtxPath = "$EngineAssets/Shaders/toon-vertex.glsl";
 	string fragPath = "$EngineAssets/Shaders/toon-fragment.glsl";
-	toonShader = new StandardShaderModel("Toon");
-	
-	Shader vertexShader = new Shader(ShaderType.VERTEX,readText(VirtualFS.getSystemPath(vtxPath)),VirtualFS.getFileName(vtxPath));
-	Shader fragmentShader = new Shader(ShaderType.FRAGMENT,readText(VirtualFS.getSystemPath(fragPath)),VirtualFS.getFileName(fragPath));
-	
-	
-	toonShader.vertexShader = vertexShader;
-	toonShader.fragmentShader = fragmentShader;
-	toonShader.compile();
+	toonShader = ShaderLibrary.getShader("$EngineAssets/Shaders/toon.shader");
 	sampler.create();
 	sampler[SamplerParameter.MinFilter] = TextureFilterfunc.NEAREST;
 	sampler[SamplerParameter.MagFilter] = TextureFilterfunc.NEAREST;

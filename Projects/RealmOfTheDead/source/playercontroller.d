@@ -21,7 +21,7 @@ class PlayerController
 
 	void componentUpdate()
 	{
-		//Logger.LogInfo("%s",eid.toString());
+		//info("%s",eid.toString());
         processInput();
         
 	}
@@ -65,7 +65,7 @@ class PlayerController
 		{
             movementVector += transform.front.cross(vec3(0,1,0)).normalized() ;
 		}
-        //Logger.LogInfo("DT: %f", dt);
+        //info("DT: %f", dt);
 
 
 

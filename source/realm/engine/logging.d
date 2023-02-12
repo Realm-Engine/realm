@@ -7,6 +7,7 @@ private
 	import std.stdio;
 	import std.meta;
 	import std.string;
+	import realm.engine.terminal;
 }
 
 enum LogLevel {INFO,WARN,ERROR}
@@ -27,7 +28,33 @@ template log(LogLevel level)
 		char[256] formatted;
 		//alias prefix = "[" ~ level.stringof  ~"] " ~ file ~ ":" ~ line ~ ":" ~fn ~" ";
 		vsprintf(formatted.ptr,cast (const (char*))fmt,vaarg);
-		printf(cast(const (char*))("[" ~ level.stringof  ~"] " ~ file ~ ":%d:" ~fn ~" %s\n"),line,formatted.ptr);
+		
+		
+		
+		TerminalColor color;
+		static if(level == LogLevel.INFO)
+		{
+			color = TerminalColor.GREEN;
+		}
+		else if(level == LogLevel.WARN)
+		{
+			color = TerminalColor.BLUE;
+		}
+		else
+		{
+			color = TerminalColor.RED;
+		}
+		terminal.setColor(color);
+		terminal.write(cast(const (char*))("[" ~ level.stringof  ~"] "));
+		terminal.setColor(TerminalColor.WHITE);
+		terminal.write(cast(const (char*))(file ~ ":%d: " ~fn ~ ":"),line);
+		terminal.setColor(color);
+
+		terminal.write(cast(const (char*)) " %s\n",formatted.ptr);
+		terminal.setColor(TerminalColor.WHITE);
+			
+		
+
 	}
 
 	void log(string fn = __FUNCTION__,string file=__FILE__,int line = __LINE__)(bool cond, string fmt,...) nothrow @nogc
@@ -39,21 +66,22 @@ template log(LogLevel level)
 	}
 }
 alias info = log!(LogLevel.INFO);
-alias warning = log!(LogLevel.WARN);
+alias warn = log!(LogLevel.WARN);
 alias error = log!(LogLevel.ERROR);
+
 class Logger
 {
-	
+	deprecated("Logger class deprecated use. info(), warning() and error() functions")
 	static void LogWarning(T...)(string fmt, T t)
 	{
 		writeln("[Warning] " ~ fmt.format(t));
 	}
-
+	deprecated("Logger class deprecated use. info(), warning() and error() functions")
 	static void LogInfo(T...)(string fmt, T t)
 	{
 		writeln("[Log] " ~ fmt.format(t));
 	}
-
+	deprecated("Logger class deprecated use. info(), warning() and error() functions")
 	static void LogInfo(T...)(bool cond, string fmt, T t)
 	{
 		if(cond)

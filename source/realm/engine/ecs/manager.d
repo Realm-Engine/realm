@@ -6,6 +6,7 @@ import std.traits;
 import realm.engine.logging;
 import std.conv;
 import realm.engine.core;
+import std.string;
 public
 {
 	import realm.engine.ecs.core;
@@ -52,7 +53,7 @@ class ECSManager
 		size_t hash = fullName.hashOf;
 		cInfo.hash = hash;
 		componentMap[hash] = cInfo;
-		Logger.LogInfo("Registering component %s", fullName);
+		info("Registering component %s", fullName.toStringz());
 	}
 
 	private size_t storeInitSymbol(const void[] symbol,size_t alignment)

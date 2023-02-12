@@ -37,7 +37,7 @@ class Scene
 		    
 		    if(child.entity.getComponent!(T)() !is null)
 		    {
-				//Logger.LogInfo("%s",child.eid.toString());
+				//info("%s",child.eid.toString());
 		        result = child.entity.getComponent!(T)();
 		        break;
 		    }

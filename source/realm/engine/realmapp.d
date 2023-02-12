@@ -66,7 +66,7 @@ mixin template RealmMain(RealmInit initFunc,RealmStart startFunc,RealmUpdate upd
 
         Logger.Assert(initDesc.width >= 0 && initDesc.height >=0,"Width and height of app are negative");
         shutdown = false;
-        Logger.LogInfo("Starting GLFW");
+        info("Starting GLFW");
         auto result = glfwInit();
         Logger.Assert(result == 1,"Failed to initialze GLFW");
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT,true);
@@ -78,14 +78,14 @@ mixin template RealmMain(RealmInit initFunc,RealmStart startFunc,RealmUpdate upd
 
         InputManager.initialze(window);
         GLVersion glVer = DerelictGL3.reload(GLVersion.GL43,GLVersion.GL45);
-        Logger.LogInfo("Loaded OpenGL Version %d",glVer);
+        info("Loaded OpenGL Version %d",glVer);
         
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwSwapInterval(1);
         
 
 
-        //ShaderLibrary.loadDir("$EngineAssets/");
+        ShaderLibrary.loadDir("$EngineAssets/Shaders");
         
 
         startFunc();
@@ -104,7 +104,7 @@ mixin template RealmMain(RealmInit initFunc,RealmStart startFunc,RealmUpdate upd
 
         scope(exit)
 		{
-            Logger.LogInfo("Cleaning up");
+            info("Cleaning up");
             if(window)
 			{
                 glfwDestroyWindow(window);

@@ -170,7 +170,7 @@ class Entity
 
 	~this()
 	{
-		Logger.LogInfo("Entity dealloc");
+		info("Entity dealloc");
 	}
 
 }

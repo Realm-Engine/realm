@@ -52,7 +52,7 @@ struct Font
     {
         Font font;
         
-        Logger.LogInfo("Loading font %s", sysPath);
+        info("Loading font %s", sysPath);
         Logger.LogError(!FT_New_Face(ft, toStringz(sysPath), 0, &font.face),
                 "Failed to load font %s", sysPath);
         return font;

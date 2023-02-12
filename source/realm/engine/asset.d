@@ -44,7 +44,7 @@ static class VirtualFS
     do
     {
         string path = getcwd() ~ "\\" ~ sysPath;
-        Logger.LogInfo("Registering virtual path %s at %s", prefix, path);
+        info("Registering virtual path %s at %s", prefix.toStringz(), path.toStringz());
         registeredPaths[prefix] = path;
         
         return path;
@@ -112,7 +112,7 @@ static class VirtualFS
             auto dir = dirEntries("Cache", "*.bin", SpanMode.depth);
             foreach (entry; dir)
             {
-                Logger.LogInfo("Deleting: %s", entry);
+                info("Deleting: %s", entry);
                 remove(entry);
             }
         }
@@ -139,14 +139,19 @@ static class ShaderLibrary
         return null;
     }
 
-    static void loadDir(string virtualPath)
+    static void loadDir(string virtualDir)
     {
-        string path = VirtualFS.getSystemPath(virtualPath);
-        auto dir = dirEntries(path, "*.rshader", SpanMode.depth);
+        string path = VirtualFS.getSystemPath(virtualDir);
+        auto dir = dirEntries(path, "*.shader", SpanMode.depth);
         foreach (entry; dir)
         {
-            Logger.LogInfo("Loading shader %s into Shader Library", entry);
-            library[VirtualFS.getFileName(entry)] = loadShaderProgram(VirtualFS.getVirtualPath(entry));
+            string virtualPath = VirtualFS.getVirtualPath(entry);
+            if(VirtualFS.getFileName(virtualPath)[0] == '_')
+			{
+                continue;
+			}
+            info("Loading shader %s into Shader Library", entry.toStringz());
+            library[VirtualFS.getFileName(entry)] = loadShaderProgram(virtualPath);
         }
     }
 
@@ -156,7 +161,7 @@ static this()
 {
     if (!exists("Cache"))
     {
-        Logger.LogInfo("Creating cache folder");
+        info("Creating cache folder");
         mkdir("Cache");
     }
     VirtualFS.registerPath!("Assets")("EngineAssets");
@@ -194,10 +199,10 @@ void writeImageBytes(IFImage* image, string path)
     {
     case "png":
         ubyte result = write_image(sysPath, image.w, image.h, image.buf8, 4);
-        Logger.LogError(result == 0, "Could not write image: %s", path);
+        error(result == 0, "Could not write image: %s", path.toStringz());
         break;
     default:
-        Logger.LogError("File type not supported: %s", fmt);
+        error("File type not supported: %s", fmt.toStringz());
         break;
 
     }
@@ -238,7 +243,7 @@ private Mesh loadLDraw(string path)
             texCoords ~= [uv, uv, uv];
             break;
         default:
-            Logger.LogWarning("Unsupported line type: %s", values[0]);
+            warn("Unsupported line type: %s", values[0]);
             break;
 
         }
@@ -257,7 +262,7 @@ private Mesh loadObj(string path)
     vec3[] vertices;
     vec3[] normals;
     vec2[] texCoords;
-    Logger.LogInfo("Loading model: %s", path);
+    info("Loading model: %s", path.toStringz());
     foreach (index, line; enumerate(file.byLine, 0))
     {
         scope(failure)
@@ -402,7 +407,7 @@ Mesh loadMesh(string path)
         result = loadObj(sysPath);
         break;
     default:
-        Logger.LogError("%s unknown file extension", fmt);
+        error("%s unknown file extension", fmt.toStringz());
         break;
     }
     result.calculateWorldBoundingBox();
@@ -447,7 +452,7 @@ StandardShaderModel loadShaderProgram(string path, string name = "")
     //string shader = readText(path);
     if (!exists(sysPath))
     {
-        Logger.LogError("Could not find path: %s", path);
+        error("Could not find path: %s", path.toStringz());
         return shader;
     }
     auto file = File(sysPath);
@@ -455,10 +460,7 @@ StandardShaderModel loadShaderProgram(string path, string name = "")
     auto range = file.byLine();
 
     CurrentProcess current = CurrentProcess.None;
-    string baseVertex = readText(VirtualFS.getSystemPath("$EngineAssets/Shaders/baseVertex.glsl"));
-    string baseFragment = readText(
-            VirtualFS.getSystemPath("$EngineAssets/Shaders/baseFragment.glsl"));
-    string core = readText(VirtualFS.getSystemPath("$EngineAssets/Shaders/core.glsl"));
+    
 
     string sharedData = "";
     string fragmentData = "";
@@ -507,10 +509,8 @@ StandardShaderModel loadShaderProgram(string path, string name = "")
     }
     string vertexShaderDefines = getShaderDefines(ShaderType.VERTEX, shader);
     string fragmentShaderDefines = getShaderDefines(ShaderType.FRAGMENT, shader);
-    string vertexText = "#version 460 core\n" ~ sharedData ~ "\n"
-        ~ vertexShaderDefines ~ "\n" ~ baseVertex ~ "\n" ~ core ~ vertexData;
-    string fragmentText = "#version 460 core\n" ~ sharedData ~ "\n"
-        ~ fragmentShaderDefines ~ "\n" ~ baseFragment ~ "\n" ~ core ~ "\n" ~ fragmentData;
+    string vertexText = "#version 460 core\n" ~ sharedData ~ "\n" ~ vertexData;
+    string fragmentText = "#version 460 core\n" ~ sharedData ~ "\n" ~ fragmentData;
 
     Shader vertexShader = new Shader(ShaderType.VERTEX, vertexText, name ~ " Vertex");
     Shader fragmentShader = new Shader(ShaderType.FRAGMENT, fragmentText, name ~ " Fragment");

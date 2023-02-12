@@ -471,7 +471,7 @@ class GShader
 
         if(!exists("Cache/Shaders"))
         {
-            Logger.LogInfo("Creating shader cache folder");
+            info("Creating shader cache folder");
             mkdir("Cache/Shaders");
             
         }
@@ -512,10 +512,10 @@ class GShader
     //Finish
     void loadShaderBinary()
     {
-        Logger.LogInfo("Loading binary for shader %s",name);
+        info("Loading binary for shader %s",name);
         id = glCreateShader(type);
         int numFormats = getNumSupportedShaderBinaryFormats();
-        Logger.LogInfo("Num supported binary formats: %d",numFormats);
+        info("Num supported binary formats: %d",numFormats);
         if(numFormats <= 0)
         {
             Logger.LogError("Loading shader binaries not supported on system");
@@ -528,7 +528,7 @@ class GShader
 
     void compile()
     {
-        Logger.LogInfo("Compiling shader %s",name);
+        info("Compiling shader %s",name.toStringz());
 
         //id = glCreateShader(type);
         const(char*)[] strings;
@@ -796,7 +796,7 @@ class GShaderProgramModel(T...)
             string fileName = "Cache/Shaders/%s_%s.bin".format(nameHash,sourceHash);
             if(!exists(fileName))
             {
-                Logger.LogInfo("Writing program binary %s to cache",_name);
+                info("Writing program binary %s to cache",_name.toStringz());
                 
                 ubyte[] binary = getBinary();
                 std.file.write(fileName,binary);
@@ -817,11 +817,11 @@ class GShaderProgramModel(T...)
         if (success == 0)
         {
             glGetProgramInfoLog(this, 256, null, result.ptr);
-            Logger.LogError("Could not link program: %s\nError:%s",_name, result);
+            error("Could not link program: %s\nError:%s",_name.toStringz(), result);
         }
         else
         {
-            Logger.LogInfo("Program %s linked", _name);
+            info("Program %s linked", _name.toStringz());
         }
 	}
 
@@ -832,7 +832,7 @@ class GShaderProgramModel(T...)
         ubyte[] result;
         if(numFormats <= 0)
         {
-            Logger.LogError("Loading program binary not supported on system");
+            error("Loading program binary not supported on system");
 
         }
         else 
@@ -844,7 +844,7 @@ class GShaderProgramModel(T...)
             formats.length = numFormats;
             int size;
             glGetIntegerv(GL_PROGRAM_BINARY_FORMATS,formats.ptr);
-            Logger.LogInfo("Loading program %s from binary", _name);
+            info("Loading program %s from binary", _name.toStringz());
             glProgramBinary(id,cast(GLenum)formats[0],cast(void*)binary.ptr,cast(int)binary.length);
         }
     }
@@ -858,7 +858,7 @@ class GShaderProgramModel(T...)
         {
 
             result = cast(ubyte[])read(fileName);
-            Logger.LogInfo("Binary for program %s found",_name);
+            info("Binary for program %s found",_name.toStringz());
         }
 
         return result;
@@ -1226,7 +1226,7 @@ struct GVertexBuffer(T, GBufferStorageMode usage)
                     {
                         attribSettings = attrib;
                         VertexAtrribute settings = attrib;
-                        Logger.LogInfo("Normalize: %s",settings.normalize);
+                        info("Normalize: %d",settings.normalize);
                     }
                 }
             }
