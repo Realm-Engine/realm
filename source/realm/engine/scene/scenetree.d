@@ -16,7 +16,7 @@ class Scene
 	uint sceneSize;
 	this(ECSManager ecs)
 	{
-		allocator = new RealmArenaAllocator(__traits(initSymbol,Transform).length * 100);
+		allocator = new RealmArenaAllocator(0);
 		root = ecs.createEntity("root");
 		this.ecs = ecs;
 		sceneSize = 1;
@@ -67,6 +67,7 @@ class Scene
 	{
 
 		bool[UUID] visited;
+		allocator.resize(((__traits(classInstanceSize,Transform) * sceneSize)) *2 );
 		Queue!(Transform) queue = new Queue!(Transform)(sceneSize,allocator);
 		visited[root.eId] = true;
 		queue.enqueue(root.transform);

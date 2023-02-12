@@ -40,6 +40,7 @@ class Stack(T, size_t Size = 0,alias A = RealmArenaAllocator)
 			this.allocator = allocator;
 
 			this.growthFactor = growthFactor;
+			
 			arr = cast(T[]) allocator.allocate!(T)(len);
 			index = 0;
 		}
@@ -48,19 +49,19 @@ class Stack(T, size_t Size = 0,alias A = RealmArenaAllocator)
 	
 
 	void push(T val) nothrow @nogc
-	in(index < arr.length)
+	in(index <= arr.length)
 	{
 		
-		arr[++index] = val;
+		
 		static if(!isFixedSize)
 		{
 			if(index == arr.length)
 			{
-
+				
 				//arr = Allocator.reallocate!(T)(arr.ptr,cast(size_t)(cast(float)arr.length * growthFactor));
 			}
 		}
-
+		arr[++index] = val;
 		
 		
 	}

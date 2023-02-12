@@ -55,9 +55,9 @@ struct MemoryHeader
 }
 static class MemoryUtil
 {
-	static bool isValidHeader( MemoryHeader header) 
+	static bool isValidHeader( MemoryHeader header) nothrow @nogc
 	{
-		return (header.magicBytes == MAGIC_BYTES);
+		return (header.magicBytes == MAGIC_BYTES) && header.forwardAlignment <= Alignment - 1;
 	}
 
 	static void* allocateChunk(size_t size) nothrow @nogc
@@ -96,11 +96,17 @@ static class MemoryUtil
 		{
 			error("Chunk at %p is not a valid memory chunk",chunk);
 		}
+		MemoryHeader header;
 		size_t hdrSize =  MemoryHeader.sizeof + (Alignment - 1);
 		size_t forwardAmount = * (cast(size_t*)(chunk-size_t.sizeof));
 		void* hdrPtr = chunk - (hdrSize + forwardAmount);
 		
-		MemoryHeader header = *(cast(MemoryHeader*)hdrPtr[0..MemoryHeader.sizeof]);
+		if(forwardAmount > Alignment)
+		{
+			error("Chunk at %p is not a valid memory chunk",chunk);
+			return header;
+		}
+		header = *(cast(MemoryHeader*)hdrPtr[0..MemoryHeader.sizeof]);
 
 		if(header.magicBytes != MAGIC_BYTES)
 		{
@@ -110,32 +116,39 @@ static class MemoryUtil
 		
 	}
 
-	static void resizeChunk(void* chunk,size_t size)
+	static void* resizeChunk(void* chunk,size_t size) nothrow @nogc
 	{
 		scope(failure)
 		{
 			error("Could not resize memory chunk at %p",chunk);
 		}
 		MemoryHeader header = getHeader(chunk);
+		size_t hdrSize =  MemoryHeader.sizeof + (Alignment - 1);
 		bool valid = isValidHeader(header);
 		
 		if(!valid)
 		{
 			error("Memory chunk at %p is not valid, will not resize",chunk);
+			return chunk;
 		}
 		
-
+		
 
 		void* ptr = chunk-header.offset;
+		
+
+		ptr = realloc(ptr,size + hdrSize);
 		if(ptr is null)
 		{
 			error("Could not resize memory chunk at %p",chunk);
-			return;
+			return chunk;
 		}
-
-		ptr = realloc(ptr,size);
 		header.size = size;
+	
 		memcpy(ptr,&header,MemoryHeader.sizeof);
+		memcpy((ptr+header.offset) - size_t.sizeof,&header.forwardAlignment,size_t.sizeof);
+		
+		return ptr + header.offset;
 
 	}
 

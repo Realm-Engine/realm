@@ -4,7 +4,7 @@ private
 {
 
 	import realm.engine.memory.core;
-
+	import realm.engine.logging;
 }
 
 
@@ -49,10 +49,27 @@ class RealmArenaAllocator
 		return allocateAligned!(T)(count);
 	}
 
+	void resize(size_t size) nothrow @nogc
+	{
+		size_t currentSize = MemoryUtil.getHeader(buffer.ptr).size;
+		if(currentSize != size)
+		{
+			buffer = MemoryUtil.resizeChunk(buffer.ptr,size)[0..size];
+			
+		}
+
+		
+	}
+
 	void deallocate()
 	{
 		offset = 0;
 
+	}
+
+	size_t size() nothrow @nogc
+	{
+		return MemoryUtil.getHeader(buffer.ptr).size;
 	}
 
 
