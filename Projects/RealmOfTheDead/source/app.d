@@ -87,7 +87,7 @@ void start()
 	Entity oildrum = ecsManager.createEntity("Oildrum");
 	
 	oildrum.addComponent!(MeshRenderer)(loadMesh("$Assets/Models/oildrum.obj"),oilDrumMaterial.data);
-	scene.add(oildrum);
+	
 	
 	IFImage floorDiffuseImage = readImageBytes("$Assets/Images/FloorTile/FloorTileDiffuse.png");
 	Texture2D floorDiffuseTexture = new Texture2D(&floorDiffuseImage);
@@ -100,8 +100,8 @@ void start()
 	floor.addComponent!(MeshRenderer)(util.generateFace(vec3(0,1,0),5),floorMaterial.data);
 	floor.transform.scale = vec3(5.0f);
 	floor.transform.position = vec3(0,-1.0f,0);
-	//scene.add(floor);
-
+	scene.add(floor);
+	
 	Entity mainCamera = ecsManager.createEntity("Camera");
 	mainCamera.addComponent!(Camera)(CameraProjection.PERSPECTIVE,vec2(cast(float)windowWidth,cast(float)windowHeight),0.1,750,60);
 	mainCamera.addComponent!(PlayerController)();

@@ -60,7 +60,7 @@ static class MemoryUtil
 		return (header.magicBytes == MAGIC_BYTES) && header.forwardAlignment <= Alignment - 1;
 	}
 
-	static void* allocateChunk(size_t size) nothrow @nogc
+	static void* allocateChunk(string fn = __FUNCTION__,string file=__FILE__,int line = __LINE__)(size_t size) nothrow @nogc
 	{
 		size_t headerSize = MemoryHeader.sizeof + (Alignment - 1);
 		size_t totalSize = headerSize + size;
@@ -81,7 +81,7 @@ static class MemoryUtil
 		memcpy(chunk,&hdr,MemoryHeader.sizeof);
 		
 		memcpy(userDataPtr - size_t.sizeof,&forwardAmount,size_t.sizeof);
-		info("Allocated %lu bytes of memory at %p",size,userDataPtr);
+		info!(fn,file,line)("Allocated %lu bytes of memory at %p",size,userDataPtr);
 		return userDataPtr;
 		
 		

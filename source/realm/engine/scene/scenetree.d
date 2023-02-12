@@ -16,7 +16,7 @@ class Scene
 	uint sceneSize;
 	this(ECSManager ecs)
 	{
-		allocator = new RealmArenaAllocator(0);
+		allocator = new RealmArenaAllocator(__traits(classInstanceSize,Transform));
 		root = ecs.createEntity("root");
 		this.ecs = ecs;
 		sceneSize = 1;
@@ -73,20 +73,20 @@ class Scene
 		queue.enqueue(root.transform);
 		while(!queue.empty)
 		{
-			Transform entity = queue.dequeue();
+			Transform transform = queue.dequeue();
 
 
-			MeshRenderer meshRenderer = entity.entity.getComponent!(MeshRenderer)();
+			MeshRenderer meshRenderer = transform.entity.getComponent!(MeshRenderer)();
 			if(meshRenderer !is null)
 			{
-				layer.drawTo(meshRenderer.mesh,meshRenderer.material,entity);
+				layer.drawTo(meshRenderer.mesh,meshRenderer.material,transform);
 			}
 
-			if(entity.getParent() !is null)
+			if(transform.getParent() !is null)
 			{
-				foreach(Transform sibling;entity.getParent().getChildren())
+				foreach(Transform sibling;transform.getParent().getChildren())
 				{
-					if(sibling.entity.eId != entity.entity.eId)
+					if(sibling.entity.eId != transform.entity.eId)
 					{
 						queue.enqueue(sibling);
 						visited[sibling.entity.eId] =  true;
@@ -94,7 +94,7 @@ class Scene
 				}
 
 			}
-			foreach(Transform child; entity.getChildren())
+			foreach(Transform child; transform.getChildren())
 			{
 				queue.enqueue(child);
 				visited[child.entity.eId] =  true;

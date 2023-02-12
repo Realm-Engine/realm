@@ -69,19 +69,21 @@ alias info = log!(LogLevel.INFO);
 alias warn = log!(LogLevel.WARN);
 alias error = log!(LogLevel.ERROR);
 
+
+deprecated("Use info(), warn() and error() functions")
 class Logger
 {
-	deprecated("Logger class deprecated use. info(), warning() and error() functions")
+	
 	static void LogWarning(T...)(string fmt, T t)
 	{
 		writeln("[Warning] " ~ fmt.format(t));
 	}
-	deprecated("Logger class deprecated use. info(), warning() and error() functions")
+	
 	static void LogInfo(T...)(string fmt, T t)
 	{
 		writeln("[Log] " ~ fmt.format(t));
 	}
-	deprecated("Logger class deprecated use. info(), warning() and error() functions")
+	
 	static void LogInfo(T...)(bool cond, string fmt, T t)
 	{
 		if(cond)
@@ -90,11 +92,13 @@ class Logger
 		}
 	}
 
+	
 	static void LogError(int line = __LINE__,string file = __FILE__,T...)( string fmt,T t )
 	{
 		writeln("[Error] %s(%d): %s".format(file,line,fmt.format(t)) );
 	}
 
+	
 	static void LogError(int line = __LINE__,string file = __FILE__,T...)(bool cond, string fmt,T t )
 	{
 		if(!cond)

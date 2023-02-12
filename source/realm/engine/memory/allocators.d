@@ -14,9 +14,9 @@ class RealmArenaAllocator
 	private void[] buffer;
 	private size_t offset;
 	private size_t prevOffset;
-	this(size_t size) nothrow @nogc
+	this(string fn = __FUNCTION__,string file=__FILE__,int line = __LINE__)(size_t size) nothrow @nogc
 	{
-		buffer = MemoryUtil.allocateChunk(size)[0..size];
+		buffer = MemoryUtil.allocateChunk!(fn,file,line)(size)[0..size];
 		offset = 0;
 		prevOffset = 0;
 	}
