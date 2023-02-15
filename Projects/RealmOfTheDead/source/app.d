@@ -10,6 +10,7 @@ import realmofthedead.playercontroller;
 import realm.engine.animation.clip;
 import realmofthedead.velocity;
 import realm.engine.memory.core;
+import core.memory;
 mixin RealmMain!(&init,&start,&update);
 import std.string;
 
@@ -22,7 +23,8 @@ Layer3D layer;
 Scene scene;
 Entity player;
 Sampler sampler;
-
+Texture2D floorDiffuseTexture;
+Texture2D oilDrumDiffuse;
 RealmInitDesc init(string[] args)
 {
 	
@@ -35,7 +37,7 @@ RealmInitDesc init(string[] args)
 	ECSManager.initialize();
 	
 	//ecsManager = new ECSManager();
-	
+	//GC.disable();
 	ecsManager.registerComponent!(Transform)();
 	ecsManager.registerComponent!(MeshRenderer)();
 	ecsManager.registerComponent!(Velocity)();
@@ -80,17 +82,17 @@ void start()
 	oilDrumMaterial.baseColor = vec4(1.0f);
 	IFImage oilDrumImage = readImageBytes("$Assets/Images/OilDrum/oildrum_col.png");
 
-	Texture2D oilDrumDiffuse = new Texture2D(&oilDrumImage);
+	oilDrumDiffuse = new Texture2D(&oilDrumImage);
 	oilDrumMaterial.textures.diffuse = oilDrumDiffuse;
 	oilDrumMaterial.textures.diffuse_Sampler = sampler;
 	oilDrumMaterial.program = toonShader;
 	Entity oildrum = ecsManager.createEntity("Oildrum");
 	
 	oildrum.addComponent!(MeshRenderer)(loadMesh("$Assets/Models/oildrum.obj"),oilDrumMaterial.data);
-	
+	scene.add(oildrum);
 	
 	IFImage floorDiffuseImage = readImageBytes("$Assets/Images/FloorTile/FloorTileDiffuse.png");
-	Texture2D floorDiffuseTexture = new Texture2D(&floorDiffuseImage);
+	floorDiffuseTexture = new Texture2D(&floorDiffuseImage);
 	Entity floor = ecsManager.createEntity("Floor");
 	ToonMaterial floorMaterial = new ToonMaterial();
 	floorMaterial.program = toonShader;

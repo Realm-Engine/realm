@@ -4,6 +4,8 @@ import gl3n.linalg;
 import realm.engine.core;
 import realm.engine.graphics.opengl;
 import realm.engine.graphics.material;
+import realm.engine.memory;
+
 
 struct Vertex3D
 {
@@ -21,7 +23,7 @@ class Layer3D
 	private ElementBuffer!(BufferStorageMode.Mutable) ibo;
 	private VertexArrayObject vao;
 	private UniformBuffer ubo;
-	
+	private RealmArenaAllocator arena;
 
 	this()
 	{
@@ -30,12 +32,7 @@ class Layer3D
 		vao.create();
 		ubo.create("PerObjectData");
 		vbo.attribFormat(vao);
-
-
-
-
-		
-
+		arena = new RealmArenaAllocator(1_000_000);
 	}
 	
 	
@@ -49,6 +46,7 @@ class Layer3D
 	void drawTo(Mesh mesh,MaterialData mat,Transform transform)
 	{
 		import derelict.opengl3.gl3; 
+		int i,unit;
 		vao.bind();
 		vbo.bind();
 		ibo.bind();
@@ -67,31 +65,25 @@ class Layer3D
 		ubo.setData!(ubyte)(buildDataStruct());
 		ubo.unbind();
 		
-		Vertex3D[] vertices;
-		vertices.length = mesh.positions.length;
-		for(int i = 0; i< mesh.positions.length; i++)
+		Vertex3D[] vertices = cast(Vertex3D[])arena.allocate!(Vertex3D)(mesh.positions.length);
+		
+		//vertices.length = mesh.positions.length;
+		for( i = 0; i< mesh.positions.length; i++)
 		{
 			vertices[i].position = mesh.positions[i];
 			vertices[i].normal = mesh.normals[i];
 			vertices[i].texCoord = mesh.textureCoordinates[i];
 		}
-		int unit = 0;
-		foreach(key; mat.textures.byKey())
+		
+		for( i = 0; i< mat.numTextures;i++)
 		{
-			uint textureId = mat.textures[key];
-			int uniform = mat.shader.uniformLocation(key);
-			Sampler sampler = mat.samplers[textureId];
-			if(uniform < 0)
-			{
-				Logger.LogError("sampler %s does not exsist", key);
-				break;
-			}
-			mat.shader.setUniformInt(uniform,unit);
-			
-			sampler.bind(TextureType.TEXTURE2D,unit,textureId);
+			uint location = mat.textureLocations[i];
+			Sampler sampler = mat.samplers[i];
+			mat.shader.setUniformInt(location,unit);
+			sampler.bind(TextureType.TEXTURE2D,unit,mat.textures[i]);
 			unit++;
-
 		}
+		
 		
 
 		vbo[0..mesh.positions.length] = vertices;
@@ -101,15 +93,16 @@ class Layer3D
 		vbo.unbind();
 		ibo.unbind();
 		vao.unbind();
-		foreach(key; mat.textures.byKey())
+		for( i = 0; i< mat.numTextures;i++)
 		{
-			uint textureId = mat.textures[key];
-			int uniform = mat.shader.uniformLocation(key);
-			Sampler sampler = mat.samplers[textureId];
+			uint textureId = mat.textures[i];
+			int uniform = mat.textureLocations[i];
+			Sampler sampler = mat.samplers[i];
 			sampler.unbind(TextureType.TEXTURE2D);
 			
 
 		}
+		arena.deallocate();
 
 
 	}

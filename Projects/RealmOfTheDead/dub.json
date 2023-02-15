@@ -12,6 +12,7 @@
 		"../../Assets/Shaders/*.shader",
 		"./Assets/Models/*.obj",
 		"./Assets/Shaders/*.glsl"
-	]
+	],
+	"buildOptions": ["profileGC"]
 	
 }

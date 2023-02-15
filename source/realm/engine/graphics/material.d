@@ -9,7 +9,7 @@ import std.range;
 import gl3n.linalg;
 import gl3n.math;
 import realm.engine.core;
-
+import realm.engine.memory.core;
 
 
 struct MaterialData
@@ -17,8 +17,11 @@ struct MaterialData
     ubyte[] dataBlock;
     TypeInfo layoutTypeInfo;
     StandardShaderModel shader;
-    uint[string] textures;
-    Sampler[uint] samplers;
+    //uint[string] textures;
+    uint* textureLocations;
+    uint* textures;
+    Sampler* samplers;
+    size_t numTextures;
     
 }
 
@@ -256,6 +259,10 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
         data.dataBlock = (cast(ubyte*)&layout)[0..UniformLayout.UserData.sizeof].dup;
         data.layoutTypeInfo = typeid( UniformLayout.UserData);
         data.shader = program;
+        data.textureLocations = (cast(uint *) MemoryUtil.allocateChunk(0));
+        data.textures = (cast(uint *) MemoryUtil.allocateChunk(0));
+        data.samplers = (cast(Sampler *)MemoryUtil.allocateChunk(0));
+        size_t numTextures = 0;
 		static foreach (member; texturesMembers!(UniformLayout))
         {
             static foreach (attribute; texturesAttributes!(UniformLayout, member))
@@ -267,8 +274,14 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
                         if(texture!is null)
 						{
                             uint id = texture.textureObject;
-							data.textures[member] = id;
-							data.samplers[id] = __traits(getMember,textures,member~"_Sampler");
+                            uint location = program.uniformLocation(member);
+                            numTextures++;
+                            data.textureLocations = cast(uint *) MemoryUtil.resizeChunk(cast(void*)data.textureLocations,numTextures * uint.sizeof);
+                            data.textures = cast(uint *) MemoryUtil.resizeChunk(cast(void*)data.textures,numTextures * uint.sizeof);
+                            data.samplers = cast(Sampler *) MemoryUtil.resizeChunk(cast(void*)data.samplers,numTextures * Sampler.sizeof);
+                            data.textureLocations[numTextures - 1] = location;
+							data.textures[numTextures - 1]  = texture.textureObject;
+							data.samplers[numTextures - 1] = __traits(getMember,textures,member~"_Sampler");
 						}
                         
 					}
@@ -276,6 +289,7 @@ class Material(UserDataVarTypes[string] uniforms = [],int order = 1, bool overri
 				}
 			}
 		}
+        data.numTextures = numTextures;
         
 
         return data;
