@@ -8,7 +8,8 @@ private
 public
 {
 	import gl3n.aabb;
-	import gl3n.linalg;
+	import gl3n.linalg : quat;
+	import realmutil.rmath;
 	import gl3n.math;
 	import std.file : read;
 	import realm.engine.logging;
