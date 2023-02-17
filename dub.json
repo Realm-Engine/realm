@@ -6,7 +6,6 @@
 	"targetType": "sourceLibrary",
 	"dependencies": {
 		"derelict-gl3": "~>1.0.24",
-		"gl3n": "~>1.4.1",
 		"glfw-d": "~>1.1.0",
 		"imagefmt": "~>2.1.2",
 		"bindbc-freetype": "~>1.0.0",
