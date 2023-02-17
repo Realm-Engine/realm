@@ -1,0 +1,3 @@
+[submodule "external/realmutil"]
+	path = external/realmutil
+	url = https://github.com/Realm-Engine/realmutil.git
