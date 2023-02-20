@@ -4,8 +4,8 @@ import gl3n.linalg;
 import realm.engine.core;
 import realm.engine.graphics.opengl;
 import realm.engine.graphics.material;
-import realm.engine.memory;
 
+import realm.engine.memory.core;
 
 struct Vertex3D
 {
@@ -23,7 +23,8 @@ class Layer3D
 	private ElementBuffer!(BufferStorageMode.Mutable) ibo;
 	private VertexArrayObject vao;
 	private UniformBuffer ubo;
-	private RealmArenaAllocator arena;
+	
+	
 
 	this()
 	{
@@ -32,7 +33,8 @@ class Layer3D
 		vao.create();
 		ubo.create("PerObjectData");
 		vbo.attribFormat(vao);
-		arena = new RealmArenaAllocator(1_000_000);
+		
+		
 	}
 	
 	
@@ -65,9 +67,8 @@ class Layer3D
 		ubo.setData!(ubyte)(buildDataStruct());
 		ubo.unbind();
 		
-		Vertex3D[] vertices = cast(Vertex3D[])arena.allocate!(Vertex3D)(mesh.positions.length);
-		
-		//vertices.length = mesh.positions.length;
+		Vertex3D[] vertices;
+		vertices.length = mesh.positions.length;
 		for( i = 0; i< mesh.positions.length; i++)
 		{
 			vertices[i].position = mesh.positions[i];
@@ -102,7 +103,7 @@ class Layer3D
 			
 
 		}
-		arena.deallocate();
+		//MemoryUtil.freeChunk(vertices.ptr);
 
 
 	}

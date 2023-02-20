@@ -55,6 +55,7 @@ struct MemoryHeader
 }
 static class MemoryUtil
 {
+	
 	static bool isValidHeader( MemoryHeader header) nothrow @nogc
 	{
 		return (header.magicBytes == MAGIC_BYTES) && header.forwardAlignment <= Alignment - 1;
@@ -65,6 +66,7 @@ static class MemoryUtil
 		size_t headerSize = MemoryHeader.sizeof + (Alignment - 1);
 		size_t totalSize = headerSize + size;
 		void* chunk = malloc(totalSize);
+		
 		if(chunk is null)
 		{
 			error("Could not allocate memory of size %d", size);
@@ -81,7 +83,15 @@ static class MemoryUtil
 		memcpy(chunk,&hdr,MemoryHeader.sizeof);
 		
 		memcpy(userDataPtr - size_t.sizeof,&forwardAmount,size_t.sizeof);
-		info!(fn,file,line)("Allocated %lu bytes of memory at %p",size,userDataPtr);
+		if(size == 0)
+		{
+			info!(fn,file,line)("Initialized memory chunk header at %p", chunk);
+		}
+		else
+		{
+			info!(fn,file,line)("Allocated %lu bytes of memory at %p",size,userDataPtr);
+		}
+		
 		return userDataPtr;
 		
 		
@@ -114,6 +124,48 @@ static class MemoryUtil
 		}		
 		return header;
 		
+	}
+
+	static ref T castChunk(T)(void* chunk)
+	in
+	{
+		MemoryHeader header = getHeader(chunk);
+		
+		if(!isValidHeader(header))
+		{
+			error("Chunk at %p is not valid",chunk);
+			assert(false);
+		}
+	}
+	do
+	{
+		MemoryHeader header = getHeader(chunk);
+		
+		static if(is(T == class))
+		{
+			size_t classSize = __traits(classInstanceSize,T);
+			if(header.size < classSize)
+			{
+				error("Chunk at %p is not big enough to hold class %s. Need %lu more bytes",chunk,T.stringof,classSize - header.size);
+				assert(false);
+			}
+			
+			return  *(cast(T*)(chunk));
+		}
+		else
+		{
+			size_t size =  T.sizeof;
+			if(header.size < size)
+			{
+				error("Chunk at %p is not big enough to hold type %s. Need %lu more bytes",chunk,T.stringof,size - header.size);
+				assert(false);
+			}
+			
+			return  *(cast(T*)(chunk));
+		}
+		
+		
+
 	}
 
 	static void* resizeChunk(void* chunk,size_t size) nothrow @nogc
@@ -169,6 +221,54 @@ static class MemoryUtil
 		info("Freed allocated chunk at %p",chunk);
 		free(ptr);
 		
+	}
+
+	static void initializeChunk(T)(void* chunk)
+	{
+		MemoryHeader header = getHeader(chunk);
+		if(!isValidHeader(header))
+		{
+			error("Chunk at %p is not valid",chunk);
+
+		}
+
+	}
+
+	unittest
+	{
+		void* mem = allocateChunk(int.sizeof);
+
+		
+		int result = castChunk!(int)(mem);
+		
+		
+		result = 5;
+		assert(result == 5);
+		
+
+		
+	}
+	unittest
+	{
+
+		
+
+		void* mem = allocateChunk(int.sizeof);
+
+		double num;
+		double result = castChunk!(double)(mem);
+		//assert(!result);
+	}
+
+	unittest
+	{
+		class A
+		{
+			int num;
+			int num2;
+		}
+
+
 	}
 
 }

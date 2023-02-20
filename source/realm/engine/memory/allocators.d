@@ -61,7 +61,7 @@ class RealmArenaAllocator
 		
 	}
 
-	void deallocate()
+	void deallocate() nothrow @nogc
 	{
 		offset = 0;
 
